@@ -8,6 +8,10 @@ export interface VerifyInput {
   web: WebResult[];
   signals: ChangeSignal[];
   asOf: string;
+  /** 질문(숫자를 묻는 질문인지 볼 때). 없으면 '위임만 있음 → 근거 없음' 규칙을 건너뛴다 */
+  question?: string;
+  /** 공고 위임 문구가 있는 후보 조 ID("교육부장관이 정하여 공고") */
+  noticeDelegated?: string[];
 }
 
 export interface VerifyOutcome {
@@ -22,6 +26,16 @@ export interface VerifyOutcome {
   /** 재시도 때 모델에 줄 설명 */
   feedback: string;
 }
+
+/** 숫자·기간·한도를 묻는 질문 */
+const QUANTITY_QUESTION = /몇|며칠|얼마|최대|최소|상한|하한|한도|기간/;
+/** 학칙에 맡기는 문구 */
+const SCHOOL_RULE_PHRASE = /학칙(?:으로|이|에서|에)\s*(?:정하|정한|정해|따라|위임)/;
+/** 조문을 직접 근거라 하지 않고 "근거로 제시할 수 있다"처럼 에둘러 쓴 표현 */
+const HEDGED_BASIS = /근거로\s*(?:제시|삼|활용|원용)[가-힣]{0,2}\s*수\s*있|근거가\s*될\s*수\s*있/;
+/** 개정 판 시행일을 알릴 만큼 최근인지(기준일 기준) */
+const RECENT_AMENDMENT_YEARS = 3;
+const MAX_AMENDMENT_NOTES = 2;
 
 /** 근거 없음을 코드가 정했을 때의 결론 문구 */
 export const NO_BASIS_SUMMARY =
@@ -140,8 +154,88 @@ export function verifyDraft(input: VerifyInput): VerifyOutcome {
   if (basisCount === 0 && verdict !== "no_basis") {
     issues.push({ kind: "no_citations_left", detail: "검증을 통과한 근거가 없어 '근거 없음'으로 바꿨습니다." });
     verdict = "no_basis";
-    forcedNoBasis = true;
-    summary = NO_BASIS_SUMMARY;
+    // 모델이 처음부터 참고로만 인용했으면(지운 인용 없음) 그 결론은 살린다. 지운 인용 때문에 비었으면 정해진 문구로
+    if (removed > 0 || kept.length === 0) {
+      forcedNoBasis = true;
+      summary = NO_BASIS_SUMMARY;
+    }
+  }
+
+  // 6. 법령이 학칙에 맡기기만 하고 질문이 묻는 숫자·기간이 없으면 근거 없음.
+  //    학칙 조(L2)나 공식 웹 원문을 근거로 인용하지 않았고, 근거로 든 법령 조의 인용이 모두 숫자 없는 학칙 위임 문구이며,
+  //    결론의 숫자가 인용 원문 어디에도 없을 때. 위임 조는 위임(delegation)으로 남겨 위임 사실을 보여 준다
+  if (verdict !== "no_basis" && input.question && QUANTITY_QUESTION.test(input.question)) {
+    const nonRef = kept.filter((c) => c.role !== "reference");
+    const allDelegation =
+      nonRef.length > 0 &&
+      nonRef.every((c) => {
+        const cand = candidates.get(c.id);
+        if (!cand || cand.grade !== "L1" || extractClaimNumbers(c.quote).length) return false;
+        return SCHOOL_RULE_PHRASE.test(c.quote) || (cand.delegated_to_school_rule && c.role === "delegation");
+      });
+    const citedText = nonRef.map((c) => candidates.get(c.id)?.text ?? "").join(" ").replace(/\s+/g, "");
+    const numbersBacked = extractClaimNumbers(summary).some((n) => citedText.includes(n));
+    if (allDelegation && !numbersBacked) {
+      issues.push({ kind: "delegation_only", detail: "법령은 학칙에 맡기기만 하고 질문이 묻는 숫자·기간을 정하지 않아 '근거 없음'으로 바꿨습니다." });
+      verdict = "no_basis";
+      for (const c of kept) if (c.role === "basis") c.role = "delegation";
+    }
+  }
+
+  // 7. 공고에 맡긴 사항(“교육부장관이 정하여 공고”)을 근거 없음으로 끝내지 않는다. 위임 조와 공고(원문 확인 필요 포함)가 있으면 일부 답(partial)
+  if (verdict === "no_basis" && !forcedNoBasis) {
+    const noticeDelegated = new Set(input.noticeDelegated ?? []);
+    const delegatedCited = kept.some((c) => c.role !== "reference" && noticeDelegated.has(c.id));
+    const noticeAvailable = [...web.values()].some((w) => w.notice && !proposals.has(w.id));
+    if (delegatedCited && noticeAvailable) {
+      issues.push({ kind: "notice_delegation", detail: "공고에 맡긴 사항이라 위임 근거와 공고 확인 안내로 일부 답(partial)으로 바꿨습니다." });
+      verdict = "partial";
+      const pending = [...web.values()].filter((w) => w.notice?.status === "needs_source_check");
+      for (const w of pending) caveats.push(`${w.title}: 원문 확인 필요(수치를 원문에서 확인하지 못했습니다).`);
+    }
+  }
+
+  // 8. 학칙·훈령·시행령 조를 근거로 들었으면 그 조에 맡긴 상위 조(②가 찾아 둔 것)를 위임 인용으로 덧붙인다(두 단계까지).
+  //    인용문은 상위 조 원문의 위임 문장·호 그대로다
+  if (verdict !== "no_basis") {
+    const cited = new Set(kept.map((c) => c.id));
+    let frontier = kept.filter((c) => c.role !== "reference").map((c) => candidates.get(c.id)).filter((c): c is ArticleCandidate => Boolean(c));
+    const visited = new Set(frontier.map((c) => c.id));
+    for (let level = 0; level < 2 && frontier.length; level += 1) {
+      const next: ArticleCandidate[] = [];
+      for (const lower of frontier) {
+        for (const up of lower.upper ?? []) {
+          const upper = candidates.get(up.id);
+          if (!upper) continue;
+          // 이미 인용한 상위 조라도 그 위로는 계속 올라간다(학칙 → 시행령 제4조(인용함) → 법 제6조)
+          if (cited.has(up.id)) {
+            if (!visited.has(up.id)) next.push(upper);
+            visited.add(up.id);
+            continue;
+          }
+          const check = checkQuote(upper.text, up.quote);
+          if (check.status !== "exact") continue;
+          cited.add(up.id);
+          kept.push({ id: up.id, quote: check.quote, role: "delegation" });
+          issues.push({ kind: "upper_added", citation_id: up.id, detail: `${lower.law_name} ${lower.number}에 맡긴 상위 조를 위임 근거로 덧붙였습니다.` });
+          visited.add(up.id);
+          next.push(upper);
+        }
+      }
+      frontier = next;
+    }
+  }
+
+  // 9. 최근 개정된 조를 근거로 들었는데 결론에 그 판의 시행일이 없으면 확인 사항에 붙인다
+  let amendmentNotes = 0;
+  for (const c of kept) {
+    if (amendmentNotes >= MAX_AMENDMENT_NOTES || c.role !== "basis") continue;
+    const cand = candidates.get(c.id);
+    if (!cand?.amended || cand.status !== "in_force") continue;
+    const years = (Date.parse(asOf) - Date.parse(cand.effective_from)) / (365.25 * 86400e3);
+    if (years < 0 || years > RECENT_AMENDMENT_YEARS || mentionsDate(summary, cand.effective_from)) continue;
+    caveats.push(`${cand.law_name} ${cand.number}는 개정되어 ${formatKoreanDate(cand.effective_from)}부터 시행 중인 판입니다. 그 전 사안에 적용할지는 부칙(적용례·경과조치)을 확인해 주세요.`);
+    amendmentNotes += 1;
   }
 
   // 4. 결론의 숫자가 인용 원문에 있는지
@@ -174,11 +268,18 @@ export function verifyDraft(input: VerifyInput): VerifyOutcome {
     basis_ids: item.basis_ids.filter((id) => kept.some((c) => c.id === id)),
   }));
 
-  const needsRetry = (forcedNoBasis && removed > 0) || removed >= 2;
-  const feedback = issues
-    .filter((i) => i.kind === "unknown_id" || i.kind === "quote_not_found" || i.kind === "not_yet_as_current")
-    .map((i) => `- ${i.citation_id ?? ""}: ${i.detail}`)
-    .join("\n");
+  // 결론이 인접 조문을 "근거로 제시할 수 있다"처럼 에둘러 근거로 삼으면 한 번 다시 묻는다(직접 근거인지 판단을 미룬 표현)
+  const hedged = verdict !== "no_basis" && HEDGED_BASIS.test(summary);
+  if (hedged) issues.push({ kind: "hedged_basis", detail: "결론이 조문을 '근거로 제시할 수 있다'처럼 에둘러 근거로 삼았습니다." });
+  const needsRetry = (forcedNoBasis && removed > 0) || removed >= 2 || hedged;
+  const feedback = [
+    ...issues
+      .filter((i) => i.kind === "unknown_id" || i.kind === "quote_not_found" || i.kind === "not_yet_as_current")
+      .map((i) => `- ${i.citation_id ?? ""}: ${i.detail}`),
+    ...(hedged
+      ? ["- 결론이 조문을 '근거로 제시할 수 있다'처럼 썼습니다. 질문 주제를 직접 정한 조문이 아니면 reference로 두고 '직접 근거는 아니다'라고 쓴 뒤 판정(verdict)을 다시 정하세요."]
+      : []),
+  ].join("\n");
 
   return {
     draft: {

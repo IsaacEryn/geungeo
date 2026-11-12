@@ -77,6 +77,15 @@ export interface ArticleCandidate {
   score: number; // 검색 점수(BM25 등)
   via: "direct" | "search" | "delegation"; // 조번호 직접 조회 / 검색 / 위임 사슬
   delegated_to_school_rule: boolean; // "학칙으로 위임 — 학교별 확인"
+  excerpt_note?: string; // 일부 항만 담은 조의 안내(LawArticle.excerpt.note)
+  /** 이 조에 권한을 맡긴 상위 조(후보에 있는 것만). quote는 상위 조 원문 그대로 */
+  upper?: { id: string; phrase: string; quote: string }[];
+  /** 이 조가 상위 조로서 맡긴 하위 조 ID(위로 거슬러 올라가 찾은 경우) */
+  upper_of?: string[];
+  /** 같은 행정규칙의 적용 범위 조라서 넣었으면 그 계기가 된 조 ID */
+  scope_of?: string;
+  /** 기준일 판이 개정으로 바뀐 판이면(같은 조의 이전 판이 있음) true */
+  amended?: boolean;
 }
 
 /** ②-b·②-c Liner Search 결과 하나(등급 매김 뒤). description은 신뢰하지 않는 데이터 */
@@ -90,6 +99,13 @@ export interface WebResult {
   grade: EvidenceGrade;
   query: string;
   excluded?: "list_page" | "menu_page"; // 교육부 목록·메뉴 URL 제외 규칙(설계 2-2)
+  /** 공고 캐시(data/notices.json)에서 온 자료. 검색 결과가 아니다 */
+  notice?: {
+    id: string;
+    issuer: string;
+    status: "checked" | "needs_source_check"; // needs_source_check면 수치 없음("원문 확인 필요")
+    figures: { label: string; value: string; location: string; checked_url: string }[];
+  };
 }
 
 /** ②-c 변경 신호(확정 아님) */
@@ -149,7 +165,11 @@ export type VerificationIssueKind =
   | "not_yet_as_current" // 시행 예정 조문을 현행처럼 말함 → partial로 낮춤
   | "number_unsupported" // 결론의 숫자가 인용문·카드에 없음 → 경고
   | "w3_number" // W3에만 있는 숫자
-  | "no_citations_left"; // 남은 근거 0 → no_basis
+  | "no_citations_left" // 남은 근거 0 → no_basis
+  | "delegation_only" // 법령은 학칙에 맡기기만 하고 묻는 숫자·기간이 없음 → no_basis
+  | "notice_delegation" // 공고에 맡긴 사항 + 공고 있음 → no_basis를 partial로
+  | "upper_added" // 학칙·하위 규범 근거에 상위 위임 조를 코드가 덧붙임
+  | "hedged_basis"; // 결론이 "근거로 제시할 수 있다"처럼 에둘러 근거로 삼음 → ③ 한 번 더
 
 export interface VerificationIssue {
   kind: VerificationIssueKind;
@@ -203,6 +223,7 @@ export interface TraceCall {
   };
   results?: { hostname: string; grade: EvidenceGrade; excluded?: WebResult["excluded"] }[];
   note?: string; // "규칙 기반 대체", "목록 페이지 제외" 같은 짧은 표시(예외 메시지 금지)
+  candidate_ids?: string[]; // ②-a(cache)만: ③에 넘긴 후보 조 ID(평가 분석용)
 }
 
 export interface Trace {

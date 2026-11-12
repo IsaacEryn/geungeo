@@ -6,9 +6,9 @@ import { roundUsd } from "@/lib/liner/cost";
 import { analyzeQuestion, ruleBasedAnalysis } from "./analyze";
 import { answerQuestion, type AnswerInput } from "./answer";
 import { buildCards } from "./cards";
-import { collectFromCache, collectSignals, collectWeb, mergeWeb, planWebSearch, schoolRulesInCache, type SignalCollectOutcome } from "./collect";
+import { collectFromCache, collectNotices, collectSignals, collectWeb, mergeWeb, planWebSearch, schoolRulesInCache, type MergedWeb, type SignalCollectOutcome } from "./collect";
 import { PipelineError, badRequest, toPipelineError } from "./errors";
-import { isIsoDate, todayKst } from "./text";
+import { formatKoreanDate, isIsoDate, mentionsDate, todayKst } from "./text";
 import type { AgentMode, ArticleCandidate, AskRequest, AskResult, ChangeSignal, Citation, SearchedScope, StageEvent, StageName, TraceCall } from "./types";
 import { verifyDraft } from "./verify";
 
@@ -81,6 +81,23 @@ function combineSignals(parts: SignalCollectOutcome[]): SignalCollectOutcome {
   };
 }
 
+/** 같은 게시글인지: 주소가 같거나, 같은 호스트에서 게시글 번호(boardSeq 등)가 같으면 */
+export function sameDocument(a: string, b: string): boolean {
+  if (a === b) return true;
+  try {
+    const ua = new URL(a);
+    const ub = new URL(b);
+    if (ua.hostname.replace(/^www\./, "") !== ub.hostname.replace(/^www\./, "")) return false;
+    for (const key of ["boardSeq", "lawSeq", "seq", "no"]) {
+      const va = ua.searchParams.get(key);
+      if (va && va === ub.searchParams.get(key)) return true;
+    }
+    return ua.pathname === ub.pathname && ua.search === ub.search;
+  } catch {
+    return false;
+  }
+}
+
 /** 변경 신호는 인용한 조의 법령과 관련된 것 중 최근 2건까지만(화면이 길어지지 않게) */
 export const MAX_CHANGE_SIGNALS = 2;
 
@@ -96,6 +113,9 @@ export function relevantSignals(signals: ChangeSignal[], citations: Citation[], 
   const related = signals.filter((s) => {
     if (citedWeb.has(s.web_id)) return true;
     if (citedLaws.has(s.related_law.replace(/\s+/g, ""))) return true;
+    // 제목이 낫표로 법령 이름을 적었으면 그 이름과 똑같아야 한다(「고등교육법 시행령」 입법예고를 고등교육법 인용에 붙이지 않게)
+    const quoted = [...s.title.matchAll(/[「｢『]([^」｣』]+)[」｣』]/g)].map((m) => m[1].replace(/\s+/g, ""));
+    if (quoted.length) return [...citedLaws].some((law) => quoted.includes(law));
     const title = s.title.replace(/\s+/g, "");
     return [...citedLaws].some((law) => title.includes(law));
   });
@@ -223,7 +243,25 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
   if (!plan.run) calls.push({ stage: "collect_web", api: "search", duration_ms: 0, note: `건너뜀: ${plan.reason}` });
   calls.push(...web.calls, ...signals.calls);
   if (web.failed + signals.failed > 0) warnings.push("웹 검색 일부가 실패해 법령 데이터 위주로 답했습니다.");
-  const merged = mergeWeb(web, signals, cache.collectedAt);
+  const mergedWeb = mergeWeb(web, signals, cache.collectedAt);
+  // 공고 캐시: 원문에서 확인한 공고(와 확인 못 한 공고의 "원문 확인 필요")를 웹 근거에 붙인다. 같은 게시글의 검색 결과는 뺀다
+  const noticeOut = collectNotices({
+    cache,
+    question,
+    analysis,
+    asOf,
+    candidates: cached.candidates,
+    delegations: cached.notices,
+    signalLaws: lawNames.slice(0, 2),
+  });
+  const merged: MergedWeb = {
+    results: [...noticeOut.results, ...mergedWeb.results.filter((w) => !noticeOut.results.some((n) => sameDocument(n.url, w.url)))],
+    signals: [],
+  };
+  merged.signals = [...noticeOut.signals, ...mergedWeb.signals.filter((s) => merged.results.some((w) => w.id === s.web_id))];
+  if (noticeOut.results.length) {
+    calls.push({ stage: "collect_web", api: "cache", query: "공고 캐시", duration_ms: 0, note: `공고 ${noticeOut.results.length}건` });
+  }
   if (mode === "tools") warnings.push("tools 모드는 미구현이라 기본 흐름(fixed)으로 답했습니다.");
 
   // ③ 대조·답변 → ④ 검증(위반이 크면 ③을 한 번 더)
@@ -237,6 +275,7 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
     signals: merged.signals,
     notices: cached.notices,
   };
+  const noticeDelegated = cached.notices.map((n) => n.from);
   let answered = await stage("answer", () => answerQuestion(answerInput, { model: options.models?.answer, call }));
   calls.push(answered.call);
   let retried = false;
@@ -252,7 +291,7 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
   }
 
   let verified = await stage("verify", () =>
-    verifyDraft({ draft: answered.draft!, candidates: cached.candidates, web: merged.results, signals: merged.signals, asOf }),
+    verifyDraft({ draft: answered.draft!, candidates: cached.candidates, web: merged.results, signals: merged.signals, asOf, question, noticeDelegated }),
   );
   if (verified.needs_retry && !retried) {
     retried = true;
@@ -262,7 +301,7 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
     calls.push(second.call);
     if (second.draft) {
       const again = await stage("verify", () =>
-        verifyDraft({ draft: second.draft!, candidates: cached.candidates, web: merged.results, signals: merged.signals, asOf }),
+        verifyDraft({ draft: second.draft!, candidates: cached.candidates, web: merged.results, signals: merged.signals, asOf, question, noticeDelegated }),
       );
       // 재시도 결과는 지어낸 인용이 줄었을 때만 쓴다. 평가 채점 4번을 위해 처음 제거 수도 합산한다
       if (again.removed_citations <= verified.removed_citations) {
@@ -288,6 +327,18 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
     cache,
   });
 
+  // 인용한 법령에 입법예고(확정 전)가 걸려 있는데 결론이 말하지 않았으면 확인 사항에 붙인다
+  const changeSignals = relevantSignals(merged.signals, draft.citations, cached.candidates);
+  const caveats = [...draft.caveats];
+  for (const s of changeSignals) {
+    if (s.kind !== "legislative_notice" || caveats.some((c) => c.includes(s.title))) continue;
+    if (s.opinion_deadline ? mentionsDate(draft.summary, s.opinion_deadline) : /입법\s*예고/.test(draft.summary)) continue;
+    caveats.push(
+      `${s.title}${s.date ? `(${formatKoreanDate(s.date)})` : ""}이 진행 중입니다. 확정·시행 전이며${s.opinion_deadline ? ` 의견 제출은 ${formatKoreanDate(s.opinion_deadline)}까지입니다` : " 의견 제출 기한은 원문을 확인해 주세요"}. 인용한 조가 바뀌는지 원문을 확인해 주세요.`,
+    );
+    break;
+  }
+
   const totalCost = roundUsd(calls.reduce((sum, c) => sum + (c.usage?.cost_usd ?? 0), 0));
   return {
     request: { question, asOf, school: requestedSchool, mode },
@@ -297,8 +348,8 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
     summary: draft.summary,
     cards,
     checklist: draft.checklist,
-    caveats: draft.caveats,
-    change_signals: relevantSignals(merged.signals, draft.citations, cached.candidates),
+    caveats,
+    change_signals: changeSignals,
     searched_scope: searchedScope,
     warnings: [...warnings, ...verified.warnings],
     verification: {
