@@ -5,7 +5,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { loadCache, type LawCache } from "@/lib/cache/load";
 import { locateQuote } from "@/lib/pipeline/cards";
 import { findNormalized } from "@/lib/pipeline/text";
-import { DEFAULT_CANDIDATE_LIMIT } from "@/lib/pipeline/collect";
+import { DEFAULT_CANDIDATE_LIMIT, versionTitle } from "@/lib/pipeline/collect";
 import { baseLawName, relevantSignals, runPipeline, topLawNames } from "@/lib/pipeline/run";
 import type { ArticleCandidate, ChangeSignal, StageEvent } from "@/lib/pipeline/types";
 import { createOfflineLiner, extractiveAnswer } from "../scripts/eval/offline-liner.mjs";
@@ -150,5 +150,26 @@ describe("오프라인 Router 대역", () => {
       "질문: 학점 인정 범위\n기준일: 2026-11-05\n장면: 처리 중 / 업무: x\n\n## 후보 조문 (1개)\n[heaf:023-00] 고등교육법 제23조(학점의 인정 등) | 시행 중(2026. 9. 11. 시행) | 법령\n제23조(학점의 인정 등) ① 학교는 학점을 인정할 수 있다.\n\n## 웹 자료 (0개)\n(없음)",
     );
     expect(a.citations[0]).toMatchObject({ id: "heaf:023-00", role: "basis" });
+  });
+});
+
+describe("조 제목은 판별로", () => {
+  it("판 본문 머리에서 제목을 읽고, 못 읽으면 최신 판 제목", () => {
+    expect(versionTitle("제11조의2(평가 등) ① 학교는", "기숙사비 및 기숙사비심의위원회")).toBe("평가 등");
+    expect(versionTitle("제2조(정의(定義)) 이 법에서", "x")).toBe("정의(定義)");
+    expect(versionTitle("① 제목 줄 없는 본문", "최신 제목")).toBe("최신 제목");
+  });
+
+  it("실제 data/: 제11조의2·제11조의3의 2026-09-10 이전 판은 옛 제목으로 나간다", () => {
+    const heaf = (id: string) => cache.articles.get(id)!;
+    const titleAt = (id: string, asOf: string) => {
+      const a = heaf(id);
+      const v = a.versions.find((x) => x.effective_from <= asOf && (x.effective_to === null || asOf <= x.effective_to))!;
+      return versionTitle(v.text, a.title);
+    };
+    expect(titleAt("heaf:011-02", "2026-09-10")).toBe("평가 등");
+    expect(titleAt("heaf:011-02", "2027-03-11")).toBe("기숙사비 및 기숙사비심의위원회");
+    expect(titleAt("heaf:011-03", "2026-09-10")).toBe("교육통계조사 등");
+    expect(titleAt("heaf:011-03", "2026-11-05")).toBe("평가 등");
   });
 });

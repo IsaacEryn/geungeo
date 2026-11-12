@@ -55,6 +55,15 @@ export const DEFAULT_CANDIDATE_LIMIT = 5;
 /** 캐시 점수가 이보다 낮으면 ②-b 웹 검색을 부른다(설계 2-2: 캐시 상위 점수가 낮을 때) */
 export const LOW_CACHE_SCORE = 8;
 
+/**
+ * 판 본문 머리("제11조의2(평가 등) ① …")에서 그 판의 조 제목을 읽는다. 못 읽으면 fallback(최신 판 제목).
+ * 조 번호가 그대로인 채 내용이 바뀐 조(제11조의2: 평가 등 → 기숙사비 및 기숙사비심의위원회)에서 옛 판에 새 제목이 붙지 않게 한다.
+ */
+export function versionTitle(text: string, fallback: string): string {
+  const m = /^\s*제\d+조(?:의\d+)?\((.+?)\)(?=\s|$)/.exec(text);
+  return m ? m[1] : fallback;
+}
+
 export function collectFromCache(input: CacheCollectInput): CacheCollectOutcome {
   const started = Date.now();
   const { cache, analysis, asOf } = input;
@@ -122,7 +131,7 @@ export function collectFromCache(input: CacheCollectInput): CacheCollectOutcome 
         law_name: law.law_name,
         kind: law.kind,
         number: article.number,
-        title: article.title,
+        title: versionTitle(version.text, article.title),
         text: version.text,
         effective_from: version.effective_from,
         effective_to: version.effective_to,
