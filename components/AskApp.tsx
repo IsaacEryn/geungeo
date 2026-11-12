@@ -339,11 +339,16 @@ function ResultView({
             {tr.cardsHeading} <span className="text-base font-normal text-muted">{fmt(tr.cardsCount, { count: result.cards.length })}</span>
           </h2>
           <ul className="mt-3 space-y-4">
-            {result.cards.map((card) => (
-              <li key={card.id} id={`card-${cssId(card.id)}`} tabIndex={-1}>
-                <EvidenceCard card={card} headingId={`card-title-${cssId(card.id)}`} />
-              </li>
-            ))}
+            {result.cards.map((card, index) => {
+              // 같은 조를 근거·위임으로 두 번 인용하면 카드 ID가 겹친다. 체크리스트 링크는 첫 카드로 가고, 뒤 카드는 번호를 붙여 HTML id가 겹치지 않게 한다
+              const nth = result.cards.slice(0, index).filter((c) => c.id === card.id).length;
+              const suffix = nth ? `-${nth + 1}` : "";
+              return (
+                <li key={`${card.id}#${index}`} id={`card-${cssId(card.id)}${suffix}`} tabIndex={-1}>
+                  <EvidenceCard card={card} headingId={`card-title-${cssId(card.id)}${suffix}`} />
+                </li>
+              );
+            })}
           </ul>
         </section>
       ) : null}
