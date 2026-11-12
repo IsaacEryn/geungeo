@@ -1,0 +1,860 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-13T01:20:21+09:00",
+  "entries": [
+    {
+      "id": "heaf",
+      "name": "고등교육법",
+      "kind": "act",
+      "editions": [
+        {
+          "effective_from": "2024-08-14",
+          "promulgated": "2024-02-13",
+          "promulgation_no": "법률 제20250호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=260177&efYd=20240814"
+        },
+        {
+          "effective_from": "2024-10-22",
+          "promulgated": "2024-10-22",
+          "promulgation_no": "법률 제20466호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=265805&efYd=20241022"
+        },
+        {
+          "effective_from": "2025-01-21",
+          "promulgated": "2025-01-21",
+          "promulgation_no": "법률 제20662호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=268513&efYd=20250121"
+        },
+        {
+          "effective_from": "2025-04-23",
+          "promulgated": "2024-10-22",
+          "promulgation_no": "법률 제20466호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=265805&efYd=20250423"
+        },
+        {
+          "effective_from": "2025-06-21",
+          "promulgated": "2024-12-20",
+          "promulgation_no": "법률 제20561호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=267347&efYd=20250621"
+        },
+        {
+          "effective_from": "2025-07-22",
+          "promulgated": "2025-01-21",
+          "promulgation_no": "법률 제20662호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=268513&efYd=20250722"
+        },
+        {
+          "effective_from": "2025-10-01",
+          "promulgated": "2025-08-14",
+          "promulgation_no": "법률 제21007호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=273309&efYd=20251001"
+        },
+        {
+          "effective_from": "2026-03-01",
+          "promulgated": "2025-01-21",
+          "promulgation_no": "법률 제20662호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=268513&efYd=20260301"
+        },
+        {
+          "effective_from": "2026-08-11",
+          "promulgated": "2026-02-10",
+          "promulgation_no": "법률 제21332호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=283297&efYd=20260811"
+        },
+        {
+          "effective_from": "2026-09-11",
+          "promulgated": "2026-03-10",
+          "promulgation_no": "법률 제21423호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=283883&efYd=20260911"
+        },
+        {
+          "effective_from": "2026-11-20",
+          "promulgated": "2026-05-19",
+          "promulgation_no": "법률 제21654호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120"
+        },
+        {
+          "effective_from": "2026-12-03",
+          "promulgated": "2025-12-02",
+          "promulgation_no": "법률 제21147호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=280021&efYd=20261203"
+        },
+        {
+          "effective_from": "2027-03-11",
+          "promulgated": "2026-03-10",
+          "promulgation_no": "법률 제21423호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=283883&efYd=20270311"
+        }
+      ],
+      "collected_at": "2026-11-13T01:09:56+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsHstListR.do?lsId=000899",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/heaf.json"
+    },
+    {
+      "id": "heaf_a20250",
+      "name": "고등교육법 부칙 <법률 제20250호, 2024. 2. 13.>",
+      "kind": "act",
+      "editions": [
+        {
+          "effective_from": "2024-02-13",
+          "promulgated": "2024-02-13",
+          "promulgation_no": "법률 제20250호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120"
+        }
+      ],
+      "collected_at": "2026-11-13T01:09:56+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_a20250.json"
+    },
+    {
+      "id": "heaf_a20466",
+      "name": "고등교육법 부칙 <법률 제20466호, 2024. 10. 22.>",
+      "kind": "act",
+      "editions": [
+        {
+          "effective_from": "2024-10-22",
+          "promulgated": "2024-10-22",
+          "promulgation_no": "법률 제20466호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120"
+        }
+      ],
+      "collected_at": "2026-11-13T01:09:56+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_a20466.json"
+    },
+    {
+      "id": "heaf_a20561",
+      "name": "고등교육법 부칙 <법률 제20561호, 2024. 12. 20.>",
+      "kind": "act",
+      "editions": [
+        {
+          "effective_from": "2024-12-20",
+          "promulgated": "2024-12-20",
+          "promulgation_no": "법률 제20561호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120"
+        }
+      ],
+      "collected_at": "2026-11-13T01:09:56+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_a20561.json"
+    },
+    {
+      "id": "heaf_a20662",
+      "name": "고등교육법 부칙 <법률 제20662호, 2025. 1. 21.>",
+      "kind": "act",
+      "editions": [
+        {
+          "effective_from": "2025-01-21",
+          "promulgated": "2025-01-21",
+          "promulgation_no": "법률 제20662호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120"
+        }
+      ],
+      "collected_at": "2026-11-13T01:09:56+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_a20662.json"
+    },
+    {
+      "id": "heaf_a21007",
+      "name": "고등교육법 부칙 <법률 제21007호, 2025. 8. 14.>",
+      "kind": "act",
+      "editions": [
+        {
+          "effective_from": "2025-08-14",
+          "promulgated": "2025-08-14",
+          "promulgation_no": "법률 제21007호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120"
+        }
+      ],
+      "collected_at": "2026-11-13T01:09:56+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_a21007.json"
+    },
+    {
+      "id": "heaf_a21147",
+      "name": "고등교육법 부칙 <법률 제21147호, 2025. 12. 2.>",
+      "kind": "act",
+      "editions": [
+        {
+          "effective_from": "2025-12-02",
+          "promulgated": "2025-12-02",
+          "promulgation_no": "법률 제21147호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120"
+        }
+      ],
+      "collected_at": "2026-11-13T01:09:56+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_a21147.json"
+    },
+    {
+      "id": "heaf_a21332",
+      "name": "고등교육법 부칙 <법률 제21332호, 2026. 2. 10.>",
+      "kind": "act",
+      "editions": [
+        {
+          "effective_from": "2026-02-10",
+          "promulgated": "2026-02-10",
+          "promulgation_no": "법률 제21332호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120"
+        }
+      ],
+      "collected_at": "2026-11-13T01:09:56+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_a21332.json"
+    },
+    {
+      "id": "heaf_a21423",
+      "name": "고등교육법 부칙 <법률 제21423호, 2026. 3. 10.>",
+      "kind": "act",
+      "editions": [
+        {
+          "effective_from": "2026-03-10",
+          "promulgated": "2026-03-10",
+          "promulgation_no": "법률 제21423호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120"
+        }
+      ],
+      "collected_at": "2026-11-13T01:09:56+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_a21423.json"
+    },
+    {
+      "id": "heaf_a21654",
+      "name": "고등교육법 부칙 <법률 제21654호, 2026. 5. 19.>",
+      "kind": "act",
+      "editions": [
+        {
+          "effective_from": "2026-05-19",
+          "promulgated": "2026-05-19",
+          "promulgation_no": "법률 제21654호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120"
+        }
+      ],
+      "collected_at": "2026-11-13T01:09:56+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_a21654.json"
+    },
+    {
+      "id": "heaf_decree",
+      "name": "고등교육법 시행령",
+      "kind": "presidential_decree",
+      "editions": [
+        {
+          "effective_from": "2024-02-20",
+          "promulgated": "2024-02-20",
+          "promulgation_no": "대통령령 제34227호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=260663&efYd=20240220"
+        },
+        {
+          "effective_from": "2024-04-30",
+          "promulgated": "2024-04-30",
+          "promulgation_no": "대통령령 제34455호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=262021&efYd=20240430"
+        },
+        {
+          "effective_from": "2024-05-21",
+          "promulgated": "2024-05-21",
+          "promulgation_no": "대통령령 제34517호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=262739&efYd=20240521"
+        },
+        {
+          "effective_from": "2024-07-09",
+          "promulgated": "2024-07-09",
+          "promulgation_no": "대통령령 제34669호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=263861&efYd=20240709"
+        },
+        {
+          "effective_from": "2024-08-21",
+          "promulgated": "2024-02-20",
+          "promulgation_no": "대통령령 제34227호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=260663&efYd=20240821"
+        },
+        {
+          "effective_from": "2025-03-11",
+          "promulgated": "2025-03-11",
+          "promulgation_no": "대통령령 제35381호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=269665&efYd=20250311"
+        },
+        {
+          "effective_from": "2025-03-12",
+          "promulgated": "2025-03-12",
+          "promulgation_no": "대통령령 제35382호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=269709&efYd=20250312"
+        },
+        {
+          "effective_from": "2025-05-27",
+          "promulgated": "2025-05-27",
+          "promulgation_no": "대통령령 제35536호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=271315&efYd=20250527"
+        },
+        {
+          "effective_from": "2025-06-21",
+          "promulgated": "2025-06-02",
+          "promulgation_no": "대통령령 제35555호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=271431&efYd=20250621"
+        },
+        {
+          "effective_from": "2025-06-21",
+          "promulgated": "2025-06-02",
+          "promulgation_no": "대통령령 제35554호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=271427&efYd=20250621"
+        },
+        {
+          "effective_from": "2025-10-01",
+          "promulgated": "2025-10-01",
+          "promulgation_no": "대통령령 제35802호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=278251&efYd=20251001"
+        },
+        {
+          "effective_from": "2026-01-02",
+          "promulgated": "2025-12-30",
+          "promulgation_no": "대통령령 제35948호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=281433&efYd=20260102"
+        },
+        {
+          "effective_from": "2026-03-01",
+          "promulgated": "2026-02-27",
+          "promulgation_no": "대통령령 제36146호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=283667&efYd=20260301"
+        },
+        {
+          "effective_from": "2026-08-11",
+          "promulgated": "2026-07-21",
+          "promulgation_no": "대통령령 제36508호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=288157&efYd=20260811"
+        },
+        {
+          "effective_from": "2026-09-11",
+          "promulgated": "2026-09-08",
+          "promulgation_no": "대통령령 제36644호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+        },
+        {
+          "effective_from": "2026-12-03",
+          "promulgated": "2026-07-21",
+          "promulgation_no": "대통령령 제36508호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=288157&efYd=20261203"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:15+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsHstListR.do?lsId=002233",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/heaf_decree.json"
+    },
+    {
+      "id": "heaf_decree_a34227",
+      "name": "고등교육법 시행령 부칙 <대통령령 제34227호, 2024. 2. 20.>",
+      "kind": "presidential_decree",
+      "editions": [
+        {
+          "effective_from": "2024-02-20",
+          "promulgated": "2024-02-20",
+          "promulgation_no": "대통령령 제34227호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:15+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_decree_a34227.json"
+    },
+    {
+      "id": "heaf_decree_a34455",
+      "name": "고등교육법 시행령 부칙 <대통령령 제34455호, 2024. 4. 30.>",
+      "kind": "presidential_decree",
+      "editions": [
+        {
+          "effective_from": "2024-04-30",
+          "promulgated": "2024-04-30",
+          "promulgation_no": "대통령령 제34455호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:15+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_decree_a34455.json"
+    },
+    {
+      "id": "heaf_decree_a34517",
+      "name": "고등교육법 시행령 부칙 <대통령령 제34517호, 2024. 5. 21.>",
+      "kind": "presidential_decree",
+      "editions": [
+        {
+          "effective_from": "2024-05-21",
+          "promulgated": "2024-05-21",
+          "promulgation_no": "대통령령 제34517호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:15+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_decree_a34517.json"
+    },
+    {
+      "id": "heaf_decree_a34669",
+      "name": "고등교육법 시행령 부칙 <대통령령 제34669호, 2024. 7. 9.>",
+      "kind": "presidential_decree",
+      "editions": [
+        {
+          "effective_from": "2024-07-09",
+          "promulgated": "2024-07-09",
+          "promulgation_no": "대통령령 제34669호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:15+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_decree_a34669.json"
+    },
+    {
+      "id": "heaf_decree_a35381",
+      "name": "고등교육법 시행령 부칙 <대통령령 제35381호, 2025. 3. 11.>",
+      "kind": "presidential_decree",
+      "editions": [
+        {
+          "effective_from": "2025-03-11",
+          "promulgated": "2025-03-11",
+          "promulgation_no": "대통령령 제35381호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:15+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_decree_a35381.json"
+    },
+    {
+      "id": "heaf_decree_a35382",
+      "name": "고등교육법 시행령 부칙 <대통령령 제35382호, 2025. 3. 12.>",
+      "kind": "presidential_decree",
+      "editions": [
+        {
+          "effective_from": "2025-03-12",
+          "promulgated": "2025-03-12",
+          "promulgation_no": "대통령령 제35382호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:15+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_decree_a35382.json"
+    },
+    {
+      "id": "heaf_decree_a35536",
+      "name": "고등교육법 시행령 부칙 <대통령령 제35536호, 2025. 5. 27.>",
+      "kind": "presidential_decree",
+      "editions": [
+        {
+          "effective_from": "2025-05-27",
+          "promulgated": "2025-05-27",
+          "promulgation_no": "대통령령 제35536호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:15+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_decree_a35536.json"
+    },
+    {
+      "id": "heaf_decree_a35554",
+      "name": "고등교육법 시행령 부칙 <대통령령 제35554호, 2025. 6. 2.>",
+      "kind": "presidential_decree",
+      "editions": [
+        {
+          "effective_from": "2025-06-02",
+          "promulgated": "2025-06-02",
+          "promulgation_no": "대통령령 제35554호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:15+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_decree_a35554.json"
+    },
+    {
+      "id": "heaf_decree_a35555",
+      "name": "고등교육법 시행령 부칙 <대통령령 제35555호, 2025. 6. 2.>",
+      "kind": "presidential_decree",
+      "editions": [
+        {
+          "effective_from": "2025-06-02",
+          "promulgated": "2025-06-02",
+          "promulgation_no": "대통령령 제35555호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:15+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_decree_a35555.json"
+    },
+    {
+      "id": "heaf_decree_a35802",
+      "name": "고등교육법 시행령 부칙 <대통령령 제35802호, 2025. 10. 1.>",
+      "kind": "presidential_decree",
+      "editions": [
+        {
+          "effective_from": "2025-10-01",
+          "promulgated": "2025-10-01",
+          "promulgation_no": "대통령령 제35802호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:15+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_decree_a35802.json"
+    },
+    {
+      "id": "heaf_decree_a35948",
+      "name": "고등교육법 시행령 부칙 <대통령령 제35948호, 2025. 12. 30.>",
+      "kind": "presidential_decree",
+      "editions": [
+        {
+          "effective_from": "2025-12-30",
+          "promulgated": "2025-12-30",
+          "promulgation_no": "대통령령 제35948호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:15+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_decree_a35948.json"
+    },
+    {
+      "id": "heaf_decree_a36146",
+      "name": "고등교육법 시행령 부칙 <대통령령 제36146호, 2026. 2. 27.>",
+      "kind": "presidential_decree",
+      "editions": [
+        {
+          "effective_from": "2026-02-27",
+          "promulgated": "2026-02-27",
+          "promulgation_no": "대통령령 제36146호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:15+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_decree_a36146.json"
+    },
+    {
+      "id": "heaf_decree_a36508",
+      "name": "고등교육법 시행령 부칙 <대통령령 제36508호, 2026. 7. 21.>",
+      "kind": "presidential_decree",
+      "editions": [
+        {
+          "effective_from": "2026-07-21",
+          "promulgated": "2026-07-21",
+          "promulgation_no": "대통령령 제36508호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:15+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_decree_a36508.json"
+    },
+    {
+      "id": "heaf_decree_a36644",
+      "name": "고등교육법 시행령 부칙 <대통령령 제36644호, 2026. 9. 8.>",
+      "kind": "presidential_decree",
+      "editions": [
+        {
+          "effective_from": "2026-09-08",
+          "promulgated": "2026-09-08",
+          "promulgation_no": "대통령령 제36644호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:15+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_decree_a36644.json"
+    },
+    {
+      "id": "tuition_rule",
+      "name": "대학 등록금에 관한 규칙",
+      "kind": "ministerial_ordinance",
+      "editions": [
+        {
+          "effective_from": "2021-02-02",
+          "promulgated": "2021-02-02",
+          "promulgation_no": "교육부령 제225호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=229297&efYd=20210202"
+        },
+        {
+          "effective_from": "2022-02-07",
+          "promulgated": "2022-02-07",
+          "promulgation_no": "교육부령 제257호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=240223&efYd=20220207"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:18+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsHstListR.do?lsId=010408",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/tuition_rule.json"
+    },
+    {
+      "id": "tuition_rule_a225",
+      "name": "대학 등록금에 관한 규칙 부칙 <교육부령 제225호, 2021. 2. 2.>",
+      "kind": "ministerial_ordinance",
+      "editions": [
+        {
+          "effective_from": "2021-02-02",
+          "promulgated": "2021-02-02",
+          "promulgation_no": "교육부령 제225호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=240223&efYd=20220207"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:18+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=240223&efYd=20220207",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/tuition_rule_a225.json"
+    },
+    {
+      "id": "tuition_rule_a257",
+      "name": "대학 등록금에 관한 규칙 부칙 <교육부령 제257호, 2022. 2. 7.>",
+      "kind": "ministerial_ordinance",
+      "editions": [
+        {
+          "effective_from": "2022-02-07",
+          "promulgated": "2022-02-07",
+          "promulgation_no": "교육부령 제257호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=240223&efYd=20220207"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:18+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=240223&efYd=20220207",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/tuition_rule_a257.json"
+    },
+    {
+      "id": "private_school_act",
+      "name": "사립학교법",
+      "kind": "act",
+      "editions": [
+        {
+          "effective_from": "2026-10-02",
+          "promulgated": "2026-08-04",
+          "promulgation_no": "법률 제21857호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=290777&efYd=20261002"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:20+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsHstListR.do?lsId=000888",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/private_school_act.json"
+    },
+    {
+      "id": "edu_official_act",
+      "name": "교육공무원법",
+      "kind": "act",
+      "editions": [
+        {
+          "effective_from": "2026-10-02",
+          "promulgated": "2026-08-04",
+          "promulgation_no": "법률 제21857호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=290751&efYd=20261002"
+        },
+        {
+          "effective_from": "2026-11-20",
+          "promulgated": "2026-05-19",
+          "promulgation_no": "법률 제21656호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286055&efYd=20261120"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:23+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsHstListR.do?lsId=001616",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/edu_official_act.json"
+    },
+    {
+      "id": "remote_class_rule",
+      "name": "대학등의 원격수업 운영에 관한 훈령",
+      "kind": "administrative_rule",
+      "editions": [
+        {
+          "effective_from": "2023-12-05",
+          "promulgated": "2023-12-05",
+          "promulgation_no": "교육부훈령 제463호",
+          "source_url": "https://www.law.go.kr/LSW/admRulLsInfoR.do?admRulSeq=2100000232140"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:24+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/admRulLsInfoR.do?admRulSeq=2100000232140",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제2호(국가 또는 지방자치단체의 고시·공고·훈령 그 밖에 이와 유사한 것)",
+      "storage": "file",
+      "path": "laws/remote_class_rule.json"
+    },
+    {
+      "id": "snu_rule",
+      "name": "서울대학교 학칙",
+      "kind": "school_rule",
+      "school": "snu",
+      "editions": [
+        {
+          "effective_from": "2026-06-29",
+          "promulgated": "2026-06-29",
+          "promulgation_no": "서울대학교학칙 제2710호",
+          "source_url": "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000157427"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:26+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000157427",
+      "attribution": "서울대학교 학칙(제2710호, 시행 2026. 6. 29.), 법제처 국가법령정보센터 게재본",
+      "redistribution": "확인 못 함 — 학칙 처리 방식(쓰는 조만 수록 / 실행 때 받기 / 대학에 묻기) 사용자 결정 전",
+      "storage": "remote"
+    },
+    {
+      "id": "pnu_rule",
+      "name": "부산대학교 학칙",
+      "kind": "school_rule",
+      "school": "pnu",
+      "editions": [
+        {
+          "effective_from": "2026-09-01",
+          "promulgated": "2026-09-01",
+          "promulgation_no": "부산대학교학칙 제3137호",
+          "source_url": "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000160929"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:27+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000160929",
+      "attribution": "부산대학교 학칙(제3137호, 시행 2026. 9. 1.), 법제처 국가법령정보센터 게재본",
+      "redistribution": "확인 못 함 — 학칙 처리 방식(쓰는 조만 수록 / 실행 때 받기 / 대학에 묻기) 사용자 결정 전",
+      "storage": "remote"
+    },
+    {
+      "id": "knou_rule",
+      "name": "한국방송통신대학교 학칙",
+      "kind": "school_rule",
+      "school": "knou",
+      "editions": [
+        {
+          "effective_from": "2027-03-01",
+          "promulgated": "2026-09-14",
+          "promulgation_no": "한국방송통신대학교학칙 제1315호",
+          "source_url": "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000160331"
+        }
+      ],
+      "collected_at": "2026-11-13T01:10:28+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000160331",
+      "attribution": "한국방송통신대학교 학칙(제1315호, 시행 2027. 3. 1.), 법제처 국가법령정보센터 게재본",
+      "redistribution": "확인 못 함 — 학칙 처리 방식(쓰는 조만 수록 / 실행 때 받기 / 대학에 묻기) 사용자 결정 전",
+      "storage": "remote"
+    }
+  ]
+}
