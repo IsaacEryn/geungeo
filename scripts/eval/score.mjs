@@ -5,6 +5,12 @@
 /** 공백을 지운 비교용 문자열 */
 const squash = (s) => String(s ?? "").replace(/\s+/g, "");
 
+/**
+ * 근거 카드 ID → 캐시 조 ID. 같은 조에 시행 중인 판과 시행 예정 판이 함께 있으면 파이프라인은 예정 판을
+ * "<조ID>@<시행일>"(예 "heaf:034-02@2026-12-03")로 따로 낸다. 채점은 조 단위라 뒤를 뗀다
+ */
+export const articleIdOf = (cardId) => String(cardId ?? "").split("@")[0];
+
 /** "a|b|c" 대안 중 하나라도 본문에 있으면 참 */
 export function includesAny(corpus, spec) {
   const body = squash(corpus);
@@ -51,14 +57,14 @@ export function scoreOne(q, result, opts = {}) {
   const shape = shapeProblems(result);
   if (shape.length) return { pass: false, format_error: true, problems: shape, checks: {} };
 
-  const cardIds = new Set(result.cards.map((c) => c.id));
+  const cardIds = new Set(result.cards.map((c) => articleIdOf(c.id)));
   const checks = {};
 
   // 1. 근거 조문 일치(조) · 세부 위치 일치(항·호·목)
   const required = [...q.article_ids, ...(opts.strictSchool && q.school ? q.school_article_ids : [])];
   const missing = required.filter((id) => !cardIds.has(id));
   checks.article = { applicable: required.length > 0, pass: missing.length === 0, missing };
-  const locHits = q.locations.filter((l) => result.cards.some((c) => c.id === l.id && squash(c.location).startsWith(squash(l.location))));
+  const locHits = q.locations.filter((l) => result.cards.some((c) => articleIdOf(c.id) === l.id && squash(c.location).startsWith(squash(l.location))));
   checks.location = { applicable: q.locations.length > 0, pass: locHits.length === q.locations.length, hit: locHits.length, of: q.locations.length };
   const schoolHits = q.school_article_ids.filter((id) => cardIds.has(id));
   checks.school_article = { applicable: Boolean(q.school) && q.school_article_ids.length > 0, counted: Boolean(opts.strictSchool), hit: schoolHits.length, of: q.school_article_ids.length };

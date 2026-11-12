@@ -99,6 +99,7 @@ describe("실행기", () => {
   it("옵션을 읽고 잘못된 값은 막는다", () => {
     const o = parseArgs(["--asof", "2026-11-05", "--repeat", "3", "--compare", "a,b", "--credit-limit", "5", "--mock"]);
     expect(o).toMatchObject({ asof: "2026-11-05", repeat: 3, compare: ["a", "b"], creditLimit: 5, mock: true });
+    expect(parseArgs(["--mock-runner"])).toMatchObject({ mockRunner: true, mock: false });
     expect(() => parseArgs(["--asof", "11/5"])).toThrow();
     expect(() => parseArgs(["--nope"])).toThrow();
   });
@@ -109,12 +110,13 @@ describe("실행기", () => {
       trace: {
         calls: [
           { api: "router", model: "liner-mark-1.3", usage: { prompt_tokens: 1_000_000, completion_tokens: 0 } },
-          { api: "search" },
+          { api: "search", usage: { prompt_tokens: 0, completion_tokens: 0, reasoning_tokens: 0, cost_usd: 0.001 } },
+          { api: "search", note: "고정 응답" }, // 고정 응답·건너뜀은 과금 없음
           { api: "router", model: "unknown-model", usage: { prompt_tokens: 10, completion_tokens: 10, cost_usd: 0.5 } },
         ],
       },
     });
-    expect(c.calls).toMatchObject({ router: 2, search: 1 });
+    expect(c.calls).toMatchObject({ router: 2, search: 2 });
     expect(c.usd).toBeCloseTo(pricing.router["liner-mark-1.3"].input_per_million + pricing.search_per_call + 0.5);
     expect(c.unpriced).toBe(true);
   });

@@ -5,8 +5,8 @@
 //   --asof 2026-11-05        기준일(기본: 평가 세트 기준일)
 //   --ids E01,E22            일부 문항만
 //   --repeat 3               반복 수
-//   --mode fixed|tools       답변 방식
-//   --offline                Liner Search 대신 tests/fixtures/search/의 고정 응답
+//   --mode fixed             답변 방식(tools는 미구현 — 받기만 하고 fixed로 돈다)
+//   --offline                Liner Search 대신 tests/fixtures/search/의 고정 응답(Router는 실제로 부른다)
 //   --model-analyze <id>     ① 모델(기본 LINER_MODEL_ANALYZE, 없으면 liner-mark-1.3)
 //   --model-answer <id>      ③ 모델(기본 LINER_MODEL_ANSWER, 없으면 liner-mark-1.3)
 //   --model-judge <id>       보조 채점 모델(기본 LINER_MODEL_JUDGE). --judge일 때만 의미가 있다
@@ -14,7 +14,10 @@
 //   --credit-limit 5         이 실행 전체 비용 상한(USD). 넘거나 처음 3문항으로 낸 예상이 넘으면 멈춘다
 //   --compare-stop 4         --compare에서 후보 하나가 끝났을 때 누적이 이 값을 넘으면 다음 후보 전에 멈춘다
 //   --strict-school          학칙 조 일치도 통과 조건에 넣는다(학칙을 캐시에 실었을 때)
-//   --mock                   목 파이프라인(scripts/eval/mock-pipeline.mjs)으로 실행기만 시험(Liner 호출 없음)
+//   --mock                   Liner를 부르지 않는 오프라인 실행. 실제 파이프라인(lib/pipeline/run.ts)에 Search 고정 응답과
+//                            Router 대역(scripts/eval/offline-liner.mjs: 규칙 기반 분석 + 추출식 답)을 끼워 끝까지 돈다.
+//                            키가 필요 없고, 통과율은 모델 없이 검색·검증·카드 경로가 정답 조를 내놓는지의 하한이다
+//   --mock-runner            실행기 자체 시험용 가짜 파이프라인(scripts/eval/mock-pipeline.mjs). 파이프라인을 안 거친다
 //   --out <dir>              결과 폴더(기본 eval/runs/<시각>, .gitignore됨)
 //
 // .env는 있으면 읽는다(process.loadEnvFile, 이미 있는 환경변수는 덮지 않음). 키 값은 출력·저장하지 않는다.
@@ -29,7 +32,7 @@ const TRAP_IDS = ["E10", "E11", "E22", "E23", "E24"];
 
 // ───────── 옵션 ─────────
 export function parseArgs(argv) {
-  const o = { asof: "2026-11-05", repeat: 1, mode: "fixed", offline: false, mock: false, strictSchool: false, judge: false };
+  const o = { asof: "2026-11-05", repeat: 1, mode: "fixed", offline: false, mock: false, mockRunner: false, strictSchool: false, judge: false };
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
     const next = () => argv[++i];
@@ -39,6 +42,7 @@ export function parseArgs(argv) {
     else if (a === "--mode") o.mode = next();
     else if (a === "--offline") o.offline = true;
     else if (a === "--mock") o.mock = true;
+    else if (a === "--mock-runner") o.mockRunner = true;
     else if (a === "--strict-school") o.strictSchool = true;
     else if (a === "--judge") o.judge = true;
     else if (a === "--model-analyze") o.modelAnalyze = next();
@@ -73,7 +77,8 @@ export function makeCoster(pricing) {
     const calls = { router: 0, search: 0, cache: 0 };
     for (const c of result?.trace?.calls ?? []) {
       calls[c.api] = (calls[c.api] ?? 0) + 1;
-      if (c.api === "search") usd += pricing.search_per_call;
+      // 고정 응답·건너뜀 기록은 과금이 없다(usage가 있는 것만 실제 호출)
+      if (c.api === "search" && c.usage) usd += pricing.search_per_call;
       if (c.api === "router" && c.usage) {
         prompt += c.usage.prompt_tokens;
         completion += c.usage.completion_tokens;
@@ -107,8 +112,8 @@ export function findSecrets(text, env = process.env) {
 }
 
 // ───────── 파이프라인 불러오기 ─────────
-async function loadPipeline(mock) {
-  if (mock) {
+async function loadPipeline(opts) {
+  if (opts.mockRunner) {
     const m = await import(pathToFileURL(join(ROOT, "scripts/eval/mock-pipeline.mjs")).href);
     return { runPipeline: m.runPipeline, cache: undefined, close: async () => {} };
   }
@@ -126,6 +131,13 @@ async function loadPipeline(mock) {
   const run = await server.ssrLoadModule("/lib/pipeline/run.ts");
   const load = await server.ssrLoadModule("/lib/cache/load.ts");
   const cache = await load.loadCache();
+  if (opts.mock) {
+    const { createOfflineLiner } = await import(pathToFileURL(join(ROOT, "scripts/eval/offline-liner.mjs")).href);
+    const offline = createOfflineLiner();
+    // 파이프라인은 키가 있어야 시작한다. 오프라인 대역은 키를 어디에도 보내지 않는다
+    if (!process.env.LINER_API_KEY) process.env.LINER_API_KEY = "offline-no-network";
+    return { runPipeline: run.runPipeline, cache, fetchImpl: offline.fetchImpl, offlineCalls: offline.calls, close: () => server.close() };
+  }
   return { runPipeline: run.runPipeline, cache, close: () => server.close() };
 }
 
@@ -152,7 +164,8 @@ async function runCandidate({ questions, opts, models, pipeline, costOf, spentBe
             cache: pipeline.cache,
             mode: opts.mode,
             models: { analyze: models.analyze, answer: models.answer },
-            searchFixtureDir: opts.offline ? join(ROOT, "tests/fixtures/search") : undefined,
+            searchFixtureDir: opts.offline || opts.mock ? join(ROOT, "tests/fixtures/search") : undefined,
+            ...(pipeline.fetchImpl ? { fetchImpl: pipeline.fetchImpl, schoolRules: "cache_only" } : {}),
           },
         );
       } catch (err) {
@@ -244,7 +257,7 @@ function summaryMarkdown({ opts, models, results, stoppedAll, startedAt }) {
   const pct = (x) => `${(x * 100).toFixed(1)}%`;
   const lines = [];
   lines.push(`# 평가 결과 ${startedAt}`, "");
-  lines.push(`- 기준일 ${opts.asof}, 반복 ${opts.repeat}, 방식 ${opts.mode}${opts.offline ? ", Search 고정 응답" : ""}${opts.mock ? ", **목 파이프라인**" : ""}`);
+  lines.push(`- 기준일 ${opts.asof}, 반복 ${opts.repeat}, 방식 ${opts.mode}${opts.offline || opts.mock ? ", Search 고정 응답" : ""}${opts.mock ? ", **오프라인(Router 대역: 규칙 기반 분석 + 추출식 답, 모델 호출 없음)**" : ""}${opts.mockRunner ? ", **목 파이프라인(실행기 시험)**" : ""}`);
   lines.push(`- 모델: ① ${models.analyze}, 보조 채점 ${opts.judge ? models.judge : "안 함"}`);
   if (stoppedAll) lines.push(`- **멈춤**: ${stoppedAll}`);
   lines.push("");
@@ -293,13 +306,13 @@ export async function main(argv = process.argv.slice(2), log = console.log) {
     for (const m of candidates) if (m === base.judge) log(`경고: 보조 채점 모델(${base.judge})이 답 모델과 같음 — 결과에 '자기 채점'으로 표시`);
     log("참고: 보조 채점(모델 판정)은 ①의 Router 호출 모듈이 생기면 붙인다. 지금은 코드 자동 채점만 한다.");
   }
-  if (!opts.mock && !env.LINER_API_KEY) log("경고: LINER_API_KEY가 없음 — 파이프라인이 missing_api_key로 끝날 수 있음");
+  if (!opts.mock && !opts.mockRunner && !env.LINER_API_KEY) log("경고: LINER_API_KEY가 없음 — 파이프라인이 missing_api_key로 끝날 수 있음");
 
   // 폴더 이름은 한국 시각(KST)
   const startedAt = new Date(Date.now() + 9 * 3600e3).toISOString().replace(/[:.]/g, "-").slice(0, 19);
   const outDir = resolve(opts.out ?? join(ROOT, "eval/runs", `${opts.compare ? "compare-" : ""}${startedAt}`));
-  const pipeline = await loadPipeline(opts.mock);
-  log(`평가 시작: 문항 ${questions.length} × 반복 ${opts.repeat}, ③ 후보 ${candidates.join(", ")}, 기준일 ${opts.asof}${opts.mock ? " (목 파이프라인)" : ""}`);
+  const pipeline = await loadPipeline(opts);
+  log(`평가 시작: 문항 ${questions.length} × 반복 ${opts.repeat}, ③ 후보 ${candidates.join(", ")}, 기준일 ${opts.asof}${opts.mock ? " (오프라인: Liner 호출 없음)" : opts.mockRunner ? " (목 파이프라인)" : ""}`);
 
   const results = [];
   let spent = 0;
@@ -323,6 +336,7 @@ export async function main(argv = process.argv.slice(2), log = console.log) {
   } finally {
     await pipeline.close();
   }
+  if (opts.mock) log(`오프라인 대역이 받은 Liner 요청 ${pipeline.offlineCalls.length}건(네트워크로 나간 것 0건)`);
 
   const allRows = results.flatMap((r) => r.rows);
   const resultsJsonl = allRows.map((r) => JSON.stringify(r)).join("\n") + "\n";
