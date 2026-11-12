@@ -6,7 +6,7 @@ import { loadCache, type LawCache } from "@/lib/cache/load";
 import { locateQuote } from "@/lib/pipeline/cards";
 import { findNormalized } from "@/lib/pipeline/text";
 import { DEFAULT_CANDIDATE_LIMIT } from "@/lib/pipeline/collect";
-import { relevantSignals, runPipeline } from "@/lib/pipeline/run";
+import { baseLawName, relevantSignals, runPipeline, topLawNames } from "@/lib/pipeline/run";
 import type { ArticleCandidate, ChangeSignal, StageEvent } from "@/lib/pipeline/types";
 import { createOfflineLiner, extractiveAnswer } from "../scripts/eval/offline-liner.mjs";
 import { loadQuestions } from "../scripts/eval/run.mjs";
@@ -128,6 +128,18 @@ describe("변경 신호 정리(인용한 조의 법령, 최근 2건)", () => {
     const signals = [sig("web:1", "사립학교법", "2026-10-01")];
     expect(relevantSignals(signals, [], [])).toEqual([]);
     expect(relevantSignals(signals, [{ id: "web:1", quote: "", role: "reference" }], [])).toHaveLength(1);
+  });
+});
+
+describe("변경 신호 검색 법령", () => {
+  it("부칙 문서는 본법 이름으로 묶는다(11/13 실제 호출에서 '고등교육법 부칙 <…> 개정 입법예고'를 검색한 일)", () => {
+    expect(baseLawName("고등교육법 부칙 <법률 제20250호, 2024. 2. 13.>")).toBe("고등교육법");
+    expect(baseLawName("고등교육법 시행령")).toBe("고등교육법 시행령");
+    const c = (law: string, score: number) => ({ law_name: law, grade: "L1", score }) as ArticleCandidate;
+    expect(topLawNames([c("고등교육법", 10), c("고등교육법 부칙 <법률 제20250호, 2024. 2. 13.>", 9), c("고등교육법 시행령", 5)])).toEqual([
+      "고등교육법",
+      "고등교육법 시행령",
+    ]);
   });
 });
 

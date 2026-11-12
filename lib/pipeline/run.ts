@@ -38,11 +38,17 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
-/** 점수 순 상위 법령 이름(L1만, 겹침 없이) */
-function topLawNames(candidates: ArticleCandidate[]): string[] {
+/** 부칙 문서("고등교육법 부칙 <법률 제20250호, …>")는 본법 이름으로 묶는다(변경 신호 검색어에 부칙 표기가 들어가지 않게) */
+export function baseLawName(name: string): string {
+  return name.replace(/\s*부칙\s*<.*$/, "").trim() || name;
+}
+
+/** 점수 순 상위 법령 이름(L1만, 부칙은 본법으로, 겹침 없이) */
+export function topLawNames(candidates: ArticleCandidate[]): string[] {
   const names: string[] = [];
   for (const c of [...candidates].sort((a, b) => b.score - a.score)) {
-    if (c.grade === "L1" && !names.includes(c.law_name)) names.push(c.law_name);
+    const name = baseLawName(c.law_name);
+    if (c.grade === "L1" && !names.includes(name)) names.push(name);
   }
   return names;
 }
@@ -84,7 +90,7 @@ export function relevantSignals(signals: ChangeSignal[], citations: Citation[], 
   const citedWeb = new Set<string>();
   for (const c of citations) {
     const cand = byId.get(c.id);
-    if (cand) citedLaws.add(cand.law_name.replace(/\s+/g, ""));
+    if (cand) citedLaws.add(baseLawName(cand.law_name).replace(/\s+/g, ""));
     else citedWeb.add(c.id);
   }
   const related = signals.filter((s) => {
@@ -202,7 +208,10 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
       const early = earlySignals ? await earlySignals : null;
       // 먼저 찾은 법령이 상위 두 법령 안이면 쓰고, 아니면 버린다(호출 1회 손해)
       const keepEarly = early && preLaw && lawNames.slice(0, 2).includes(preLaw) ? early : null;
-      const missing = signalLaws.filter((name) => name !== preLaw || !keepEarly);
+      // 먼저 받은 법령도 한 자리로 센다(호출 수가 예전보다 늘지 않게)
+      const missing = keepEarly
+        ? signalLaws.filter((name) => name !== preLaw).slice(0, Math.max(0, signalLaws.length - 1))
+        : signalLaws;
       const extra = missing.length ? await collectSignals(missing, webCtx) : null;
       const parts = [keepEarly, extra].filter((x): x is NonNullable<typeof x> => Boolean(x));
       if (early && !keepEarly) parts.push({ ...early, items: [] }); // 호출 기록·비용은 남긴다
