@@ -7,7 +7,7 @@
 //   응답 B(한 번에): Content-Type application/json — AskResult 그대로.
 //   오류(JSON): app/api/ask는 {type:"error", code, message}(StageEvent 꼴)로 보낸다. 예전 꼴 {error: code}도 받는다.
 //
-// 목 데이터: 개발 서버(NODE_ENV !== "production")에서만 쓴다.
+// 목 데이터: 개발 서버(NODE_ENV !== "production")에서만 쓴다. 배포 빌드 묶음에는 목 데이터 파일이 들어가지 않는다.
 //   - 주소에 ?mock=1이 있으면 처음부터 목 데이터로 답한다.
 //   - 주소에 ?demo=E22처럼 예시 ID를 주면 그 예시를 바로 목 데이터로 띄운다(접근성 검사·영상 촬영용, 대기 없음).
 //   - /api/ask가 501(not_implemented)을 돌려주면 목 데이터로 넘어간다(파이프라인이 붙기 전 임시).
@@ -46,11 +46,13 @@ async function runMock(
   onEvent: (event: StageEvent) => void,
   signal: AbortSignal,
 ): Promise<AskOutcome> {
-  // 목 픽스처는 개발 때만 받는다. 이 조건으로 배포 번들에서는 목 데이터 파일이 빠진다.
-  if (process.env.NODE_ENV === "production") throw new AskError("internal");
-  const { streamMockEvents } = await import("./mock/fixtures");
-  await streamMockEvents(request, onEvent, signal, { instant: demoExampleId() !== null });
-  return { mock: true };
+  // 목 픽스처는 개발 때만 받는다. import를 조건 블록 안에 두어 배포 빌드가 이 분기를 통째로 버리게 한다.
+  if (process.env.NODE_ENV !== "production") {
+    const { streamMockEvents } = await import("./mock/fixtures");
+    await streamMockEvents(request, onEvent, signal, { instant: demoExampleId() !== null });
+    return { mock: true };
+  }
+  throw new AskError("internal");
 }
 
 /** 질문 하나를 보내고 단계 이벤트를 onEvent로 흘려 준다. 결과·오류도 이벤트로 온다 */
