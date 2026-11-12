@@ -7,8 +7,9 @@
 // 실행(Node 22): node --experimental-strip-types scripts/collect/collect.mjs [옵션]
 //   --raw-dir <dir>     받은 HTML을 저장할 곳(저장소 밖, 예: ~/tmp/geungeo-raw). 다시 돌릴 때 --offline으로 재사용
 //   --offline           요청하지 않고 --raw-dir의 HTML만 읽는다(요청 0)
-//   --rules-out <dir>   학칙 '쓰는 조'를 이 폴더에 저장한다. data/rules를 주면 manifest storage가 file이 된다.
-//                       주지 않으면 학칙 본문은 어디에도 저장하지 않고 manifest에 remote로만 적는다(처리 방식 결정 전 기본)
+//   --rules-out <dir>   학칙 '쓰는 조·항'(config의 school_rules)을 이 폴더에 저장한다. 앱이 읽게 하려면 data/rules를 준다
+//                       (manifest storage가 file이 됨). 주지 않으면 학칙 본문은 저장하지 않고 manifest에 remote로만 적는다.
+//                       remote 학칙은 앱이 읽지 않는다(실행 중 law.go.kr 호출 없음)
 //   --data-dir <dir>    출력 data 폴더(기본 <저장소>/data)
 //   --only heaf,heaf_decree   일부만 다시 받기(나머지 manifest 항목은 그대로 둔다)
 import { createHash } from "node:crypto";
@@ -17,7 +18,9 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   buildAddendumDocument,
+  buildArticle,
   buildLawDocument,
+  circledToNumber,
   linkDelegations,
   parseHistoryList,
   parseLawPage,
@@ -116,7 +119,7 @@ const REDIST = {
   presidential_decree: "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
   ministerial_ordinance: "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
   administrative_rule: "저작권법 제7조제2호(국가 또는 지방자치단체의 고시·공고·훈령 그 밖에 이와 유사한 것)",
-  school_rule: "확인 못 함 — 학칙 처리 방식(쓰는 조만 수록 / 실행 때 받기 / 대학에 묻기)을 정하기 전",
+  school_rule: "확인 못 함 — 재배포 근거를 확인하지 못해 시연·평가에 쓰는 조·항만 인용 수준으로 수록",
 };
 const ATTR = "출처: 법제처 국가법령정보센터";
 
@@ -241,6 +244,29 @@ async function collectAdminRule(rule) {
   });
 }
 
+/** 조 원문 줄에서 지정한 항만 남긴다. 머리 줄(제N조(제목))과 조 단위 꼬리표 줄([본조신설 …])은 둔다 */
+function excerptLines(lines, keep) {
+  const head = lines[0].match(/^(제\d+조(?:의\d+)?\s*(?:\([^)]*\))?)\s*(.*)$/);
+  const out = [];
+  let cur = null; // 지금 줄이 속한 항 번호
+  const take = (line) => (cur === null || keep.has(cur)) && out.push(line);
+  const paraNo = (line) => circledToNumber(line.trim()[0] ?? "");
+  const first = head ? head[2] : "";
+  if (head && first && paraNo(first)) {
+    cur = paraNo(first);
+    out.push(keep.has(cur) ? lines[0] : head[1].trim());
+  } else out.push(lines[0]);
+  for (const line of lines.slice(1)) {
+    const n = paraNo(line);
+    if (n) cur = n;
+    if (/^\s*\[[^\]]*\]\s*$/.test(line)) out.push(line); // 조 단위 꼬리표
+    else take(line);
+  }
+  return out;
+}
+
+const KO_PARA = (nos) => nos.map((n) => `제${n}항`).join("·");
+
 async function collectSchoolRule(rule) {
   const url = `${BASE}/LSW/schlPubRulInfoR.do?schlPubRulSeq=${rule.schlPubRulSeq}`;
   const parsed = parseLawPage(await get(url), rule.id);
@@ -248,32 +274,72 @@ async function collectSchoolRule(rule) {
   const attribution = `${rule.name}(제${no}호, 시행 ${fmtKoDate(parsed.effective_from)}), 법제처 국가법령정보센터 게재본`;
   console.log(`  ${rule.id} ${parsed.effective_from} ${parsed.promulgation_no} 조 ${parsed.articles.length}`);
   const toFile = rulesOut && resolve(rulesOut) === resolve(join(dataDir, "rules"));
+  const specs = rule.articles.map((a) => (typeof a === "string" ? { number: a } : a));
+  const addSpecs = (rule.addenda ?? []).map((a) => (typeof a === "string" ? { no: a } : a));
+  const scopeParts = [
+    ...specs.map((s) => (s.paragraphs ? `${s.number}${KO_PARA(s.paragraphs)}` : s.number)),
+    ...addSpecs.map((s) => `부칙<제${s.no}호> ${(s.articles ?? ["전체"]).join("·")}`),
+  ];
   const entry = {
     id: rule.id,
     name: rule.name,
     kind: "school_rule",
     school: rule.school,
-    editions: [{ effective_from: parsed.effective_from, promulgated: parsed.promulgated, promulgation_no: parsed.promulgation_no, source_url: url }],
+    editions: [
+      ...(rule.prior_editions ?? []),
+      { effective_from: parsed.effective_from, promulgated: parsed.promulgated, promulgation_no: parsed.promulgation_no, source_url: url },
+    ],
     collected_at: kstNow(lastFetchedAt),
     method: "html",
     source_url: url,
     attribution,
     redistribution: REDIST.school_rule,
     storage: toFile ? "file" : "remote",
+    scope: `시연·평가에 쓰는 조·항만: ${scopeParts.join(", ")}`,
   };
-  if (toFile) entry.path = `rules/${rule.id}.json`;
+  if (rule.limitations?.length) entry.limitations = rule.limitations;
+  if (toFile) entry.path = `rules/${rule.id}.json`; // 본문 조가 없으면 아래에서 첫 부칙 파일로 바꾼다
   entries.push(entry);
-  if (!rulesOut) return; // 결정 전 기본: 본문 저장 안 함
+  if (!rulesOut) return; // 저장 위치를 주지 않으면 본문은 저장하지 않는다
 
-  const full = buildLawDocument([{ parsed, source_url: url }], { law_id: rule.id, law_name: rule.name, kind: "school_rule", school: rule.school, overrides });
-  const keep = new Set(rule.articles);
-  const doc = { ...full, articles: full.articles.filter((a) => keep.has(a.number)) };
+  // 쓰는 조만, paragraphs를 준 조는 그 항만 남긴다
+  const picked = [];
+  for (const s of specs) {
+    const a = parsed.articles.find((x) => x.number === s.number);
+    if (!a) throw new Error(`${rule.id}: ${s.number}를 화면에서 찾지 못함`);
+    if (!s.paragraphs) {
+      picked.push({ parsed: a });
+      continue;
+    }
+    const all = a.paragraphs.map((p) => p.no).filter(Boolean);
+    for (const n of s.paragraphs) if (!all.includes(n)) throw new Error(`${rule.id} ${s.number}: 제${n}항 없음(있는 항 ${all.join(",")})`);
+    const cut = buildArticle(rule.id, excerptLines(a.text.split("\n"), new Set(s.paragraphs)));
+    const omitted = all.filter((n) => !s.paragraphs.includes(n));
+    picked.push({
+      parsed: cut,
+      excerpt: { paragraphs: s.paragraphs, omitted, note: `${KO_PARA(s.paragraphs)}만 수록(${KO_PARA(omitted)} 생략, 전문은 출처 URL)` },
+    });
+  }
+  const full = buildLawDocument([{ parsed: { ...parsed, articles: picked.map((p) => p.parsed) }, source_url: url }], {
+    law_id: rule.id,
+    law_name: rule.name,
+    kind: "school_rule",
+    school: rule.school,
+    overrides,
+  });
+  for (const p of picked) {
+    if (!p.excerpt) continue;
+    const art = full.articles.find((x) => x.number === p.parsed.number);
+    if (art) art.excerpt = p.excerpt;
+  }
   const out = [];
-  if (doc.articles.length) out.push({ doc, file: `${rule.id}.json` });
+  if (full.articles.length) out.push({ doc: full, file: `${rule.id}.json` });
   for (const add of parsed.addenda) {
     const addNo = add.promulgation_no.match(/제([0-9-]+)호/)?.[1];
-    if (!rule.addenda.includes(addNo)) continue;
-    const adoc = buildAddendumDocument(add, { law_id: rule.id, law_name: rule.name, kind: "school_rule", school: rule.school }, url);
+    const spec = addSpecs.find((x) => x.no === addNo);
+    if (!spec) continue;
+    const kept = spec.articles ? { ...add, articles: add.articles.filter((a) => spec.articles.includes(a.number)) } : add;
+    const adoc = buildAddendumDocument(kept, { law_id: rule.id, law_name: rule.name, kind: "school_rule", school: rule.school }, url);
     if (!adoc) continue;
     for (const a of adoc.articles) {
       const o = overrides.find((x) => x.article_id === a.id && x.effective_from);
@@ -281,11 +347,16 @@ async function collectSchoolRule(rule) {
     }
     out.push({ doc: adoc, file: `${adoc.law_id}.json` });
   }
+  if (toFile && out.length) entry.path = `rules/${out[0].file}`;
   mkdirSync(rulesOut, { recursive: true });
+  // 이 학교의 옛 파일은 지우고 새로 쓴다(쓰는 조 목록이 줄었을 때 남지 않게)
+  for (const f of readdirSync(rulesOut)) if ((f === `${rule.id}.json` || f.startsWith(`${rule.id}_a`)) && f.endsWith(".json")) rmSync(join(rulesOut, f));
   for (const { doc: d, file } of out) {
     const errs = validateLawDocument(d);
     if (errs.length) throw new Error(`형식 오류 ${d.law_id}: ${errs.slice(0, 5).join("; ")}`);
     writeFileSync(join(rulesOut, file), serializeDoc(d));
+    const chars = d.articles.reduce((n, a) => n + a.versions.reduce((m, v) => m + v.text.length, 0), 0);
+    console.log(`    저장 ${file}: 조 ${d.articles.length}, 글자 ${chars}`);
   }
 }
 

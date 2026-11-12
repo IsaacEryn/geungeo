@@ -1,11 +1,11 @@
 // lib/cache/load.ts·lawdata.ts 시험: 실제 data/가 형식대로 읽히는지, 시행일 함정 조가 맞게 들어갔는지,
-// 형식 오류를 잡는지, 학칙 file/remote 두 방식이 도는지.
-import { cpSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+// 형식 오류를 잡는지, 학칙이 data/rules/ 파일로 읽히고 remote는 명시적으로 허용할 때만 도는지, notices 형식.
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { CacheFormatError, loadCache, loadSchoolRuleBundle, loadSchoolRules } from "@/lib/cache/load";
+import { CacheFormatError, checkedNotices, loadCache, loadSchoolRuleBundle, loadSchoolRules, validateNotices, type NoticeCache } from "@/lib/cache/load";
 import {
   addDays,
   buildLawDocument,
@@ -33,15 +33,66 @@ describe("loadCache(실제 data/)", () => {
     }
     expect(cache.articles.size).toBeGreaterThan(400);
     expect(cache.collectedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+09:00$/);
-    expect(cache.notices?.notices).toEqual([]);
-    // 학칙은 처리 방식 결정 전: manifest에는 remote로만 있고 본문은 읽지 않는다
+    // 학칙: 쓰는 조·항만 data/rules/에 담아 파일로 읽는다
     const rules = cache.manifest.entries.filter((e) => e.kind === "school_rule");
     expect(rules.map((e) => e.school).sort()).toEqual(["knou", "pnu", "snu"]);
     for (const e of rules) {
-      expect(e.storage).toBe("remote");
+      expect(e.storage).toBe("file");
       expect(e.attribution.startsWith(e.name)).toBe(true); // 대학명 먼저
+      expect(e.attribution).toContain("법제처 국가법령정보센터 게재본");
+      expect(e.scope).toMatch(/^시연·평가에 쓰는 조·항만/);
     }
-    expect([...cache.laws.values()].some((d) => d.kind === "school_rule")).toBe(false);
+    expect(cache.warnings).toEqual([]);
+  });
+
+  it("학칙: 평가 근거 조 11개가 실려 있고, 그 밖의 조는 없다", async () => {
+    const cache = await loadCache({ dataDir: DATA });
+    const ids = [...cache.articles.keys()].filter((id) => /^(snu|pnu|knou)_rule/.test(id)).sort();
+    expect(ids).toEqual([
+      "knou_rule_a1315:001-00",
+      "knou_rule_a1315:002-00",
+      "pnu_rule:064-00",
+      "pnu_rule:085-00",
+      "snu_rule:066-00",
+      "snu_rule:085-00",
+      "snu_rule:103-00",
+      "snu_rule:104-00",
+      "snu_rule:113-00",
+      "snu_rule:118-00",
+      "snu_rule:119-00",
+    ]);
+    // 일부 항만 담은 조: 담은 항만 원문에 있고 excerpt로 표시된다
+    const a66 = cache.articles.get("snu_rule:066-00")!;
+    expect(a66.excerpt?.paragraphs).toEqual(["4", "5"]);
+    expect(a66.versions[0].paragraphs.map((p) => p.no)).toEqual(["4", "5"]);
+    expect(a66.versions[0].text).toContain("6개 학기 또는 3년");
+    expect(a66.versions[0].text).not.toContain("①");
+    expect(cache.articles.get("snu_rule:113-00")!.versions[0].text).toContain("교직원 3명, 학생 3명");
+    expect(cache.articles.get("pnu_rule:085-00")!.excerpt).toBeUndefined(); // 조 전체
+    // E11: 학과명 변경 경과조치는 2027. 3. 1. 시행이라 2026-11-05에는 시행 중인 판이 없다
+    const k2 = cache.articles.get("knou_rule_a1315:002-00")!;
+    expect(at(k2, "2026-11-05")).toBeUndefined();
+    expect(at(k2, "2027-03-01")?.text).toContain("평생교육상담심리학과");
+    const knou = cache.manifest.entries.find((e) => e.id === "knou_rule")!;
+    expect(knou.editions.map((e) => e.promulgation_no)).toEqual(["한국방송통신대학교학칙 제1309호", "한국방송통신대학교학칙 제1315호"]);
+    expect(knou.limitations?.length).toBeGreaterThan(0);
+    // 글자 수: 인용 수준(합계 1만 자 미만)
+    const chars = ids.reduce((n, id) => n + cache.articles.get(id)!.versions.reduce((m, v) => m + v.text.length, 0), 0);
+    expect(chars).toBeLessThan(10000);
+  });
+
+  it("notices: 원문에서 확인한 수치만 있고, 원문 확인 필요 항목은 수치가 비어 있다", async () => {
+    const cache = await loadCache({ dataDir: DATA });
+    const all = cache.notices!.notices;
+    expect(all.length).toBeGreaterThan(0);
+    for (const n of all) {
+      if (n.status === "needs_source_check") expect(n.figures ?? []).toEqual([]);
+      for (const f of n.figures ?? []) expect(f.checked_url).toMatch(/^https:\/\/www\.moe\.go\.kr\//);
+      expect(JSON.stringify(n)).not.toContain("3.19");
+    }
+    expect(all.find((n) => n.id === "moe-tuition-cap-2026")?.status).toBe("needs_source_check");
+    expect(checkedNotices(cache).every((n) => (n.figures ?? []).length > 0)).toBe(true);
+    expect(checkedNotices(cache, 2026).map((n) => n.id)).toContain("moe-national-scholarship-2026-1");
   });
 
   it("같은 옵션이면 한 번 읽은 캐시를 재사용한다", async () => {
@@ -248,7 +299,7 @@ describe("학칙 두 방식", () => {
       expect(url).toBe("https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000000001");
       return new Response(ruleHtml, { status: 200 });
     }) as unknown as typeof fetch;
-    const bundle = await loadSchoolRuleBundle("snu", { dataDir: dir, fetchImpl });
+    const bundle = await loadSchoolRuleBundle("snu", { dataDir: dir, fetchImpl, allowRemote: true });
     expect(bundle?.storage).toBe("remote");
     expect(bundle?.rules.school).toBe("snu");
     const art = bundle!.rules.articles.find((a) => a.id === "snu_rule:005-00")!;
@@ -257,19 +308,33 @@ describe("학칙 두 방식", () => {
     expect(art.versions[0].paragraphs.map((p) => p.no)).toEqual(["1", "2", "3"]);
     expect(bundle!.addenda[0].articles.map((a) => a.id)).toEqual(["snu_rule_a100:001-00", "snu_rule_a100:002-00"]);
     // 두 번째 부르면 받은 것을 재사용
-    await loadSchoolRules("snu", { dataDir: dir, fetchImpl });
+    await loadSchoolRules("snu", { dataDir: dir, fetchImpl, allowRemote: true });
     expect(calls).toBe(1);
+  });
+
+  it("remote: allowRemote 없이는 law.go.kr을 부르지 않고 null(앱 실행 경로)", async () => {
+    const dir = dataWithRule("remote");
+    let calls = 0;
+    const fetchImpl = (async () => {
+      calls += 1;
+      return new Response(ruleHtml, { status: 200 });
+    }) as unknown as typeof fetch;
+    expect(await loadSchoolRules("snu", { dataDir: dir, fetchImpl, reload: true })).toBeNull();
+    expect(await loadSchoolRules("snu", { dataDir: dir, fetchImpl, rules: "remote", reload: true })).toBeNull();
+    const cache = await loadCache({ dataDir: dir, rules: "remote", reload: true });
+    expect([...cache.laws.values()].some((d) => d.kind === "school_rule")).toBe(false);
+    expect(calls).toBe(0);
   });
 
   it("remote: law.go.kr 오류 페이지나 실패면 null(답에는 '학칙 확인 필요')", async () => {
     const dir = dataWithRule("remote");
     const errorPage = "<html><head><title>국가법령정보센터 | 오류페이지</title></head><body><div id=\"error500\">해당 한글주소명을 찾을 수 없습니다.</div></body></html>";
     const fetchImpl = (async () => new Response(errorPage, { status: 200 })) as unknown as typeof fetch;
-    expect(await loadSchoolRules("snu", { dataDir: dir, fetchImpl, reload: true })).toBeNull();
+    expect(await loadSchoolRules("snu", { dataDir: dir, fetchImpl, reload: true, allowRemote: true })).toBeNull();
     const failing = (async () => {
       throw new TypeError("network");
     }) as unknown as typeof fetch;
-    expect(await loadSchoolRules("snu", { dataDir: dir, fetchImpl: failing, reload: true })).toBeNull();
+    expect(await loadSchoolRules("snu", { dataDir: dir, fetchImpl: failing, reload: true, allowRemote: true })).toBeNull();
   });
 
   it("file: data/rules/의 파일을 loadCache와 loadSchoolRules가 함께 읽는다", async () => {
@@ -286,12 +351,55 @@ describe("학칙 두 방식", () => {
     expect(cache.articles.has("snu_rule:005-00")).toBe(true);
     expect(cache.laws.get("snu_rule")?.kind).toBe("school_rule");
     expect((await loadSchoolRules("snu", { dataDir: dir }))?.articles.length).toBe(2);
-    // 파일이 없는 학교는 경고만 남긴다
-    expect(cache.warnings?.some((w) => w.includes("부산대학교"))).toBe(false); // pnu는 remote 그대로
+    expect(cache.warnings?.some((w) => w.includes("부산대학교"))).toBe(false);
   });
 
-  it("rules 옵션으로 manifest 값을 덮어쓸 수 있다(remote 학칙을 file로 읽으면 파일 없음 경고)", async () => {
-    const cache = await loadCache({ dataDir: DATA, rules: "file", reload: true });
+  it("방송대처럼 부칙만 담은 학교도 loadSchoolRuleBundle이 읽는다", async () => {
+    const bundle = await loadSchoolRuleBundle("knou", { dataDir: DATA, reload: true });
+    expect(bundle?.storage).toBe("file");
+    expect(bundle?.rules.law_id).toBe("knou_rule_a1315");
+  });
+
+  it("학칙 파일이 없으면 경고를 남긴다", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "geungeo-norules-"));
+    cpSync(DATA, dir, { recursive: true });
+    for (const f of ["snu_rule.json", "pnu_rule.json", "knou_rule_a1315.json"]) rmSync(join(dir, "rules", f));
+    const cache = await loadCache({ dataDir: dir, reload: true });
     expect(cache.warnings?.length).toBe(3);
+  });
+});
+
+describe("notices 형식 검사", () => {
+  const base = (extra: Partial<NoticeCache["notices"][number]>): NoticeCache => ({
+    schema_version: 1,
+    notices: [
+      {
+        id: "x",
+        title: "t",
+        issuer: "교육부",
+        year: 2026,
+        url: "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=294&boardSeq=1",
+        posted: "2026-01-01",
+        excerpt: null,
+        kogl_type1_confirmed: false,
+        collected_at: "2026-11-13T00:00:00+09:00",
+        ...extra,
+      },
+    ],
+  });
+  const fig = (checked_url: string) => ({ label: "l", value: "1.2배", location: "본문", checked_url });
+
+  it("moe.go.kr HTML에서 확인한 수치는 통과", () => {
+    expect(validateNotices(base({ figures: [fig("https://www.moe.go.kr/upload/synap/202611/abc.files/1.html")] }))).toEqual([]);
+  });
+  it("HWPX·PDF나 다른 사이트에서 확인한 수치는 막는다", () => {
+    expect(validateNotices(base({ figures: [fig("https://www.moe.go.kr/boardCnts/fileDown.do?x=1.hwpx")] }))).toHaveLength(1);
+    expect(validateNotices(base({ figures: [fig("https://news.example.com/a")] }))).toHaveLength(1);
+  });
+  it("원문 확인 필요 항목에는 수치를 둘 수 없다", () => {
+    expect(validateNotices(base({ status: "needs_source_check", figures: [fig("https://www.moe.go.kr/a.html")] }))).toHaveLength(1);
+  });
+  it("공공누리 확인 없이 발췌를 둘 수 없다", () => {
+    expect(validateNotices(base({ excerpt: "문장" }))).toHaveLength(1);
   });
 });

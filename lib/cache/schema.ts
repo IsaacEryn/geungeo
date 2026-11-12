@@ -70,6 +70,15 @@ export interface LawArticle {
   links: DelegationLink[];
   moved_from?: string; // 옛 조 ID(조 번호 이동)
   moved_to?: string; // 새 조 ID
+  /** 조의 일부 항만 담은 경우(학칙 인용 최소화). 없으면 조 전체 */
+  excerpt?: ArticleExcerpt;
+}
+
+/** 일부 항만 담은 조의 표시. versions[].text·paragraphs에는 담은 항만 있다 */
+export interface ArticleExcerpt {
+  paragraphs: string[]; // 담은 항 번호, 예 ["4","5"]
+  omitted: string[]; // 뺀 항 번호
+  note: string; // 화면·답에 붙일 안내, 예 "제4항·제5항만 수록(전문은 출처 URL)"
 }
 
 /** data/laws/<law_id>.json (학칙은 data/rules/<law_id>.json) */
@@ -101,8 +110,12 @@ export interface ManifestEntry {
   source_url: string;
   attribution: string; // 출처 표기 문구(학칙은 대학명 먼저)
   redistribution: string; // 재배포 근거 메모(예 "저작권법 제7조제1호")
-  storage: "file" | "remote"; // remote = 실행 때 law.go.kr 공개 화면에서 받음(학칙 처리 방식 결정에 따름)
+  storage: "file" | "remote"; // remote = 수집기 개발용(law.go.kr에서 받기). 앱 실행 경로는 file만 읽는다
   path?: string; // storage가 file이면 data/ 기준 경로
+  /** 학칙: 저장소에 담은 범위(쓰는 조·항만) */
+  scope?: string;
+  /** 알려진 한계(예: 현행 직전 판 정보를 확인하지 못함) */
+  limitations?: string[];
 }
 
 export interface Manifest {

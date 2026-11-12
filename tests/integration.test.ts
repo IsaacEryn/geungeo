@@ -39,11 +39,11 @@ async function runOffline(id: string, events?: StageEvent[]) {
 
 describe("실제 data/ 읽기", () => {
   it("loadCache가 법령 6종과 조 ID 색인을 올린다", () => {
-    // 본문 6종 + 부칙 문서(heaf_a21423 등). 학칙은 처리 방식 결정 전이라 캐시에 없다(storage remote)
+    // 본문 6종 + 부칙 문서(heaf_a21423 등) + 학칙(쓰는 조·항만, data/rules/)
     for (const id of ["edu_official_act", "heaf", "heaf_decree", "private_school_act", "remote_class_rule", "tuition_rule"]) {
       expect(cache.laws.has(id)).toBe(true);
     }
-    expect([...cache.laws.values()].some((l) => l.kind === "school_rule")).toBe(false);
+    expect([...cache.laws.values()].filter((l) => l.kind === "school_rule").map((l) => l.law_id).sort()).toEqual(["knou_rule_a1315", "pnu_rule", "snu_rule"]);
     expect(cache.articles.get("heaf:011-02")?.versions.at(-1)?.effective_from).toBe("2027-03-11");
     expect(cache.collectedAt).toMatch(/^2026-11-13T/);
   });
