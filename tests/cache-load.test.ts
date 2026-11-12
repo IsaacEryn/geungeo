@@ -56,15 +56,22 @@ describe("loadCache(실제 data/)", () => {
     expect(at(a, "2026-11-05")).toBeUndefined();
     expect(at(a, "2027-03-11")?.text).toContain("기숙사비심의위원회");
     expect(at(a, "2027-03-10")).toBeUndefined();
+    // 결선일(12/05)과 그 앞 평가 기준일(12/03)에도 시행 중인 판이 없다
+    expect(at(a, "2026-12-03")).toBeUndefined();
+    expect(at(a, "2026-12-05")).toBeUndefined();
     expect(a.moved_to).toBe("heaf:011-03");
     expect(at(articles.get("heaf:011-03")!, "2026-11-05")?.text).toContain("평가 등");
   });
 
-  it("E23: 제34조의2③~⑤(외부 평가 위원 준용)는 2026-12-03부터", async () => {
+  it("E23: 제34조의2③~⑤(외부 평가 위원 준용)는 2026-12-03부터, 결선일 12/05에도 시행 중", async () => {
     const { articles } = await loadCache({ dataDir: DATA });
     const a = articles.get("heaf:034-02")!;
     expect(at(a, "2026-11-05")?.text).not.toContain("외부 위원");
+    expect(at(a, "2026-12-02")?.text).not.toContain("외부 위원");
     expect(at(a, "2026-12-03")?.text).toContain("평가 위원을 외부에서 위촉하는 경우");
+    // 결선일(12/05)에는 ⑤가 시행 중
+    expect(at(a, "2026-12-05")?.effective_from).toBe("2026-12-03");
+    expect(at(a, "2026-12-05")?.text).toContain("⑤ 제1항에 따른 교육부장관이 시행하는 시험의 성적 외의");
   });
 
   it("E06: 제23조의4제3호(육아휴학 12세 이하)는 2025-04-23부터, 그 전은 개정 전 문구", async () => {
