@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-13T01:20:21+09:00",
+  "generated_at": "2026-11-13T02:18:28+09:00",
   "entries": [
     {
       "id": "heaf",
@@ -809,12 +809,14 @@
           "source_url": "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000157427"
         }
       ],
-      "collected_at": "2026-11-13T01:10:26+09:00",
+      "collected_at": "2026-11-13T02:17:37+09:00",
       "method": "html",
       "source_url": "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000157427",
       "attribution": "서울대학교 학칙(제2710호, 시행 2026. 6. 29.), 법제처 국가법령정보센터 게재본",
-      "redistribution": "확인 못 함 — 학칙 처리 방식(쓰는 조만 수록 / 실행 때 받기 / 대학에 묻기)을 정하기 전",
-      "storage": "remote"
+      "redistribution": "확인 못 함 — 재배포 근거를 확인하지 못해 시연·평가에 쓰는 조·항만 인용 수준으로 수록",
+      "storage": "file",
+      "scope": "시연·평가에 쓰는 조·항만: 제66조제4항·제5항, 제85조제3항, 제103조제2항, 제104조, 제113조제2항, 제118조, 제119조",
+      "path": "rules/snu_rule.json"
     },
     {
       "id": "pnu_rule",
@@ -829,12 +831,14 @@
           "source_url": "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000160929"
         }
       ],
-      "collected_at": "2026-11-13T01:10:27+09:00",
+      "collected_at": "2026-11-13T02:17:38+09:00",
       "method": "html",
       "source_url": "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000160929",
       "attribution": "부산대학교 학칙(제3137호, 시행 2026. 9. 1.), 법제처 국가법령정보센터 게재본",
-      "redistribution": "확인 못 함 — 학칙 처리 방식(쓰는 조만 수록 / 실행 때 받기 / 대학에 묻기)을 정하기 전",
-      "storage": "remote"
+      "redistribution": "확인 못 함 — 재배포 근거를 확인하지 못해 시연·평가에 쓰는 조·항만 인용 수준으로 수록",
+      "storage": "file",
+      "scope": "시연·평가에 쓰는 조·항만: 제64조제1항·제2항, 제85조",
+      "path": "rules/pnu_rule.json"
     },
     {
       "id": "knou_rule",
@@ -843,18 +847,30 @@
       "school": "knou",
       "editions": [
         {
+          "effective_from": "2026-04-08",
+          "promulgated": "2026-04-08",
+          "promulgation_no": "한국방송통신대학교학칙 제1309호",
+          "source_url": "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000154433"
+        },
+        {
           "effective_from": "2027-03-01",
           "promulgated": "2026-09-14",
           "promulgation_no": "한국방송통신대학교학칙 제1315호",
           "source_url": "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000160331"
         }
       ],
-      "collected_at": "2026-11-13T01:10:28+09:00",
+      "collected_at": "2026-11-13T02:17:39+09:00",
       "method": "html",
       "source_url": "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000160331",
       "attribution": "한국방송통신대학교 학칙(제1315호, 시행 2027. 3. 1.), 법제처 국가법령정보센터 게재본",
-      "redistribution": "확인 못 함 — 학칙 처리 방식(쓰는 조만 수록 / 실행 때 받기 / 대학에 묻기)을 정하기 전",
-      "storage": "remote"
+      "redistribution": "확인 못 함 — 재배포 근거를 확인하지 못해 시연·평가에 쓰는 조·항만 인용 수준으로 수록",
+      "storage": "file",
+      "scope": "시연·평가에 쓰는 조·항만: 부칙<제1315호> 제1조·제2조",
+      "limitations": [
+        "law.go.kr가 첫 화면에 보여 주는 판(제1315호)은 2027. 3. 1. 시행 예정이다. 2026. 11. 기준 시행 중인 판은 연혁 목록(schlPubRulHstListR.do)에서 확인한 제1309호(시행 2026. 4. 8.)이며, 저장소에는 그 판의 본문을 넣지 않았다(판 번호·시행일·URL만).",
+        "학과 명칭은 학칙 별표에 있어 수록하지 않았다. 학과명 변경 시점은 부칙<제1315호> 제1조·제2조로만 판단한다."
+      ],
+      "path": "rules/knou_rule_a1315.json"
     }
   ]
 }

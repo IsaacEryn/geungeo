@@ -1,5 +1,6 @@
 // data/를 읽는 유일한 입구. 파이프라인은 data/ 파일을 직접 열지 않는다(설계 6절 경계).
-// 학칙은 처리 방식 결정(저장소 수록 / 실행 때 받기) 전이라 두 방식을 모두 받게 둔다(설계 4-1).
+// 학칙은 시연·평가에 쓰는 조·항만 data/rules/에 담아 파일로 읽는다(설계 4-1). 앱 실행 중에는 law.go.kr을 부르지 않는다.
+// remote(law.go.kr 공개 화면에서 받기)는 수집기 개발·점검용으로만 남겼고, allowRemote: true를 줄 때만 돈다.
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import {
@@ -14,17 +15,37 @@ import {
 import type { IsoDate, IsoDateTime, LawArticle, LawDocument, Manifest, ManifestEntry, Overrides, SchoolId, Synonyms } from "./schema";
 
 /**
- * data/notices.json — 교육부 연도별 공고(E16형) 캐시. 넣을지 아직 정하지 않아(설계 4-1) 형식만 두고 비워 둔다.
- * 공공누리 제1유형 표시를 확인한 W1만 excerpt를 두고, 그 밖은 제목·URL·게시일만(설계 4-1·5-1).
+ * data/notices.json — 교육부 공고·안내(E16형) 캐시. 공고명·대상 연도·원문 URL·게시일·공고 기관과,
+ * moe.go.kr 원문 HTML(또는 교육부 synap 미리보기 HTML)에서 직접 확인한 수치만 둔다(설계 4-1).
+ * 원문에서 수치를 찾지 못한 항목은 status "needs_source_check"로 두고 figures를 비운다. 언론 보도 수치는 넣지 않는다.
+ * 문장 발췌(excerpt)는 공공누리 제1유형 표시를 확인한 것만 둔다(설계 4-1·5-1).
  */
+export interface NoticeFigure {
+  label: string; // 무엇의 수치인지, 예 "2026학년도 1학기 국가장학금 1차 신청 시작"
+  value: string; // 원문 표기 그대로, 예 "11. 20.(목) 9시"
+  unit?: string; // "%", "배" 등(값에 이미 있으면 생략)
+  location: string; // 원문 안 위치, 예 "본문 둘째 문단" "첨부 미리보기 1쪽 표"
+  checked_url: string; // 수치를 확인한 HTML 주소(게시글 또는 moe.go.kr/upload/synap/… 미리보기)
+}
+
 export interface NoticeEntry {
   id: string; // "moe-tuition-cap-2026"
   title: string; // 공고명 원문
-  issuer: string; // "교육부"
+  issuer: string; // 공고 기관, 예 "교육부"
   year: number | null; // 대상 학년도
   url: string; // 원문 게시글 URL(https)
   posted: IsoDate | null; // 게시일
-  excerpt: string | null; // 짧은 발췌. kogl_type1_confirmed가 true일 때만
+  /** 연결되는 평가 문항(예 ["E16"]) */
+  questions?: string[];
+  /** 수치를 원문에서 확인했으면 "checked", 못 했으면 "needs_source_check"(figures는 빈 배열). 없으면 checked로 본다 */
+  status?: "checked" | "needs_source_check";
+  /** 원문에서 직접 확인한 수치(문장 발췌가 아님) */
+  figures?: NoticeFigure[];
+  /** 확인하지 못한 이유·확인할 곳 등 메모 */
+  note?: string;
+  /** 저작권 메모, 예 "저작권법 제7조제2호(국가의 고시·공고·훈령 그 밖에 이와 유사한 것)" */
+  redistribution?: string;
+  excerpt: string | null; // 짧은 문장 발췌. kogl_type1_confirmed가 true일 때만
   kogl_type1_confirmed: boolean; // 공공누리 제1유형 표시를 사람이 확인했는지
   collected_at: IsoDateTime;
 }
@@ -53,8 +74,10 @@ export interface LawCache {
 export interface LoadOptions {
   /** data/ 폴더 위치. 기본은 <프로젝트>/data */
   dataDir?: string;
-  /** 학칙 읽는 방식. file = data/rules/, remote = 실행 때 law.go.kr 공개 화면에서 받기. 기본은 manifest의 storage 값 */
+  /** 학칙 읽는 방식. file = data/rules/(앱 기본), remote = law.go.kr 공개 화면에서 받기(수집기 개발용). 기본은 manifest의 storage 값 */
   rules?: "file" | "remote";
+  /** remote 학칙 받기를 허용한다(수집기 개발·점검용). 앱 실행 경로는 주지 않는다 — 없으면 remote여도 law.go.kr을 부르지 않고 null */
+  allowRemote?: boolean;
   /** 메모해 둔 캐시를 버리고 다시 읽기 */
   reload?: boolean;
   /** remote 모드에서 쓸 fetch(시험용 주입). 기본은 전역 fetch */
@@ -85,14 +108,32 @@ async function readJsonIfExists<T>(path: string, fallback: T): Promise<T> {
   }
 }
 
+const MOE_HTML = /^https:\/\/(www\.)?moe\.go\.kr\//;
+
 export function validateNotices(n: NoticeCache): string[] {
   const errs: string[] = [];
   if (n.schema_version !== 1) errs.push("notices schema_version");
+  const ids = new Set<string>();
   for (const x of n.notices ?? []) {
     if (!x.id || !x.title || !/^https:\/\//.test(x.url)) errs.push(`notices ${x.id}: id·title·https url 필요`);
+    if (ids.has(x.id)) errs.push(`notices ${x.id}: id 중복`);
+    ids.add(x.id);
+    if (!x.issuer) errs.push(`notices ${x.id}: issuer(공고 기관) 필요`);
+    if (x.posted !== null && !/^\d{4}-\d{2}-\d{2}$/.test(x.posted)) errs.push(`notices ${x.id}: posted는 YYYY-MM-DD`);
     if (x.excerpt && !x.kogl_type1_confirmed) errs.push(`notices ${x.id}: 공공누리 제1유형 확인 없이 발췌를 둘 수 없음`);
+    const figures = x.figures ?? [];
+    if (x.status === "needs_source_check" && figures.length) errs.push(`notices ${x.id}: 원문 확인 필요 항목에 수치를 둘 수 없음`);
+    for (const f of figures) {
+      if (!f.label || !f.value || !f.location) errs.push(`notices ${x.id}: 수치에 label·value·location 필요`);
+      if (!MOE_HTML.test(f.checked_url) || /\.(hwpx?|pdf)(\?|$)/i.test(f.checked_url)) errs.push(`notices ${x.id}: 수치는 moe.go.kr 원문 HTML에서 확인한 것만(${f.checked_url})`);
+    }
   }
   return errs;
+}
+
+/** 지금 쓸 수 있는 공고(원문 확인된 것)만. 대상 연도를 주면 그 연도만 */
+export function checkedNotices(cache: Pick<LawCache, "notices">, year?: number): NoticeEntry[] {
+  return (cache.notices?.notices ?? []).filter((x) => (x.status ?? "checked") === "checked" && (year === undefined || x.year === year));
 }
 
 /** 학칙 파일(data/rules/<id>.json, 부칙은 <id>_a<번호>.json)을 읽는다. 없으면 빈 배열 */
@@ -216,13 +257,17 @@ export async function loadSchoolRuleBundle(school: SchoolId, options: LoadOption
   if (mode === "file") {
     try {
       const docs = await readRuleFiles(dataDir, entry);
-      const rules = docs.find((d) => d.law_id === entry.id);
-      if (!rules || validateLawDocument(rules).length) return null;
+      // 본문 조 없이 부칙만 담은 학교(방송대)는 부칙 문서를 본문 자리에 둔다
+      const rules = docs.find((d) => d.law_id === entry.id) ?? docs[0];
+      if (!rules || docs.some((d) => validateLawDocument(d).length)) return null;
       return { rules, addenda: docs.filter((d) => d !== rules), entry, storage: "file" };
     } catch {
       return null;
     }
   }
+
+  // 앱 실행 경로는 law.go.kr을 부르지 않는다. 수집기 개발·점검에서 allowRemote를 줄 때만 받는다
+  if (!options.allowRemote) return null;
 
   const key = `${entry.source_url}|${options.reload ? Date.now() : ""}`;
   if (!remoteMemo.has(key)) {

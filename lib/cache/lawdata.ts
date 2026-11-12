@@ -1,5 +1,5 @@
 // law.go.kr 공개 화면(raw HTML)을 조 단위 데이터로 바꾸는 순수 함수 모음.
-// 수집기(scripts/collect)와 학칙 '실행 때 받기'(load.ts remote 모드)가 같이 쓴다.
+// 수집기(scripts/collect)와 학칙 remote 모드(load.ts, 개발·점검용)가 같이 쓴다.
 // 이 파일은 런타임 import가 없다(Node --experimental-strip-types로 수집기에서 바로 읽기 위해 type import만 둔다).
 // 원칙: 원문은 바꾸지 않는다. 태그를 벗기고 공백만 정리한다(설계 4-2).
 import type {
@@ -695,6 +695,13 @@ export function validateLawDocument(doc: LawDocument): string[] {
       }
       for (const t of v.amend_tags) if (!v.text.includes(t)) errs.push(w(`꼬리표가 원문에 없음: ${t}`));
       prev = v;
+    }
+    if (a.excerpt) {
+      // 일부 항만 담은 조: 담은 항과 판의 항이 같아야 하고, 뺀 항은 겹치지 않아야 한다
+      const kept = a.excerpt.paragraphs.join(",");
+      for (const v of a.versions) if (v.paragraphs.map((p) => p.no).join(",") !== kept) errs.push(w(`excerpt 항(${kept})과 판의 항이 다름`));
+      if (a.excerpt.omitted.some((n) => a.excerpt!.paragraphs.includes(n))) errs.push(w("excerpt 담은 항과 뺀 항이 겹침"));
+      if (!a.excerpt.note) errs.push(w("excerpt note 없음"));
     }
   }
   return errs;

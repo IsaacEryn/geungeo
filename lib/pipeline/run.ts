@@ -27,7 +27,7 @@ export interface RunOptions {
   mode?: AgentMode;
   /** 시험용: Liner 호출의 fetch 바꿔 끼우기(계약 밖 선택 항목) */
   fetchImpl?: typeof fetch;
-  /** 학칙 읽기: auto(기본) = 캐시에 없으면 manifest 방식대로(remote면 law.go.kr에서 받기), cache_only = 캐시에 실린 것만(오프라인 평가) */
+  /** 학칙 읽기: auto(기본) = 캐시에 없으면 data/rules/ 파일을 다시 읽기(law.go.kr은 부르지 않음), cache_only = 캐시에 실린 것만(오프라인 평가) */
   schoolRules?: "auto" | "cache_only";
 }
 
