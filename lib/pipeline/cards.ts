@@ -12,9 +12,13 @@ export function locateQuote(article: Pick<LawArticle, "number" | "versions">, ef
   if (!version) return article.number;
   const at = findNormalized(version.text, quote);
   if (!at) return article.number;
-  // 인용이 "② …"처럼 항 번호부터 시작하면 번호·공백을 건너뛴 자리로 위치를 정한다
+  // 인용이 "제15조(…) ① …", "② …", "1. …", "다. …"처럼 머리·번호부터 시작하면 그것을 건너뛴 자리로 위치를 정한다
+  // (실제 응답에서 "다. 가목 및 나목 외의 경우…"처럼 목 번호째 인용하는 일이 많았다)
   let start = at[0];
-  while (start < at[1] && /[\s①-⑳]/.test(version.text[start])) start += 1;
+  const lead = version.text
+    .slice(start, at[1])
+    .match(/^\s*(?:제\d+조(?:의\d+)?(?:\([^)]*\))?\s*)?(?:[①-⑳]\s*)?(?:(?:\d+|[가-하])\.\s*)?/);
+  if (lead && lead[0].length < at[1] - start) start += lead[0].length;
   const within = (part: string) => {
     const r = findNormalized(version.text, part);
     return r !== null && r[0] <= start && start < r[1];

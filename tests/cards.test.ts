@@ -22,6 +22,13 @@ describe("locateQuote", () => {
     expect(locateQuote(tuition, "2022-02-07", "회의 개최 5일(토요일 및 공휴일은 제외한다) 전까지 송부")).toBe("제2조제6항제2호");
   });
 
+  it("호·목 번호나 조 머리부터 시작하는 인용도 그 호·목으로", () => {
+    expect(locateQuote(dorm, "2027-03-11", "2. 기숙사비 납부에 관한 사항")).toBe("제11조의2제2항제2호");
+    expect(locateQuote(tuition, "2022-02-07", "2. 회의 자료: 회의 개최 5일(토요일 및 공휴일은 제외한다) 전까지 송부")).toBe("제2조제6항제2호");
+    const head = dorm.versions.at(-1)!.text.split("\n")[0].slice(0, 40);
+    expect(locateQuote(dorm, "2027-03-11", head)).toMatch(/^제11조의2제1항/);
+  });
+
   it("못 찾으면 조 번호만", () => {
     expect(locateQuote(dorm, "2027-03-11", "없는 문장")).toBe("제11조의2");
   });

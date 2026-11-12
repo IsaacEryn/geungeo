@@ -37,7 +37,10 @@ export function normalizeForMatch(source: string): NormalizedText {
   for (let i = 0; i < source.length; i += 1) {
     const ch = source[i];
     if (/\s/.test(ch)) continue;
-    text += CHAR_MAP[ch] ?? ch;
+    // 법령 원문의 한자는 CJK 호환 한자(예 年 U+F98E)로 들어 있는 일이 많다. 모델은 보통 통합 한자(U+5E74)로 옮겨 쓰므로 맞춘다
+    const code = ch.charCodeAt(0);
+    const unified = code >= 0xf900 && code <= 0xfaff ? ch.normalize("NFKC") : ch;
+    text += CHAR_MAP[ch] ?? (unified.length === 1 ? unified : ch);
     map.push(i);
   }
   return { text, map };
