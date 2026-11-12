@@ -1,0 +1,9 @@
+#!/bin/sh
+# 커밋 전 비밀 검사. gitleaks가 없으면 커밋을 막는다(조용히 지나가면 장치가 없는 것과 같다).
+# 켜기: git config core.hooksPath .githooks
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "gitleaks 없음: 커밋 중단. 설치 뒤 다시 커밋하세요(https://github.com/gitleaks/gitleaks)." >&2
+  exit 1
+fi
+# --staged: 스테이징된 변경만, --redact: 찾은 값을 화면에 찍지 않음
+exec gitleaks git --staged --redact --no-banner --exit-code 1 .
