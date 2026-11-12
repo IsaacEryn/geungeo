@@ -184,6 +184,8 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
   );
   calls.push(analyzed.call);
   const analysis = analyzed.analysis;
+  // 모델 호출이 실패했거나 형식이 맞지 않아 규칙으로 대신했으면 화면에도 알린다(처리 과정 기록만으로는 구별이 어렵다)
+  if (analysis.fallback) warnings.push("질문 분석은 규칙으로 대신했습니다.");
   const school = requestedSchool ?? analysis.school ?? null;
 
   let schoolRules: LawDocument | null = null;

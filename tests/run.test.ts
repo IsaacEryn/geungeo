@@ -121,6 +121,14 @@ describe("runPipeline 실패·대체", () => {
     const analyze = result.trace.calls.find((c) => c.stage === "analyze")!;
     expect(analyze.note).toContain("규칙 기반 대체");
     expect(result.cards.some((c) => c.id === "heaf:011-02")).toBe(true);
+    // 규칙 대체는 처리 과정뿐 아니라 화면 주의 문구에도 나와야 한다
+    expect(result.warnings).toContain("질문 분석은 규칙으로 대신했습니다.");
+  });
+
+  it("질문 분석이 성공하면 규칙 대체 주의 문구가 없다", async () => {
+    const mock = createLinerMock(e22Handler);
+    const result = await runPipeline({ question: E22_QUESTION, asOf: "2026-11-05" }, { cache, fetchImpl: mock.fetchImpl });
+    expect(result.warnings).not.toContain("질문 분석은 규칙으로 대신했습니다.");
   });
 
   it("키가 없으면 missing_api_key 오류 이벤트", async () => {
