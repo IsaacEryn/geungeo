@@ -81,7 +81,7 @@ function combineSignals(parts: SignalCollectOutcome[]): SignalCollectOutcome {
   };
 }
 
-/** 변경 신호는 인용한 조의 법령과 관련된 것 중 최근 2건까지만(11/13 리더 결정) */
+/** 변경 신호는 인용한 조의 법령과 관련된 것 중 최근 2건까지만(화면이 길어지지 않게) */
 export const MAX_CHANGE_SIGNALS = 2;
 
 export function relevantSignals(signals: ChangeSignal[], citations: Citation[], candidates: ArticleCandidate[]): ChangeSignal[] {
@@ -107,7 +107,7 @@ export function relevantSignals(signals: ChangeSignal[], citations: Citation[], 
     .map((x) => x.s);
 }
 
-/** 답변 방식. tools 모드는 미구현(11/13 리더 결정: 만들지 않음) — 값이 와도 fixed 흐름으로 돌고 경고만 붙인다 */
+/** 답변 방식. tools 모드는 만들지 않았다 — 값이 와도 fixed 흐름으로 돌고 경고만 붙인다 */
 function resolveMode(request: AskRequest, options: RunOptions): AgentMode {
   const raw = options.mode ?? request.mode ?? process.env.AGENT_MODE;
   return raw === "tools" ? "tools" : "fixed";
@@ -167,7 +167,7 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
     throw new PipelineError("internal", "법령 데이터를 읽지 못했습니다. data/ 폴더를 확인해 주세요.");
   }
 
-  // ① 질문 분석과 그 결과가 필요 없는 일을 겹쳐 돌린다(응답 시간, 11/13 리더 결정).
+  // ① 질문 분석과 그 결과가 필요 없는 일을 겹쳐 돌린다(응답 시간 단축).
   //  - 질문 글만으로 캐시를 미리 찾아(규칙 기반 검색어, 로컬이라 수 ms) 상위 법령의 변경 신호 검색(②-c)을 먼저 띄운다
   //  - 화면에서 학교를 골랐으면 학칙 읽기도 먼저 띄운다
   // 단계 이벤트(화면 진행 표시)는 예전 순서 그대로 보낸다. 실제 소요 시간은 처리 과정(trace)에 남는다.

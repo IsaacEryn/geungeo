@@ -1,6 +1,6 @@
 // 파이프라인 계약(설계 1·2·3절). 화면은 이 파일의 타입만 안다.
 // 흐름: ① 질문 분석 → ② 근거 수집(캐시·Search·변경 신호) → ③ 대조·답변 → ④ 코드 검증 → ⑤ 출력(AskResult)
-// 고칠 때는 화면·데이터 작업자와 맞춘 뒤 바꾼다.
+// 고칠 때는 화면(components/)과 데이터 읽기(lib/cache/)도 함께 맞춘다.
 
 import type { IsoDate, IsoDateTime, LawKind, SchoolId } from "@/lib/cache/schema";
 

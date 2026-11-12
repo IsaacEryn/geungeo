@@ -49,7 +49,7 @@ export interface CacheCollectOutcome {
   queries: string[];
 }
 
-/** ③에 넣는 조 후보 수(검색으로 고른 것). 8개에서 5개로 줄였다(11/13 리더 결정, ③ 프롬프트를 줄여 응답 시간 단축) */
+/** ③에 넣는 조 후보 수(검색으로 고른 것). 8개에서 5개로 줄였다(③ 프롬프트를 줄여 응답 시간 단축) */
 export const DEFAULT_CANDIDATE_LIMIT = 5;
 
 /** 캐시 점수가 이보다 낮으면 ②-b 웹 검색을 부른다(설계 2-2: 캐시 상위 점수가 낮을 때) */

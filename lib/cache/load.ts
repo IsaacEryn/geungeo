@@ -14,7 +14,7 @@ import {
 import type { IsoDate, IsoDateTime, LawArticle, LawDocument, Manifest, ManifestEntry, Overrides, SchoolId, Synonyms } from "./schema";
 
 /**
- * data/notices.json — 교육부 연도별 공고(E16형) 캐시. 넣을지는 사용자 결정 전(설계 4-1)이라 형식만 두고 비워 둔다.
+ * data/notices.json — 교육부 연도별 공고(E16형) 캐시. 넣을지 아직 정하지 않아(설계 4-1) 형식만 두고 비워 둔다.
  * 공공누리 제1유형 표시를 확인한 W1만 excerpt를 두고, 그 밖은 제목·URL·게시일만(설계 4-1·5-1).
  */
 export interface NoticeEntry {

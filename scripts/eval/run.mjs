@@ -364,7 +364,7 @@ export async function main(argv = process.argv.slice(2), log = console.log) {
   }
   log(`누적 비용(토큰×단가) $${spent.toFixed(5)}. 결과: ${outDir}`);
   if (stoppedAll) {
-    log(`멈춤: ${stoppedAll} — 리더·사용자에게 보고(문항을 줄이거나 후보를 빼는 안과 함께)`);
+    log(`멈춤: ${stoppedAll} — 문항을 줄이거나 비교할 모델을 빼고 다시 돌리세요`);
     process.exitCode = 3;
   }
   return { results, spent, stoppedAll, outDir };

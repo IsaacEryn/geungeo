@@ -1,6 +1,6 @@
 // 화면이 파이프라인과 만나는 유일한 곳. 실제 파이프라인으로 바꿀 때 여기만 본다.
 //
-// 형식(파이프라인 작업자와 맞출 것):
+// 형식(app/api/ask와 맞출 것):
 //   POST /api/ask, 본문 AskRequest(JSON)
 //   응답 A(스트리밍, 권장): Content-Type application/x-ndjson — 한 줄에 StageEvent 하나.
 //     stage_start/stage_end를 차례로 보내고 마지막 줄은 {type:"result"} 또는 {type:"error"}.
