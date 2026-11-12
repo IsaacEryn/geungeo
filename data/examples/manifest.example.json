@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-05T00:27:00+09:00",
+  "entries": [
+    {
+      "id": "heaf",
+      "name": "고등교육법",
+      "kind": "act",
+      "editions": [
+        {
+          "effective_from": "2026-09-11",
+          "promulgated": "2026-03-10",
+          "promulgation_no": "법률 제21423호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=283883&efYd=20260911"
+        },
+        {
+          "effective_from": "2027-03-11",
+          "promulgated": "2026-03-10",
+          "promulgation_no": "법률 제21423호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=283883&efYd=20270311"
+        }
+      ],
+      "collected_at": "2026-11-05T00:27:00+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsHstListR.do?lsId=000899",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/heaf.json"
+    }
+  ]
+}
