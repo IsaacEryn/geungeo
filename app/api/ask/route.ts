@@ -11,6 +11,8 @@ export const dynamic = "force-dynamic";
 const STATUS: Record<PipelineErrorCode, number> = {
   bad_request: 400,
   missing_api_key: 500,
+  invalid_api_key: 502,
+  insufficient_credit: 502,
   liner_unavailable: 502,
   rate_limited: 429,
   internal: 500,

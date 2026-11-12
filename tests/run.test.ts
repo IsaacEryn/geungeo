@@ -7,6 +7,7 @@ import { runPipeline } from "@/lib/pipeline/run";
 import { PipelineError } from "@/lib/pipeline/errors";
 import { fixtureFileName } from "@/lib/liner/search";
 import type { StageEvent } from "@/lib/pipeline/types";
+import messages from "@/messages/ko.json";
 import { buildTestCache } from "./support/cache";
 import { chatBody, createLinerMock, schemaName } from "./support/liner-mock";
 import { E22_QUESTION, E25_QUESTION, e22Handler, e25Handler, SIGNAL_RESULTS } from "./support/scenarios";
@@ -142,6 +143,39 @@ describe("runPipeline 실패·대체", () => {
     );
     await expect(runPipeline({ question: E22_QUESTION, asOf: "2026-11-05" }, { cache, fetchImpl: mock.fetchImpl })).rejects.toMatchObject({
       code: "rate_limited",
+    });
+  });
+
+  // Liner가 모든 요청에 같은 상태로 답할 때 화면에 나가는 코드와 문구
+  it.each([
+    [401, "invalid_api_key", messages.errors.invalid_api_key],
+    [403, "invalid_api_key", messages.errors.invalid_api_key],
+    [402, "insufficient_credit", messages.errors.insufficient_credit],
+    [503, "liner_unavailable", messages.errors.liner_unavailable],
+  ] as const)("Liner가 %i이면 %s", async (status, code, message) => {
+    const mock = createLinerMock(() => ({ status, body: { error: { code: "X" } }, headers: { "retry-after": "0" } }));
+    const events: StageEvent[] = [];
+    await expect(
+      runPipeline({ question: E22_QUESTION, asOf: "2026-11-05" }, { cache, fetchImpl: mock.fetchImpl, onEvent: (e) => events.push(e) }),
+    ).rejects.toMatchObject({ code, message });
+    expect(events.at(-1)).toEqual({ type: "error", code, message });
+  });
+
+  it("키가 틀리면 '잠시 뒤 다시'가 아니라 키를 확인하라고 한다", () => {
+    expect(messages.errors.invalid_api_key).toContain("LINER_API_KEY");
+    expect(messages.errors.invalid_api_key).not.toContain("잠시 뒤");
+    expect(messages.errors.insufficient_credit).toContain("크레딧");
+    expect(messages.errors.rate_limited).toContain("잠시 뒤");
+    expect(messages.errors.liner_unavailable).toContain("연결하지 못했습니다");
+  });
+
+  it("네트워크 오류가 이어지면 liner_unavailable(연결 실패)", async () => {
+    const failing = (async () => {
+      throw new TypeError("fetch failed");
+    }) as typeof fetch;
+    await expect(runPipeline({ question: E22_QUESTION, asOf: "2026-11-05" }, { cache, fetchImpl: failing })).rejects.toMatchObject({
+      code: "liner_unavailable",
+      message: messages.errors.liner_unavailable,
     });
   });
 

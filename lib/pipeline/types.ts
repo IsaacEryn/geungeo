@@ -243,6 +243,8 @@ export type StageEvent =
 export type PipelineErrorCode =
   | "bad_request" // 질문이 비었거나 기준일 형식 오류
   | "missing_api_key" // LINER_API_KEY 없음
-  | "liner_unavailable" // Liner API 오류·타임아웃(재시도 뒤)
+  | "invalid_api_key" // 401·403: 키가 틀렸거나 권한 없음
+  | "insufficient_credit" // 402: 크레딧 부족
+  | "liner_unavailable" // 네트워크 오류·5xx·타임아웃(재시도 뒤)
   | "rate_limited" // 429
   | "internal";

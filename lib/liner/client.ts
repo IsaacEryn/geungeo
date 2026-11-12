@@ -3,7 +3,14 @@
 
 export const LINER_BASE_URL = "https://platform.liner.com/api/v1";
 
-export type LinerErrorCode = "missing_api_key" | "rate_limited" | "liner_unavailable" | "bad_response" | "aborted";
+export type LinerErrorCode =
+  | "missing_api_key"
+  | "invalid_api_key" // 401·403
+  | "insufficient_credit" // 402
+  | "rate_limited"
+  | "liner_unavailable"
+  | "bad_response"
+  | "aborted";
 
 /** Liner 호출 실패. message는 짧은 한국어 설명만(응답 본문·키 금지) */
 export class LinerError extends Error {
@@ -140,8 +147,8 @@ export async function linerRequest<T>(
     }
     if (res.status === 429) throw new LinerError("rate_limited", "Liner API 요청 한도에 걸렸습니다.", 429, elapsed);
     if (res.status === 401 || res.status === 403)
-      throw new LinerError("liner_unavailable", "Liner API 키가 거부되었습니다.", res.status, elapsed);
-    if (res.status === 402) throw new LinerError("liner_unavailable", "Liner API 크레딧이 부족합니다.", 402, elapsed);
+      throw new LinerError("invalid_api_key", "Liner API 키가 거부되었습니다.", res.status, elapsed);
+    if (res.status === 402) throw new LinerError("insufficient_credit", "Liner API 크레딧이 부족합니다.", 402, elapsed);
     throw new LinerError("liner_unavailable", `Liner API 오류(HTTP ${res.status})`, res.status, elapsed);
   }
 }
