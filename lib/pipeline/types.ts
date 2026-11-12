@@ -8,7 +8,7 @@ export type { IsoDate, IsoDateTime, LawKind, SchoolId };
 
 // ───────── 요청 ─────────
 
-/** 답변 방식(설계 2-3). fixed가 기본 */
+/** 답변 방식(설계 2-3). fixed만 동작한다. tools는 미구현(만들지 않기로 함) — 계약 호환을 위해 값만 남김 */
 export type AgentMode = "fixed" | "tools";
 
 /** POST /api/ask 본문이자 runPipeline 입력 */

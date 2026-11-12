@@ -35,7 +35,7 @@ export interface CacheCollectInput {
   asOf: string;
   cache: LawCache;
   schoolRules: LawDocument | null;
-  /** 조 후보 수 상한(판 펼치기 전). 기본 8 */
+  /** 조 후보 수 상한(판 펼치기 전, 위임 사슬로 더한 조는 따로). 기본 DEFAULT_CANDIDATE_LIMIT */
   limit?: number;
 }
 
@@ -48,6 +48,9 @@ export interface CacheCollectOutcome {
   /** 검색에 쓴 말 */
   queries: string[];
 }
+
+/** ③에 넣는 조 후보 수(검색으로 고른 것). 8개에서 5개로 줄였다(11/13 리더 결정, ③ 프롬프트를 줄여 응답 시간 단축) */
+export const DEFAULT_CANDIDATE_LIMIT = 5;
 
 /** 캐시 점수가 이보다 낮으면 ②-b 웹 검색을 부른다(설계 2-2: 캐시 상위 점수가 낮을 때) */
 export const LOW_CACHE_SCORE = 8;
@@ -86,7 +89,7 @@ export function collectFromCache(input: CacheCollectInput): CacheCollectOutcome 
   const topScore = ranked.find((h) => h.via === "search")?.score ?? (ranked.length ? ranked[0].score : 0);
   // 상위 점수의 25% 미만은 버린다(관계 적은 조가 프롬프트를 채우지 않게)
   const floor = topScore * 0.25;
-  const chosen = ranked.filter((h) => h.via === "direct" || h.score >= floor).slice(0, input.limit ?? 8);
+  const chosen = ranked.filter((h) => h.via === "direct" || h.score >= floor).slice(0, input.limit ?? DEFAULT_CANDIDATE_LIMIT);
 
   const startArticles = chosen.map((h) => lookup(h.id)?.article).filter((a): a is LawArticle => Boolean(a));
   const delegation = followDelegations(startArticles.slice(0, 5), (id) => lookup(id)?.article, {
@@ -248,8 +251,10 @@ export async function collectWeb(plan: WebPlan, ctx: WebContext): Promise<WebCol
   return { items, calls, queries, failed };
 }
 
+export type SignalCollectOutcome = WebCollectOutcome & { lawByQuery: Map<string, string> };
+
 /** ②-c: 상위 법령 1~2개의 "개정 입법예고" 검색. W1만 남긴다 */
-export async function collectSignals(lawNames: string[], ctx: WebContext): Promise<WebCollectOutcome & { lawByQuery: Map<string, string> }> {
+export async function collectSignals(lawNames: string[], ctx: WebContext): Promise<SignalCollectOutcome> {
   const lawByQuery = new Map<string, string>();
   const qs: SearchQuery[] = lawNames.slice(0, 2).map((name) => {
     const query = `${name} 개정 입법예고`;

@@ -3,13 +3,13 @@ import { loadCache, loadSchoolRules, type LawCache } from "@/lib/cache/load";
 import type { LawDocument } from "@/lib/cache/schema";
 import { getApiKey, type LinerCallOptions } from "@/lib/liner/client";
 import { roundUsd } from "@/lib/liner/cost";
-import { analyzeQuestion } from "./analyze";
+import { analyzeQuestion, ruleBasedAnalysis } from "./analyze";
 import { answerQuestion, type AnswerInput } from "./answer";
 import { buildCards } from "./cards";
-import { collectFromCache, collectSignals, collectWeb, mergeWeb, planWebSearch, schoolRulesInCache } from "./collect";
+import { collectFromCache, collectSignals, collectWeb, mergeWeb, planWebSearch, schoolRulesInCache, type SignalCollectOutcome } from "./collect";
 import { PipelineError, badRequest, toPipelineError } from "./errors";
 import { isIsoDate, todayKst } from "./text";
-import type { AgentMode, AskRequest, AskResult, SearchedScope, StageEvent, StageName, TraceCall } from "./types";
+import type { AgentMode, ArticleCandidate, AskRequest, AskResult, ChangeSignal, Citation, SearchedScope, StageEvent, StageName, TraceCall } from "./types";
 import { verifyDraft } from "./verify";
 
 export interface RunOptions {
@@ -27,6 +27,8 @@ export interface RunOptions {
   mode?: AgentMode;
   /** 시험용: Liner 호출의 fetch 바꿔 끼우기(계약 밖 선택 항목) */
   fetchImpl?: typeof fetch;
+  /** 학칙 읽기: auto(기본) = 캐시에 없으면 manifest 방식대로(remote면 law.go.kr에서 받기), cache_only = 캐시에 실린 것만(오프라인 평가) */
+  schoolRules?: "auto" | "cache_only";
 }
 
 const MAX_QUESTION_LENGTH = 1000;
@@ -36,6 +38,70 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
+/** 점수 순 상위 법령 이름(L1만, 겹침 없이) */
+function topLawNames(candidates: ArticleCandidate[]): string[] {
+  const names: string[] = [];
+  for (const c of [...candidates].sort((a, b) => b.score - a.score)) {
+    if (c.grade === "L1" && !names.includes(c.law_name)) names.push(c.law_name);
+  }
+  return names;
+}
+
+/** 지정 학교 학칙: 캐시에 실려 있으면 그것, 아니면 loadSchoolRules(실패하면 null) */
+async function readSchoolRules(
+  cache: LawCache,
+  school: NonNullable<AskRequest["school"]>,
+  how: RunOptions["schoolRules"] = "auto",
+): Promise<LawDocument | null> {
+  const inCache = schoolRulesInCache(cache, school);
+  if (inCache || how === "cache_only") return inCache;
+  try {
+    return await loadSchoolRules(school);
+  } catch {
+    return null;
+  }
+}
+
+/** ②-c 결과 여럿을 하나로 */
+function combineSignals(parts: SignalCollectOutcome[]): SignalCollectOutcome {
+  const lawByQuery = new Map<string, string>();
+  for (const p of parts) for (const [q, law] of p.lawByQuery) lawByQuery.set(q, law);
+  return {
+    items: parts.flatMap((p) => p.items),
+    calls: parts.flatMap((p) => p.calls),
+    queries: parts.flatMap((p) => p.queries),
+    failed: parts.reduce((n, p) => n + p.failed, 0),
+    lawByQuery,
+  };
+}
+
+/** 변경 신호는 인용한 조의 법령과 관련된 것 중 최근 2건까지만(11/13 리더 결정) */
+export const MAX_CHANGE_SIGNALS = 2;
+
+export function relevantSignals(signals: ChangeSignal[], citations: Citation[], candidates: ArticleCandidate[]): ChangeSignal[] {
+  const byId = new Map(candidates.map((c) => [c.id, c]));
+  const citedLaws = new Set<string>();
+  const citedWeb = new Set<string>();
+  for (const c of citations) {
+    const cand = byId.get(c.id);
+    if (cand) citedLaws.add(cand.law_name.replace(/\s+/g, ""));
+    else citedWeb.add(c.id);
+  }
+  const related = signals.filter((s) => {
+    if (citedWeb.has(s.web_id)) return true;
+    if (citedLaws.has(s.related_law.replace(/\s+/g, ""))) return true;
+    const title = s.title.replace(/\s+/g, "");
+    return [...citedLaws].some((law) => title.includes(law));
+  });
+  // 날짜가 있는 것을 최근 순으로, 날짜 모르는 것은 뒤로(같으면 원래 순서)
+  return related
+    .map((s, i) => ({ s, i }))
+    .sort((a, b) => (b.s.date ?? "").localeCompare(a.s.date ?? "") || a.i - b.i)
+    .slice(0, MAX_CHANGE_SIGNALS)
+    .map((x) => x.s);
+}
+
+/** 답변 방식. tools 모드는 미구현(11/13 리더 결정: 만들지 않음) — 값이 와도 fixed 흐름으로 돌고 경고만 붙인다 */
 function resolveMode(request: AskRequest, options: RunOptions): AgentMode {
   const raw = options.mode ?? request.mode ?? process.env.AGENT_MODE;
   return raw === "tools" ? "tools" : "fixed";
@@ -95,7 +161,18 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
     throw new PipelineError("internal", "법령 데이터를 읽지 못했습니다. data/ 폴더를 확인해 주세요.");
   }
 
-  // ① 질문 분석
+  // ① 질문 분석과 그 결과가 필요 없는 일을 겹쳐 돌린다(응답 시간, 11/13 리더 결정).
+  //  - 질문 글만으로 캐시를 미리 찾아(규칙 기반 검색어, 로컬이라 수 ms) 상위 법령의 변경 신호 검색(②-c)을 먼저 띄운다
+  //  - 화면에서 학교를 골랐으면 학칙 읽기도 먼저 띄운다
+  // 단계 이벤트(화면 진행 표시)는 예전 순서 그대로 보낸다. 실제 소요 시간은 처리 과정(trace)에 남는다.
+  const webCtx = { searchFixtureDir: options.searchFixtureDir, call };
+  const preAnalysis = ruleBasedAnalysis(question, cache.synonyms);
+  const preCache = collectFromCache({ question, analysis: preAnalysis, asOf, cache, schoolRules: null });
+  const preLaw = topLawNames(preCache.candidates)[0];
+  const earlySignals = preLaw ? collectSignals([preLaw], webCtx) : null;
+  earlySignals?.catch(() => undefined); // ①이 먼저 실패해도 처리 안 된 거부가 남지 않게
+  const earlyRules = requestedSchool ? readSchoolRules(cache, requestedSchool, options.schoolRules) : null;
+
   const analyzed = await stage("analyze", () =>
     analyzeQuestion({ ...request, question }, asOf, { synonyms: cache.synonyms, model: options.models?.analyze, call }),
   );
@@ -105,14 +182,7 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
 
   let schoolRules: LawDocument | null = null;
   if (school) {
-    schoolRules = schoolRulesInCache(cache, school);
-    if (!schoolRules) {
-      try {
-        schoolRules = await loadSchoolRules(school);
-      } catch {
-        schoolRules = null;
-      }
-    }
+    schoolRules = await (school === requestedSchool && earlyRules ? earlyRules : readSchoolRules(cache, school, options.schoolRules));
     if (!schoolRules) warnings.push("지정한 학교의 학칙을 읽지 못했습니다. 학칙은 학교 원문에서 확인해 주세요.");
   }
 
@@ -122,22 +192,28 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
   );
   calls.push(cached.call);
 
-  // ②-b·②-c 병렬
+  // ②-b·②-c 병렬. ②-c는 먼저 띄운 검색을 받고, 모자란 법령만 더 부른다
   const plan = planWebSearch(analysis, cached.topScore, cached.candidates.length);
-  const lawNames: string[] = [];
-  for (const c of [...cached.candidates].sort((a, b) => b.score - a.score)) {
-    if (c.grade === "L1" && !lawNames.includes(c.law_name)) lawNames.push(c.law_name);
-  }
+  const lawNames = topLawNames(cached.candidates);
   const signalLaws = lawNames.slice(0, analysis.needs_external ? 2 : 1);
   const [web, signals] = await Promise.all([
-    stage("collect_web", () => collectWeb(plan, { searchFixtureDir: options.searchFixtureDir, call })),
-    stage("collect_signals", () => collectSignals(signalLaws, { searchFixtureDir: options.searchFixtureDir, call })),
+    stage("collect_web", () => collectWeb(plan, webCtx)),
+    stage("collect_signals", async () => {
+      const early = earlySignals ? await earlySignals : null;
+      // 먼저 찾은 법령이 상위 두 법령 안이면 쓰고, 아니면 버린다(호출 1회 손해)
+      const keepEarly = early && preLaw && lawNames.slice(0, 2).includes(preLaw) ? early : null;
+      const missing = signalLaws.filter((name) => name !== preLaw || !keepEarly);
+      const extra = missing.length ? await collectSignals(missing, webCtx) : null;
+      const parts = [keepEarly, extra].filter((x): x is NonNullable<typeof x> => Boolean(x));
+      if (early && !keepEarly) parts.push({ ...early, items: [] }); // 호출 기록·비용은 남긴다
+      return combineSignals(parts);
+    }),
   ]);
   if (!plan.run) calls.push({ stage: "collect_web", api: "search", duration_ms: 0, note: `건너뜀: ${plan.reason}` });
   calls.push(...web.calls, ...signals.calls);
   if (web.failed + signals.failed > 0) warnings.push("웹 검색 일부가 실패해 법령 데이터 위주로 답했습니다.");
   const merged = mergeWeb(web, signals, cache.collectedAt);
-  if (mode === "tools") warnings.push("심화 찾기(tools) 모드는 준비 중이라 기본 흐름으로 답했습니다.");
+  if (mode === "tools") warnings.push("tools 모드는 미구현이라 기본 흐름(fixed)으로 답했습니다.");
 
   // ③ 대조·답변 → ④ 검증(위반이 크면 ③을 한 번 더)
   const answerInput: AnswerInput = {
@@ -211,7 +287,7 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
     cards,
     checklist: draft.checklist,
     caveats: draft.caveats,
-    change_signals: merged.signals,
+    change_signals: relevantSignals(merged.signals, draft.citations, cached.candidates),
     searched_scope: searchedScope,
     warnings: [...warnings, ...verified.warnings],
     verification: {

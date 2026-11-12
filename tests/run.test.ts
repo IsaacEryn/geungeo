@@ -49,10 +49,10 @@ describe("runPipeline E22형(시행 예정)", () => {
     expect(card.notes).toContain("학칙으로 위임 — 학교별 확인");
     expect(result.cards.find((c) => c.role === "delegation")?.location).toBe("제11조의2제3항");
 
-    // 신호: 블로그 재게시본·목록 페이지는 빠지고 교육부 원문과 공포 소식만
-    expect(result.change_signals.map((s) => s.kind)).toEqual(["legislative_notice", "amendment_news"]);
-    expect(result.change_signals[0]).toMatchObject({ opinion_deadline: "2026-12-07", after_collection: false, related_law: "고등교육법" });
-    expect(result.change_signals[1].after_collection).toBe(true);
+    // 신호: 블로그 재게시본·목록 페이지는 빠지고 교육부 원문과 공포 소식만, 최근 것부터
+    expect(result.change_signals.map((s) => s.kind)).toEqual(["amendment_news", "legislative_notice"]);
+    expect(result.change_signals[1]).toMatchObject({ opinion_deadline: "2026-12-07", after_collection: false, related_law: "고등교육법" });
+    expect(result.change_signals[0].after_collection).toBe(true);
     const webCard = result.cards.find((c) => c.id === "web:1")!;
     expect(webCard).toMatchObject({ grade: "W1", badge: "proposed", role: "reference", posted_date: "2026-10-27" });
     // 수집 뒤 공포 소식이 있어 조문 카드에 배지
@@ -62,11 +62,12 @@ describe("runPipeline E22형(시행 예정)", () => {
     expect(result.verification).toMatchObject({ removed_citations: 0, retried: false, verdict_before: "answered", verdict_after: "answered" });
     expect(result.warnings).toEqual([]);
 
-    // 호출: 분석 1 + 신호 검색 1 + 답 1. 공고 검색은 건너뜀. 분석 검색어의 날짜는 지워진다
-    expect(mock.calls.map((c) => c.path)).toEqual(["/chat/completions", "/tools/search/web", "/chat/completions"]);
-    expect(mock.calls[1].body).toMatchObject({ include_knowledge: false, lang: "ko", country_code: "kr", date_range: "past_year" });
-    expect(mock.calls[1].headers["x-api-key"]).toBe("test-key-not-real");
-    expect(mock.calls[0].headers.Authorization).toBe("Bearer test-key-not-real");
+    // 호출: 신호 검색 1(질문 분석과 겹쳐 먼저 띄움) + 분석 1 + 답 1. 공고 검색은 건너뜀. 분석 검색어의 날짜는 지워진다
+    expect(mock.calls.map((c) => c.path)).toEqual(["/tools/search/web", "/chat/completions", "/chat/completions"]);
+    expect(schemaName(mock.calls[1].body)).toBe("question_analysis");
+    expect(mock.calls[0].body).toMatchObject({ query: "고등교육법 개정 입법예고", include_knowledge: false, lang: "ko", country_code: "kr", date_range: "past_year" });
+    expect(mock.calls[0].headers["x-api-key"]).toBe("test-key-not-real");
+    expect(mock.calls[1].headers.Authorization).toBe("Bearer test-key-not-real");
     expect(result.trace.calls.find((c) => c.stage === "collect_web")?.note).toContain("건너뜀");
     expect(result.trace.calls.find((c) => c.stage === "collect_cache")?.query).not.toContain("2026-11-05");
 
