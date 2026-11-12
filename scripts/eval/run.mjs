@@ -188,7 +188,12 @@ async function runCandidate({ questions, opts, models, pipeline, costOf, spentBe
         verdict: result?.verdict ?? null,
         summary: result?.summary ?? null,
         card_ids: (result?.cards ?? []).map((c) => c.id),
+        // ② 캐시 단계가 ③에 넘긴 후보 조 ID(카드에 안 나온 조가 후보에 있었는지 가르는 데 쓴다)
+        candidate_ids: (result?.trace?.calls ?? []).find((c) => c.stage === "collect_cache")?.candidate_ids ?? [],
         removed_citations: result?.verification?.removed_citations ?? null,
+        // ④ 검증이 고친 것(종류·인용 ID만, 설명 문구는 뺀다)
+        issues: (result?.verification?.issues ?? []).map((i) => (i.citation_id ? `${i.kind}:${i.citation_id}` : i.kind)),
+        retried: result?.verification?.retried ?? null,
         duration_ms: ms,
         answer_ms: answerMs,
         calls: cost.calls,
