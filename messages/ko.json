@@ -3,7 +3,211 @@
     "title": "근거",
     "description": "대학 행정 업무의 근거 조항·절차·선행 요건을 시행일·출처와 함께 찾아 줍니다.",
     "skipLink": "본문으로 건너뛰기",
-    "wip": "작업 중입니다. 질문 입력과 근거 카드는 곧 붙습니다."
+    "tagline": "공개 법령·학칙 기준"
+  },
+  "form": {
+    "heading": "질문",
+    "questionLabel": "무엇을 찾을까요?",
+    "questionHint": "업무 상황을 평소 말투로 적어 주세요. 예: 등심위 첫 회의 소집 공문은 며칠 전까지 보내야 하나요?",
+    "questionRequired": "질문을 입력해 주세요.",
+    "schoolLabel": "학교(학칙)",
+    "schoolNone": "지정 안 함",
+    "schools": {
+      "snu": "서울대학교",
+      "pnu": "부산대학교",
+      "knou": "한국방송통신대학교"
+    },
+    "asOfLabel": "기준일",
+    "asOfHint": "이 날짜에 시행 중인 조문으로 답합니다. 형식: 연도-월-일(예 2026-11-13)",
+    "asOfInvalid": "기준일을 연도-월-일 형식으로 입력해 주세요.",
+    "submit": "근거 찾기",
+    "submitting": "찾는 중…",
+    "examplesHeading": "예시 질문",
+    "examplesHint": "누르면 질문을 채우고 바로 찾습니다."
+  },
+  "examples": [
+    {
+      "id": "E01",
+      "tag": "처리 중",
+      "question": "다른 대학에서 딴 학점을 우리 학교 학점으로 몇 학점까지 인정해 줄 수 있나요?"
+    },
+    {
+      "id": "E03",
+      "tag": "처리 중",
+      "question": "군 복무로 휴학 중인 학생이 원격수업 들어서 딴 학점, 한 학기에 몇 학점까지 인정돼요?"
+    },
+    {
+      "id": "E14",
+      "tag": "업무 시작",
+      "question": "등심위 첫 회의 소집 공문을 돌리려는데, 며칠 전까지 무엇을 보내야 하나요?"
+    },
+    {
+      "id": "E13",
+      "tag": "업무 시작",
+      "question": "내년도 등록금심의위원회를 새로 꾸려야 해요. 위원 수와 구성 비율 조건이 뭐예요?"
+    },
+    {
+      "id": "E25",
+      "tag": "근거 없음",
+      "question": "사립대인데 교원 연구년 제도를 새로 만들려고 해요. 법령상 근거 조항이 뭐예요?"
+    },
+    {
+      "id": "E22",
+      "tag": "시행 전",
+      "question": "기숙사비심의위원회를 만들어야 한다는 법이 생겼다던데, 지금 당장 설치해야 하나요?"
+    }
+  ],
+  "stages": {
+    "heading": "처리 단계",
+    "names": {
+      "analyze": "질문 분석",
+      "collect_cache": "조문 검색",
+      "collect_web": "교육부 자료 검색",
+      "collect_signals": "변경 신호 검색",
+      "answer": "조문 대조·답 작성",
+      "verify": "인용 검증"
+    },
+    "state": {
+      "pending": "대기",
+      "running": "진행 중",
+      "done": "완료",
+      "failed": "실패"
+    },
+    "liveRunning": "{stage} 중입니다.",
+    "liveDone": "답을 찾았습니다. 근거 카드 {count}개.",
+    "liveNoBasis": "직접 근거를 찾지 못했습니다. 찾아본 범위를 확인해 주세요.",
+    "liveError": "오류: {message}"
+  },
+  "result": {
+    "heading": "결론",
+    "asOf": "{date} 기준",
+    "collectedAt": "법령 데이터 수집일 {date}",
+    "sceneLabel": "장면",
+    "scenes": {
+      "processing": "처리 중",
+      "initiating": "업무 시작",
+      "unknown": "분류 못 함"
+    },
+    "verdictLabel": "판정",
+    "verdicts": {
+      "answered": "근거 있음",
+      "partial": "일부 근거",
+      "no_basis": "근거 없음"
+    },
+    "caveatsHeading": "확인할 점",
+    "warningsHeading": "주의",
+    "cardsHeading": "근거 조문과 자료",
+    "cardsCount": "{count}개",
+    "sourcesHeading": "이 답의 출처"
+  },
+  "card": {
+    "grades": {
+      "L1": "L1 법령·행정규칙",
+      "L2": "L2 학칙",
+      "W1": "W1 정부 원문",
+      "W1_aux": "W1 참고(교육부 블로그)",
+      "W2": "W2 대학 공개 자료",
+      "W2_repost": "W2 재게시본",
+      "W3": "W3 참고(근거 아님)"
+    },
+    "roles": {
+      "basis": "근거",
+      "reference": "참고",
+      "delegation": "위임"
+    },
+    "kinds": {
+      "act": "법률",
+      "presidential_decree": "대통령령",
+      "ministerial_ordinance": "부령",
+      "administrative_rule": "행정규칙",
+      "school_rule": "학칙"
+    },
+    "badges": {
+      "in_force": "시행 중",
+      "not_yet": "시행 예정",
+      "superseded": "구판",
+      "proposed": "입법예고(미확정)",
+      "reference": "웹 참고"
+    },
+    "gradeLabel": "근거 등급",
+    "effectiveFrom": "시행 {date}",
+    "notYetFrom": "{date}부터 시행 예정",
+    "postedDate": "게시 {date}(검색 결과 기준, 참고)",
+    "collectedAt": "{date} 수집",
+    "quote": "원문",
+    "sourceLink": "{title} {location} 원문 보기",
+    "newWindow": "(새 창)",
+    "changedAfterCollection": "수집 뒤 변경 가능성"
+  },
+  "checklist": {
+    "heading": "업무 시작 체크리스트",
+    "intro": "순서대로 확인하세요. 기한은 원문 표현을 옮겼습니다.",
+    "deadline": "기한",
+    "basis": "근거"
+  },
+  "signals": {
+    "heading": "변경 신호",
+    "intro": "확정된 개정이 아닙니다. 수집일 뒤 바뀔 수 있는 것을 Liner Search로 찾았습니다.",
+    "kinds": {
+      "legislative_notice": "입법예고",
+      "amendment_news": "개정 소식",
+      "other": "그 밖"
+    },
+    "relatedLaw": "관련 법령",
+    "deadline": "의견 제출 마감 {date}",
+    "posted": "게시 {date}",
+    "afterCollection": "수집 뒤 변경 가능성",
+    "linkLabel": "{title} 원문 보기"
+  },
+  "noBasis": {
+    "heading": "찾아본 범위",
+    "intro": "아래 범위에서 직접 근거를 찾지 못했습니다. 조항을 지어내지 않고 확인할 곳을 안내합니다.",
+    "laws": "본 법령",
+    "queries": "쓴 검색어",
+    "whereToCheck": "확인할 곳"
+  },
+  "trace": {
+    "summary": "처리 과정 보기",
+    "summaryTotals": "호출 {count}회 · {duration} · {cost}",
+    "intro": "Liner API를 부른 지점과 소요 시간, 토큰, 금액입니다. 금액은 토큰 수에 단가를 곱해 계산했고, Liner Search는 회당 단가입니다.",
+    "caption": "단계별 호출 기록",
+    "cols": {
+      "stage": "단계",
+      "api": "호출",
+      "detail": "모델·검색어",
+      "status": "응답",
+      "duration": "소요",
+      "tokens": "토큰(입력/출력/추론)",
+      "cost": "금액",
+      "results": "검색 결과(등급)"
+    },
+    "apis": {
+      "router": "Liner Router",
+      "search": "Liner Search",
+      "cache": "조문 캐시(로컬)"
+    },
+    "none": "없음",
+    "models": "단계별 모델",
+    "modelAnalyze": "질문 분석",
+    "modelAnswer": "대조·답 작성",
+    "verification": "인용 검증",
+    "removedCitations": "지어낸 인용 제거 {count}건",
+    "retried": "답 작성 1회 재시도",
+    "verdictChange": "판정 {before} → {after}",
+    "excluded": "제외",
+    "total": "합계"
+  },
+  "errors": {
+    "bad_request": "질문이나 기준일 형식을 확인해 주세요.",
+    "missing_api_key": "서버에 Liner API 키가 설정되지 않았습니다. README의 실행 절을 확인해 주세요.",
+    "liner_unavailable": "Liner API가 응답하지 않습니다. 잠시 뒤 다시 시도해 주세요.",
+    "rate_limited": "요청이 많아 잠시 막혔습니다. 잠시 뒤 다시 시도해 주세요.",
+    "internal": "처리 중 문제가 생겼습니다. 다시 시도해 주세요.",
+    "network": "서버에 연결하지 못했습니다. 잠시 뒤 다시 시도해 주세요.",
+    "mockUnknownQuestion": "목 데이터 모드에서는 예시 질문 6개에만 답합니다."
+  },
+  "mock": {
+    "banner": "목 데이터 화면입니다. Liner API를 부르지 않았고, 처리 과정의 호출 기록·토큰·금액은 예시 값입니다. 조문 인용은 실제 원문입니다."
   },
   "footer": {
     "source": "출처: 법제처 국가법령정보센터 · 교육부(공공누리 제1유형, 해당 자료에 한함)",
