@@ -275,10 +275,11 @@ export interface MergedWeb {
   signals: ChangeSignal[];
 }
 
-function signalKind(title: string, description: string): ChangeSignal["kind"] {
-  const hay = `${title} ${description}`;
-  if (hay.includes("입법예고")) return "legislative_notice";
-  if (/개정|일부개정|공포/.test(hay)) return "amendment_news";
+/** 신호 종류. 제목으로 먼저 정하고, 제목에 없으면 설명에 입법예고와 법령 이름이 함께 있을 때만 입법예고로 본다 */
+function signalKind(title: string, description: string, lawName: string): ChangeSignal["kind"] {
+  if (/입법예고|개정령안|개정법률안|개정안/.test(title)) return "legislative_notice";
+  if (/개정|공포/.test(title)) return "amendment_news";
+  if (description.includes("입법예고") && mentionsLaw(lawName, description)) return "legislative_notice";
   return "other";
 }
 
@@ -296,11 +297,10 @@ export function parseOpinionDeadline(text: string, postedDate: string | null): s
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-/** 신호 결과가 그 법령을 실제로 말하는지(법령 이름 전체 또는 앞 네 글자) */
+/** 신호 결과가 그 법령을 실제로 말하는지(띄어쓰기를 무시한 법령 이름 전체) */
 function mentionsLaw(lawName: string, text: string): boolean {
   const name = lawName.replace(/\s+/g, "");
-  const hay = text.replace(/\s+/g, "");
-  return hay.includes(name) || hay.includes(name.slice(0, 4));
+  return text.replace(/\s+/g, "").includes(name);
 }
 
 /**
@@ -345,7 +345,7 @@ export function mergeWeb(
     };
     results.push(result);
     if (p.signalLaw && !p.outcome.excluded && mentionsLaw(p.signalLaw, `${p.raw.title} ${p.raw.description}`)) {
-      const kind = signalKind(p.raw.title, p.raw.description);
+      const kind = signalKind(p.raw.title, p.raw.description, p.signalLaw);
       if (kind === "other") return;
       out.push({
         web_id: result.id,

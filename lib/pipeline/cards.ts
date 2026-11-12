@@ -12,10 +12,12 @@ export function locateQuote(article: Pick<LawArticle, "number" | "versions">, ef
   if (!version) return article.number;
   const at = findNormalized(version.text, quote);
   if (!at) return article.number;
-  const start = at[0];
+  // 인용이 "② …"처럼 항 번호부터 시작하면 번호·공백을 건너뛴 자리로 위치를 정한다
+  let start = at[0];
+  while (start < at[1] && /[\s①-⑳]/.test(version.text[start])) start += 1;
   const within = (part: string) => {
     const r = findNormalized(version.text, part);
-    return r !== null && r[0] <= start && start < r[1] + 2;
+    return r !== null && r[0] <= start && start < r[1];
   };
   let location = article.number;
   for (const p of version.paragraphs) {
