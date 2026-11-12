@@ -2,6 +2,7 @@
 // - 질문은 평가 세트(2026. 11. 5. 작성) 문항 그대로다.
 // - 인용문(quote)은 평가 세트 근거로 받은 법제처 원문 캡처(2026. 11. 5.)에서 그대로 옮긴 quotes.json과
 //   data/examples/heaf.example.json만 쓴다. 조문 문구를 새로 쓰지 않는다.
+// - 학칙 인용(quotes.json의 snu_113_2)은 data/rules/snu_rule.json에 담은 항 그대로다(쓰는 항만, 대학명 먼저 출처 표기).
 // - 결론(summary)·체크리스트는 평가 세트 '정답 요지'를 줄인 것이다.
 // - 처리 과정의 토큰·소요 시간·금액은 예시 값이다(화면에도 목 데이터라고 띄운다).
 import heafExample from "@/data/examples/heaf.example.json";
@@ -27,6 +28,8 @@ const URL_HEAF_270311 = "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=283883&efYd
 const URL_HEDEC = "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911";
 const URL_TUITION = "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=240223&efYd=20220207";
 const URL_SNU = "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000157427";
+// 학칙 인용을 받은 시각(data/manifest.json의 snu_rule collected_at)
+const COLLECTED_AT_SNU = "2026-11-13T02:17:37+09:00";
 
 // Liner 단가(설계 1-1): liner-mark-1.3 입력 $1/100만·출력 $5/100만(추론 토큰은 출력에 포함해 출력 단가), Search 회당 $0.001
 const MODEL = "liner-mark-1.3";
@@ -340,7 +343,7 @@ const E13: MockScenario = {
     if (snu) {
       cards.push(
         lawCard({
-          id: "snu:113-00",
+          id: "snu_rule:113-00",
           grade: "L2",
           role: "reference",
           title: "서울대학교 학칙",
@@ -350,6 +353,8 @@ const E13: MockScenario = {
           effective_from: "2026-06-29",
           source_url: URL_SNU,
           attribution: "출처: 서울대학교 학칙(제2710호, 시행 2026. 6. 29.), 법제처 국가법령정보센터 게재본",
+          collected_at: COLLECTED_AT_SNU,
+          notes: ["학칙 예시 — 제2항만 수록(전문은 출처 URL)"],
         }),
       );
     }
@@ -357,7 +362,7 @@ const E13: MockScenario = {
       scene: "initiating",
       verdict: "answered",
       summary: snu
-        ? "위원은 7명 이상이고 교직원(사립은 법인 추천 재단인사 포함)·학생·관련 전문가로 구성합니다. 학생 위원은 정수의 10분의 3 이상, 구성단위별 위원은 10분의 5 미만이어야 하고, 전문가 위원은 학칙에 따라 학교 측과 학생 측이 협의해 선임합니다. 서울대학교 학칙의 구성 조항은 학칙 원문 처리 방식이 정해진 뒤 인용합니다(지금은 자리 표시)."
+        ? "위원은 7명 이상이고 교직원(사립은 법인 추천 재단인사 포함)·학생·관련 전문가로 구성합니다. 학생 위원은 정수의 10분의 3 이상, 구성단위별 위원은 10분의 5 미만이어야 하고, 전문가 위원은 학칙에 따라 학교 측과 학생 측이 협의해 선임합니다. 예로 서울대학교 학칙 제113조제2항은 교직원 3명, 학생 3명, 관련 전문가 2명, 학부모 또는 동문 1명으로 구성합니다."
         : "위원은 7명 이상이고 교직원(사립은 법인 추천 재단인사 포함)·학생·관련 전문가로 구성합니다. 학생 위원은 정수의 10분의 3 이상, 구성단위별 위원은 10분의 5 미만이어야 하고, 전문가 위원은 학칙에 따라 학교 측과 학생 측이 협의해 선임합니다. 구성단위별 위원 수·선임방법·임기는 위원회에서 논의해 학칙으로 정합니다.",
       cards,
       checklist: [
