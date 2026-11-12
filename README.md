@@ -15,7 +15,7 @@ cp .env.example .env    # .env의 LINER_API_KEY= 뒤에 발급받은 키를 넣�
 npm run dev             # http://localhost:3000
 ```
 
-(선택, 작업 중) `npm run eval` — 평가 문항 28개를 돌려 통과율을 출력합니다(`.env`를 같은 방식으로 읽음).
+(선택) `npm run eval` — 평가 문항 28개를 돌려 통과율을 출력합니다(`.env`를 같은 방식으로 읽음). 키 없이 흐름만 보려면 `npm run eval -- --mock`(Liner를 부르지 않고 Search 고정 응답과 규칙 기반 대역으로 돕니다).
 
 키는 서버 쪽에서만 읽고 브라우저로 보내지 않습니다. `.env`는 커밋되지 않습니다.
 
@@ -32,21 +32,22 @@ npm run dev             # http://localhost:3000
 
 개발 서버(`npm run dev`)에서는 파이프라인 없이 목 데이터로 화면을 볼 수 있습니다. 주소 끝에 `?demo=E22`처럼 예시 ID(E01·E03·E13·E14·E22·E25)를 붙이면 그 예시가 바로 뜨고, `?mock=1`이면 예시 버튼이 목 데이터로 답합니다. 목 데이터 화면에는 안내 띠가 붙고, 배포 빌드(`npm run build`)에서는 목 데이터로 답하지 않습니다.
 
-## Liner API를 쓰는 곳 (작업 중)
+## Liner API를 쓰는 곳
 
 - Liner Search(`search/web`, `include_knowledge: false`): 교육부 공고·보도, 입법예고 등 법령 데이터베이스 밖의 근거와 최근 변경 신호
 - Liner Router(기본 모델 `liner-mark-1.3`): 질문 분석(장면 분류·검색어, `LINER_MODEL_ANALYZE`), 조문·웹 근거 대조와 답 작성·근거 없음 판정(`LINER_MODEL_ANSWER`), 평가 보조 채점(`LINER_MODEL_JUDGE`)
 - (선택) 단계별 값을 다른 라우터(`liner-gpt-router`·`liner-claude-router`)로 바꾸면 같은 흐름으로 실행됩니다. 모델별 평가 결과는 비교 실험 뒤 채웁니다
 
-## 데이터 (작업 중)
+## 데이터
 
 - `data/`: 법제처 국가법령정보센터에서 수집한 법령·행정규칙 조문(수집일은 `data/manifest.json`). 형식 예시는 `data/examples/`
 - 출처 표기는 `NOTICE.md`. 학칙은 대학명을 먼저 적습니다
-- 데이터 갱신은 개발자용 `scripts/collect/`(국가법령정보센터 Open API 키 필요). 심사 실행에는 필요 없습니다
+- 학칙은 재배포 방식을 정하기 전이라 저장소에 넣지 않았습니다. 학교를 고르면 실행 때 법제처 국가법령정보센터 공개 화면에서 받습니다
+- 데이터 갱신은 개발자용 `npm run collect`(`scripts/collect/`, law.go.kr 공개 화면에서 받음). 심사 실행에는 필요 없습니다
 
 ## 기존 부분과 새로 만든 부분
 
-- 기존 부분: `eval/questions.jsonl`의 평가 문항(2026. 11. 5. 작성한 평가 세트 초안을 11. 12. 이후 정리한 사본 — 문항·정답 요지·근거 조문), `data/synonyms.json`의 동의어(그 평가 문항에서 뽑음) (작업 중)
+- 기존 부분: `eval/questions.jsonl`의 평가 문항(2026. 11. 5. 작성한 평가 세트 초안을 11. 12. 이후 정리한 사본 — 문항·정답 요지·근거 조문), `data/synonyms.json`의 동의어(그 평가 문항에서 뽑음)
 - 새로 만든 부분: 그 밖의 코드·데이터 수집기·화면·README 전부(2026. 11. 12. 이후 작성, 커밋 이력 참고)
 
 ## 개발자용

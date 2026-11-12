@@ -14,7 +14,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "eval": "node scripts/eval/run.mjs"
+    "eval": "node scripts/eval/run.mjs",
+    "collect": "node --experimental-strip-types scripts/collect/collect.mjs"
   },
   "dependencies": {
     "next": "16.4.5",
