@@ -1,0 +1,142 @@
+{
+  "$comment": "scripts/collect/collect.mjs 설정(개발자용). 법령은 연혁 목록(lsHstListR.do)에서 since 이후 판을 빠짐없이 받는다(설계 3-2·4-1). 학칙은 처리 방식 결정 전이라 --rules-out을 줄 때만 본문을 저장한다.",
+  "request_interval_ms": 1100,
+  "user_agent": "Mozilla/5.0 (compatible; geungeo-collector/0.1; developer data refresh, 1 req/s)",
+  "laws": [
+    {
+      "id": "heaf",
+      "name": "고등교육법",
+      "kind": "act",
+      "lsId": "000899",
+      "since": "2024-08-14",
+      "addenda": true
+    },
+    {
+      "id": "heaf_decree",
+      "name": "고등교육법 시행령",
+      "kind": "presidential_decree",
+      "lsId": "002233",
+      "since": "2024-01-01",
+      "addenda": true
+    },
+    {
+      "id": "tuition_rule",
+      "name": "대학 등록금에 관한 규칙",
+      "kind": "ministerial_ordinance",
+      "lsId": "010408",
+      "since": "2021-01-01",
+      "addenda": true
+    },
+    {
+      "id": "private_school_act",
+      "name": "사립학교법",
+      "kind": "act",
+      "lsId": "000888",
+      "since": "2026-10-02",
+      "addenda": false
+    },
+    {
+      "id": "edu_official_act",
+      "name": "교육공무원법",
+      "kind": "act",
+      "lsId": "001616",
+      "since": "2026-10-02",
+      "addenda": false
+    }
+  ],
+  "admin_rules": [
+    {
+      "id": "remote_class_rule",
+      "name": "대학등의 원격수업 운영에 관한 훈령",
+      "kind": "administrative_rule",
+      "admRulSeq": "2100000232140"
+    }
+  ],
+  "school_rules": [
+    {
+      "id": "snu_rule",
+      "school": "snu",
+      "name": "서울대학교 학칙",
+      "schlPubRulSeq": "2200000157427",
+      "articles": [
+        "제66조",
+        "제85조",
+        "제103조",
+        "제104조",
+        "제113조",
+        "제117조",
+        "제118조",
+        "제119조"
+      ],
+      "addenda": []
+    },
+    {
+      "id": "pnu_rule",
+      "school": "pnu",
+      "name": "부산대학교 학칙",
+      "schlPubRulSeq": "2200000160929",
+      "articles": [
+        "제28조의2",
+        "제48조",
+        "제64조",
+        "제85조"
+      ],
+      "addenda": []
+    },
+    {
+      "id": "knou_rule",
+      "school": "knou",
+      "name": "한국방송통신대학교 학칙",
+      "schlPubRulSeq": "2200000160331",
+      "articles": [],
+      "addenda": [
+        "1315"
+      ]
+    }
+  ],
+  "delegations": [
+    {
+      "parent": "heaf",
+      "child": "heaf_decree",
+      "phrase": "대통령령",
+      "ref": "(?:(?<![가-힣」])법|「고등교육법」)\\s*제(\\d+)조(?:의(\\d+))?"
+    },
+    {
+      "parent": "heaf",
+      "child": "tuition_rule",
+      "phrase": "교육부령",
+      "ref": "(?:(?<![가-힣」])법|「고등교육법」)\\s*제(\\d+)조(?:의(\\d+))?"
+    }
+  ],
+  "manual_links": [
+    {
+      "from": "heaf_decree:014-02",
+      "paragraph_no": "1",
+      "phrase": "교육부장관이 정하는 기준",
+      "to": "remote_class_rule:004-00",
+      "basis": "law.go.kr 시행령 제14조의2 위임행정규칙 연결(lsiJoDelegatedAdmRul.do)"
+    }
+  ],
+  "article_fixes": [
+    {
+      "article_ids": [
+        "heaf:011-02",
+        "heaf:011-03",
+        "heaf:011-04"
+      ],
+      "exclude_editions": [
+        "2026-11-20",
+        "2026-12-03"
+      ],
+      "basis": "고등교육법 2026-11-20 판(법률 제21654호)·2026-12-03 판(법률 제21147호)은 법률 제21423호의 조 이동(제11조의2→제11조의3, 제11조의3→제11조의4, 2026. 9. 11. 시행) 전 번호 체계로 만들어져 있음. 같은 법률 부칙 제2조가 다른 법률의 '「고등교육법」 제11조의2' 인용을 '제11조의3'으로 고친 것과 맞춰, 이 세 조는 두 판을 후보에서 뺀다. 그 결과 법률 제21654호의 '평가 등' 조 개정(2026. 5. 19.)은 반영하지 못함"
+    },
+    {
+      "article_ids": [
+        "heaf:011-02"
+      ],
+      "absent_from": "2026-09-11",
+      "absent_to": "2027-03-10",
+      "basis": "법률 제21423호 부칙 제1조: 법은 2026. 9. 11. 시행(종전 제11조의2는 제11조의3으로 이동), 신설 제11조의2는 2027. 3. 11. 시행. 그 사이 제11조의2는 시행 중인 원문이 없음"
+    }
+  ]
+}

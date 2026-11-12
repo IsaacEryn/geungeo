@@ -1,0 +1,119 @@
+{
+  "_note": "Liner Search 응답(2026. 11. 13. 확인 호출)에서 제목·URL·호스트·날짜만 남김. description은 출처 이용 조건 확인 전이라 비움",
+  "query": "국가장학금 1차 신청 기간 교육부 보도자료",
+  "date_range": null,
+  "results": [
+    {
+      "title": "깜빡했다면 바로 지금! 국가장학금 1학기 2차 통합 신청",
+      "url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=294&boardSeq=105272&lev=0&m=0204",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "2026학년도 2학기 국가장학금 신청",
+      "url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=294&boardSeq=106238&lev=0&m=020402",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": "2026-05-21"
+    },
+    {
+      "title": "2026학년도 1학기 국가장학금 1차 신청 안내",
+      "url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=294&boardSeq=104563&lev=0&m=020402",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": "2025-11-20"
+    },
+    {
+      "title": "대학 국가장학금 신청 개시…8구간 이하 '셋째 이상'엔 전액 ...",
+      "url": "https://www.korea.kr/news/policyNewsView.do?newsId=148955036",
+      "hostname": "korea.kr",
+      "description": "",
+      "date": "2025-11-20"
+    },
+    {
+      "title": "한국장학재단",
+      "url": "https://www.kosaf.go.kr/",
+      "hostname": "kosaf.go.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "📢 2026-2학기 국가장학금 학생 신청 매뉴얼(홈페이지) 안내 ...",
+      "url": "https://www.instagram.com/p/DYgo4pOFEES/",
+      "hostname": "instagram.com",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "오늘부터 2026학년도 1학기 국가장학금 신청 시작",
+      "url": "https://www.edpl.co.kr/news/articleView.html?idxno=18761",
+      "hostname": "edpl.co.kr",
+      "description": "",
+      "date": "2025-11-20"
+    },
+    {
+      "title": "교육부 > 교육부 소식 > 보도·설명·반박 > 보도자료",
+      "url": "https://www.moe.go.kr/boardCnts/viewRenew.do?m=020402&s=moe&page=3&boardID=340&boardSeq=107243&lev=0&opType=N",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "등록금 부담은 줄이고 대학 생활을 더 가볍게 '26학년도 1 ...",
+      "url": "https://blog.naver.com/moeblog/224081905724",
+      "hostname": "blog.naver.com",
+      "description": "",
+      "date": "2025-11-20"
+    },
+    {
+      "title": "2026년 맞춤형 국가장학금 지원 기본계획",
+      "url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=294&boardSeq=105327&lev=0&searchType=null&statusYN=W&page=1&s=moe&m=020402&opType=N",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": "2026-02-10"
+    },
+    {
+      "title": "FAQ 한 국 장 학 재 단 국 가 장 학 지 원 부",
+      "url": "https://biz.jj.ac.kr/accounting/community/notice.do?mode=download&articleNo=45537&attachNo=10452",
+      "hostname": "biz.jj.ac.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "2026년 1학기 국가장학금 1차 신청 안내",
+      "url": "https://blog.naver.com/dreamcampus/224073253445",
+      "hostname": "blog.naver.com",
+      "description": "",
+      "date": "2025-11-19"
+    },
+    {
+      "title": "국가장학금 2차 신청 마감 7일 앞둬…한국장학재단 누리집서 ...",
+      "url": "https://www.kyosu.net/news/articleView.html?idxno=200302",
+      "hostname": "kyosu.net",
+      "description": "",
+      "date": "2026-03-10"
+    },
+    {
+      "title": "[장학] 2026년 1학기 국가장학금 1차 신청 안내(재학생 ...",
+      "url": "https://korean.knou.ac.kr/bbs/knou/51/774868/artclView.do",
+      "hostname": "korean.knou.ac.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "돌아온 국가장학금 신청 기간! 지원금과 범위도 확대됐어요",
+      "url": "https://www.korea.kr/news/reporterView.do?newsId=148944148",
+      "hostname": "korea.kr",
+      "description": "",
+      "date": "2025-06-10"
+    },
+    {
+      "title": "국가장학금 기준 및 신청 기간ㅣ대학생이라면 꼭 확인해 보세요",
+      "url": "https://kbthink.com/youth-guide/national-scholarship.html",
+      "hostname": "kbthink.com",
+      "description": "",
+      "date": "2026-02-20"
+    }
+  ]
+}

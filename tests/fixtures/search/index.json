@@ -1,0 +1,32 @@
+{
+  "7019b131076b09fa.json": {
+    "query": "2026학년도 대학 등록금 법정 인상 한도 교육부 공고",
+    "date_range": null,
+    "results": 16
+  },
+  "b46b90001da86260.json": {
+    "query": "고등교육법 시행령 대학 등록금에 관한 규칙 입법예고 2026",
+    "date_range": null,
+    "results": 13
+  },
+  "3c272b89758f1eed.json": {
+    "query": "국가장학금 1차 신청 기간 교육부 보도자료",
+    "date_range": null,
+    "results": 16
+  },
+  "c3677bdec92dc96c.json": {
+    "query": "대학 원격수업 운영 교육부 안내",
+    "date_range": null,
+    "results": 18
+  },
+  "23ad99882908f063.json": {
+    "query": "등록금 법정 인상 한도 site:moe.go.kr",
+    "date_range": null,
+    "results": 17
+  },
+  "fdd6313bea9f76b6.json": {
+    "query": "교육부 2026학년도 대학 등록금 인상률 산정방법 공고",
+    "date_range": "past_year",
+    "results": 19
+  }
+}
