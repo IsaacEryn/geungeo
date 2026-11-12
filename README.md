@@ -7,7 +7,9 @@
 
 ## 실행 (5분)
 
-필요: Node.js 20.9 이상(22 권장, `.nvmrc`), Liner API 키
+필요: Node.js 22.12 이상(`.nvmrc`), Liner API 키
+
+평가 실행기(`npm run eval`)가 쓰는 vite와 수집기(`npm run collect`)가 22.12 이상을 요구해 이 버전에 맞췄습니다.
 
 ```sh
 npm install
@@ -30,7 +32,7 @@ npm run dev             # http://localhost:3000
 
 접근성은 WCAG 2.2 AA와 KWCAG 2.2를 기준으로 만들었습니다. 키보드만으로 모두 쓸 수 있고, 진행 상황은 화면 읽기 프로그램에 상태 메시지로 알리며, 상태 배지는 색과 함께 글자·아이콘으로 구분합니다.
 
-개발 서버(`npm run dev`)에서는 파이프라인 없이 목 데이터로 화면을 볼 수 있습니다. 주소 끝에 `?demo=E22`처럼 예시 ID(E01·E03·E13·E14·E22·E25)를 붙이면 그 예시가 바로 뜨고, `?mock=1`이면 예시 버튼이 목 데이터로 답합니다. 목 데이터 화면에는 안내 띠가 붙고, 배포 빌드(`npm run build`)에서는 목 데이터로 답하지 않습니다.
+개발 서버(`npm run dev`)에서는 파이프라인 없이 목 데이터로 화면을 볼 수 있습니다. 주소 끝에 `?demo=E22`처럼 예시 ID(E01·E03·E13·E14·E22·E25)를 붙이면 그 예시가 바로 뜨고, `?mock=1`이면 예시 버튼이 목 데이터로 답합니다. 목 데이터 화면에는 안내 띠가 붙고, 배포 빌드(`npm run build`)에서는 목 데이터로 답하지 않고 목 데이터 파일도 묶음에 들어가지 않습니다.
 
 ## Liner API를 쓰는 곳
 
@@ -47,17 +49,26 @@ npm run dev             # http://localhost:3000
 
 ## 기존 부분과 새로 만든 부분
 
-- 기존 부분: `eval/questions.jsonl`의 평가 문항(2026. 11. 5. 작성한 평가 세트 초안을 11. 12. 이후 정리한 사본 — 문항·정답 요지·근거 조문), `data/synonyms.json`의 동의어(그 평가 문항에서 뽑음)
+- 기존 부분: 2026. 11. 5. 작성한 평가 세트에서 온 아래 파일들. 11. 12. 이후 이 저장소 형식에 맞게 옮기거나 줄였습니다.
+  - `eval/questions.jsonl`: 평가 문항(문항·정답 요지·근거 조문을 정리한 사본)
+  - `data/synonyms.json`: 동의어(그 평가 문항에서 뽑음)
+  - `components/mock/fixtures.ts`: 목 화면의 질문(평가 문항 그대로)과 결론·체크리스트(정답 요지를 줄임)
+  - `components/mock/quotes.json`: 목 화면의 조문 인용(평가 세트의 법제처 원문 캡처에서 옮김)
+  - `messages/ko.json`의 `examples`: 예시 질문 6개(평가 문항 그대로)
+  - `tests/support/laws.fixture.json`: 시험용 법령 조문(평가 세트의 원문 캡처에서 옮김, 학칙은 시험용 문구)
+  - `tests/live.test.ts`의 `QUESTIONS`: 실제 호출 확인용 질문 4개(평가 문항 그대로)
 - 새로 만든 부분: 그 밖의 코드·데이터 수집기·화면·README 전부(2026. 11. 12. 이후 작성, 커밋 이력 참고)
 
 ## 개발자용
 
 ```sh
 npm run lint
+npm run typecheck
 npm test          # vitest
 npm run build
 ```
 
+- `.npmrc`의 `legacy-peer-deps=true`를 지우면 `npm ci`가 실패합니다(잠금 파일이 이 설정에 맞춰 만들어져 있음)
 - 커밋 전 비밀 검사: 저장소를 받은 뒤 `git config core.hooksPath .githooks` 한 번. 훅이 `gitleaks git --staged --redact`를 돌리고, gitleaks가 없으면 커밋을 막습니다
 - 구조: 화면(`app/`, `components/`, `messages/`)은 `lib/pipeline/types.ts`의 타입만 압니다. 파이프라인은 `data/`를 `lib/cache/load.ts`를 거쳐서만 읽습니다
 
