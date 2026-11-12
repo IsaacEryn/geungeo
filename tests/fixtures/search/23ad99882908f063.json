@@ -1,0 +1,126 @@
+{
+  "_note": "Liner Search 응답(2026. 11. 13. 확인 호출)에서 제목·URL·호스트·날짜만 남김. description은 출처 이용 조건 확인 전이라 비움",
+  "query": "등록금 법정 인상 한도 site:moe.go.kr",
+  "date_range": null,
+  "results": [
+    {
+      "title": "2023학년도 대학(대학원) 등록금 인상률 산정방법 공고",
+      "url": "https://www.moe.go.kr/boardCnts/fileDown.do?m=020502&s=moe&fileSeq=277e9b4960e618e40fa811e23b0ca1c8",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "[교육부 12-27(수) 조간보도자료] 2024학년도 대학(대학원 ...",
+      "url": "https://www.moe.go.kr/upload/synap/202611/d3b8301da1f560fea7baa69fc79f48a0.view.xhtml?",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "2024학년도 등록금 인상률 법정 상한",
+      "url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=294&boardSeq=97550&lev=0&searchType=null&statusYN=W&page=1&s=moe&m=020402&opType=N",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": "2023-12-27"
+    },
+    {
+      "title": "★ 2월 9일",
+      "url": "https://moe.go.kr/upload/board/201412/58053/12-22(%EC%9B%94)%EC%A1%B0%EA%B0%84%EB%B3%B4%EB%8F%84%EC%9E%90%EB%A3%8C(2015%ED%95%99%EB%85%84%EB%8F%84%20%EB%93%B1%EB%A1%9D%EA%B8%88%20%EC%82%B0%EC%A0%95%EB%B0%A9%EC%8B%9D%20%EB%B3%B4%EB%8F%84%EC%9E%90%EB%A3%8C).hwp",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "2014학년도 학자금대출한도 설정방안",
+      "url": "https://www.moe.go.kr/boardCnts/fileDown.do?m=040103&s=moe&fileSeq=552f215b5efc3c8db2dddfe5b3fa4fb5",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "목 차",
+      "url": "https://www.moe.go.kr/boardCnts/fileDown.do?m=0303&s=moe&fileSeq=c236094e64da182155af6f52ef505c12",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "교육부",
+      "url": "https://www.moe.go.kr/",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "민원 질의・회신 사례집",
+      "url": "https://www.moe.go.kr/upload/filedown/2018moeqnaexample.pdf",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": "2018-12-07"
+    },
+    {
+      "title": "2023년 전문대학 혁신지원사업",
+      "url": "https://www.moe.go.kr/boardCnts/fileDown.do?m=020402&s=moe&fileSeq=66906fee1545f9d41f3d50f472efa1d8",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": "2023-02-22"
+    },
+    {
+      "title": "3월! 2026년 초.중.고 학생 교육급여와 교육비 지원 신청하세요!",
+      "url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=294&boardSeq=105459&lev=0&m=020402&s=moe",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": "2026-03-02"
+    },
+    {
+      "title": "법령 > 사전정보공표 > 관할기관 감사정보",
+      "url": "https://www.moe.go.kr/boardCnts/viewRenew.do?m=041202&s=moe&page=73&boardID=339&boardSeq=58053&lev=0&opType=N",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "2021학년도 국립대학회계 예산집행 기본지침",
+      "url": "https://www.moe.go.kr/ko/board/download.do?boardSeq=174344",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "지방교육자치제도 발전을 위한",
+      "url": "https://www.moe.go.kr/ko/board/download.do?boardSeq=161705",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": "2018-01-01"
+    },
+    {
+      "title": "2020학년도 1학기 학자금 대출 기본계획",
+      "url": "https://www.moe.go.kr/boardCnts/fileDown.do?m=0303&s=moe&fileSeq=e15f5feb0f2ffc868819920c0b8abe4d",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": "2020-01-08"
+    },
+    {
+      "title": "2022학년도 국립대학회계 예산집행 기본지침",
+      "url": "https://www.moe.go.kr/boardCnts/fileDown.do?m=0303&s=moe&fileSeq=437f3ba4c3ca116b36c803d644738a42",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "질의․ 회신 사례집",
+      "url": "https://www.moe.go.kr/upload/filedown/2011mestqnaexample2.pdf",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "2주기 대학의 평생교육체제 지원 사업 (LiFE 2.0) 기본계획(안)",
+      "url": "https://www.moe.go.kr/boardCnts/fileDown.do?m=020502&s=moe&fileSeq=4874e562d352408028ab430747736849",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": null
+    }
+  ]
+}

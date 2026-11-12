@@ -1,0 +1,133 @@
+{
+  "_note": "Liner Search 응답(2026. 11. 13. 확인 호출)에서 제목·URL·호스트·날짜만 남김. description은 출처 이용 조건 확인 전이라 비움",
+  "query": "대학 원격수업 운영 교육부 안내",
+  "date_range": null,
+  "results": [
+    {
+      "title": "교육부 > 정책 > 대학(원)교육",
+      "url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=337&boardSeq=92611&lev=0&searchType=null&statusYN=W&page=1&s=moe&m=0303&opType=N",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": "2022-09-20"
+    },
+    {
+      "title": "행정규칙 > 대학등의 원격수업 운영에 관한 훈령",
+      "url": "https://www.law.go.kr/LSW//admRulInfoP.do?admRulSeq=2100000232140&chrClsCd=010201",
+      "hostname": "law.go.kr",
+      "description": "",
+      "date": "2023-12-05"
+    },
+    {
+      "title": "대학 원격교육 콘텐츠 개발 및 운영 가이드 연구",
+      "url": "https://keris.or.kr/common/fileDownload.do?fileKey=45b0a856a96a775df7c3e440b953a03a&dwlTy=pblcte",
+      "hostname": "keris.or.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "교육부 > 정책 > 대학(원)교육",
+      "url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=337&lev=0&statusYN=C&s=moe&m=0303&opType=N&boardSeq=75423",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "법령 > 법령정보 > 입법·행정예고",
+      "url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=141&boardSeq=92690&lev=0&searchType=S&statusYN=W&page=2&s=moe&m=040401&opType=",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "교육부 체계적인 원격수업을 위한 운영기준안 PDF",
+      "url": "https://m.blog.naver.com/PostView.naver?blogId=erke2000&logNo=221876815847&categoryNo=64&proxyReferer=&noTrackingCode=true",
+      "hostname": "m.blog.naver.com",
+      "description": "",
+      "date": "2020-03-27"
+    },
+    {
+      "title": "지침(가이드라인) | 한경국립대학교 원격교육지원센터",
+      "url": "https://cedu.hknu.ac.kr/cedu/intro/board.do",
+      "hostname": "cedu.hknu.ac.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "2022년도 대학원격교육지원센터 운영 사업 기본계획",
+      "url": "https://www.moe.go.kr/boardCnts/fileDown.do?m=0303&s=moe&fileSeq=4023ebfa6f2170d8c33f49cfbe21f045",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "일반대학의 원격수업 운영 기준",
+      "url": "https://www.korea.kr/archive/expDocView.do?docId=38300",
+      "hostname": "korea.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "교육부 > 정책 > 대학(원)교육",
+      "url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=337&boardSeq=91112&lev=0&searchType=null&statusYN=W&page=1&s=moe&m=0303&opType=N",
+      "hostname": "moe.go.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "한국체육대학교 원격수업 운영지침",
+      "url": "https://www.knsu.ac.kr/knsu/info/guideline.do?mode=download&articleNo=53729&attachNo=118276",
+      "hostname": "knsu.ac.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "대학등의 원격수업 운영에 관한 훈령",
+      "url": "https://law.go.kr/LSW/admRulLsInfoP.do?admRulSeq=2100000208445",
+      "hostname": "law.go.kr",
+      "description": "",
+      "date": "2022-03-25"
+    },
+    {
+      "title": "대학교, 대면 or 비대면? 궁금한 사람들 모여라!",
+      "url": "https://m.blog.naver.com/moeblog/222680523417",
+      "hostname": "m.blog.naver.com",
+      "description": "",
+      "date": "2022-03-23"
+    },
+    {
+      "title": "부산대학교 원격수업운영지침",
+      "url": "https://www.pusan.ac.kr/rule/ajx_json/UploadMgr/downloadRun.do?qcode=UnVsZU1nciwzNzI0NDcsWQ==",
+      "hostname": "pusan.ac.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "부경대학교 원격수업 운영 지침",
+      "url": "https://www.pknu.ac.kr/rule/ruleBoardDownload.do?no=68045",
+      "hostname": "pknu.ac.kr",
+      "description": "",
+      "date": null
+    },
+    {
+      "title": "2026학년도 1학기 수업 운영 지침",
+      "url": "https://www.shinhan.ac.kr/bbs/graduate/1576/97103/download.do",
+      "hostname": "shinhan.ac.kr",
+      "description": "",
+      "date": "2026-02-02"
+    },
+    {
+      "title": "비대면 수업 진행에 따른 유의사항 안내(저작권, 보안이슈 등)",
+      "url": "https://gses.snu.ac.kr/news/notice/notice?md=v&bbsidx=4021",
+      "hostname": "gses.snu.ac.kr",
+      "description": "",
+      "date": "2020-04-08"
+    },
+    {
+      "title": "행정규칙 > 일반대학의 원격수업 운영에 관한 훈령",
+      "url": "https://www.law.go.kr/LSW/admRulInfoP.do?admRulSeq=2100000198212&lsId=76256&chrClsCd=010202",
+      "hostname": "law.go.kr",
+      "description": "",
+      "date": "2021-02-15"
+    }
+  ]
+}
