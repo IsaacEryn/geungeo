@@ -1,5 +1,5 @@
 // POST /api/ask: 질문 → 파이프라인 → 단계 이벤트를 NDJSON(한 줄에 이벤트 하나)으로 흘려보내고 마지막 줄에 result를 보낸다.
-// Accept: application/json이면 스트리밍 없이 결과 JSON 하나만 돌려준다(평가·curl용).
+// Accept가 application/json뿐이면(x-ndjson 없이) 스트리밍 없이 결과 JSON 하나만 돌려준다(평가·curl용).
 // 키는 서버 환경변수에서만 읽고, 오류는 정해진 한국어 문구만 내려보낸다(설계 5-3).
 import { runPipeline } from "@/lib/pipeline/run";
 import { toPipelineError } from "@/lib/pipeline/errors";
@@ -44,7 +44,9 @@ export async function POST(request: Request): Promise<Response> {
   const ask = pickRequest(body);
   if (!ask) return errorJson("bad_request", "질문을 입력해 주세요.");
 
-  const wantsJson = (request.headers.get("accept") ?? "").includes("application/json");
+  // 화면(ask-client)은 "application/x-ndjson, application/json"을 함께 보낸다. NDJSON을 받을 수 있으면 스트리밍을 우선한다
+  const accept = request.headers.get("accept") ?? "";
+  const wantsJson = accept.includes("application/json") && !accept.includes("application/x-ndjson");
   if (wantsJson) {
     try {
       const result = await runPipeline(ask, { signal: request.signal });

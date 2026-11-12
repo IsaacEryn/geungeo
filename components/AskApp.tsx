@@ -119,7 +119,8 @@ export function AskApp() {
       if (error instanceof AskError) {
         const key = error.code === "mock_unknown_question" ? "mockUnknownQuestion" : error.code;
         setMock(error.code === "mock_unknown_question");
-        showError(messages.errors[key]);
+        // 서버가 보낸 사용자용 문구가 있으면 그것을(예: 질문 길이), 없으면 코드별 기본 문구
+        showError(error.message && error.message !== error.code ? error.message : messages.errors[key]);
       } else {
         showError(messages.errors.internal);
       }

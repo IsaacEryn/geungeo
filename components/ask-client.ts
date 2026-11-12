@@ -4,7 +4,8 @@
 //   POST /api/ask, 본문 AskRequest(JSON)
 //   응답 A(스트리밍, 권장): Content-Type application/x-ndjson — 한 줄에 StageEvent 하나.
 //     stage_start/stage_end를 차례로 보내고 마지막 줄은 {type:"result"} 또는 {type:"error"}.
-//   응답 B(한 번에): Content-Type application/json — AskResult 그대로, 또는 {error: PipelineErrorCode}.
+//   응답 B(한 번에): Content-Type application/json — AskResult 그대로.
+//   오류(JSON): app/api/ask는 {type:"error", code, message}(StageEvent 꼴)로 보낸다. 예전 꼴 {error: code}도 받는다.
 //
 // 목 데이터: 개발 서버(NODE_ENV !== "production")에서만 쓴다.
 //   - 주소에 ?mock=1이 있으면 처음부터 목 데이터로 답한다.
@@ -77,7 +78,13 @@ export async function ask(
 
   const contentType = response.headers.get("content-type") ?? "";
   if (contentType.includes("application/x-ndjson") && response.body) {
-    await readNdjson(response.body, onEvent);
+    let finished = false;
+    await readNdjson(response.body, (event) => {
+      if (event.type === "result" || event.type === "error") finished = true;
+      onEvent(event);
+    });
+    // 결과·오류 줄 없이 끊긴 스트림(서버 중단 등)은 오류로 알린다. 그러지 않으면 화면이 '진행 중'에 머문다
+    if (!finished && !signal.aborted) throw new AskError("internal");
     return { mock: false };
   }
 
@@ -87,12 +94,17 @@ export async function ask(
   } catch {
     throw new AskError("internal");
   }
+  if (isErrorEvent(payload)) throw new AskError(payload.code, payload.message);
   if (!response.ok || isErrorPayload(payload)) {
     const code = isErrorPayload(payload) ? payload.error : "internal";
     throw new AskError(code);
   }
   onEvent({ type: "result", result: payload as AskResult });
   return { mock: false };
+}
+
+function isErrorEvent(value: unknown): value is Extract<StageEvent, { type: "error" }> {
+  return typeof value === "object" && value !== null && (value as { type?: unknown }).type === "error" && "code" in value;
 }
 
 function isErrorPayload(value: unknown): value is { error: PipelineErrorCode } {
