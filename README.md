@@ -1,0 +1,56 @@
+# 근거(geungeo) — 대학 행정 근거 찾기 에이전트
+
+> 작업 중입니다. 아래에서 '(작업 중)'으로 표시한 기능은 아직 동작하지 않습니다.
+
+업무 중 "무슨 규정이냐"와 새 업무 기안 때 필요한 근거 조항·절차·선행 요건을
+시행일·출처와 함께 찾아 주고, 근거가 없으면 '근거 없음'이라고 답합니다.
+
+## 실행 (5분)
+
+필요: Node.js 20.9 이상(22 권장, `.nvmrc`), Liner API 키
+
+```sh
+npm install
+cp .env.example .env    # .env의 LINER_API_KEY= 뒤에 발급받은 키를 넣습니다
+npm run dev             # http://localhost:3000
+```
+
+(선택, 작업 중) `npm run eval` — 평가 문항 28개를 돌려 통과율을 출력합니다(`.env`를 같은 방식으로 읽음).
+
+키는 서버 쪽에서만 읽고 브라우저로 보내지 않습니다. `.env`는 커밋되지 않습니다.
+
+## Liner API를 쓰는 곳 (작업 중)
+
+- Liner Search(`search/web`, `include_knowledge: false`): 교육부 공고·보도, 입법예고 등 법령 데이터베이스 밖의 근거와 최근 변경 신호
+- Liner Router(기본 모델 `liner-mark-1.3`): 질문 분석(장면 분류·검색어, `LINER_MODEL_ANALYZE`), 조문·웹 근거 대조와 답 작성·근거 없음 판정(`LINER_MODEL_ANSWER`), 평가 보조 채점(`LINER_MODEL_JUDGE`)
+- (선택) 단계별 값을 다른 라우터(`liner-gpt-router`·`liner-claude-router`)로 바꾸면 같은 흐름으로 실행됩니다. 모델별 평가 결과는 비교 실험 뒤 채웁니다
+
+## 데이터 (작업 중)
+
+- `data/`: 법제처 국가법령정보센터에서 수집한 법령·행정규칙 조문(수집일은 `data/manifest.json`). 형식 예시는 `data/examples/`
+- 출처 표기는 `NOTICE.md`. 학칙은 대학명을 먼저 적습니다
+- 데이터 갱신은 개발자용 `scripts/collect/`(국가법령정보센터 Open API 키 필요). 심사 실행에는 필요 없습니다
+
+## 기존 부분과 새로 만든 부분
+
+- 기존 부분: `eval/questions.jsonl`의 평가 문항(2026. 11. 5. 작성한 평가 세트 초안을 11. 12. 이후 정리한 사본 — 문항·정답 요지·근거 조문), `data/synonyms.json`의 동의어(그 평가 문항에서 뽑음) (작업 중)
+- 새로 만든 부분: 그 밖의 코드·데이터 수집기·화면·README 전부(2026. 11. 12. 이후 작성, 커밋 이력 참고)
+
+## 개발자용
+
+```sh
+npm run lint
+npm test          # vitest
+npm run build
+```
+
+- 커밋 전 비밀 검사: 저장소를 받은 뒤 `git config core.hooksPath .githooks` 한 번. 훅이 `gitleaks git --staged --redact`를 돌리고, gitleaks가 없으면 커밋을 막습니다
+- 구조: 화면(`app/`, `components/`, `messages/`)은 `lib/pipeline/types.ts`의 타입만 압니다. 파이프라인은 `data/`를 `lib/cache/load.ts`를 거쳐서만 읽습니다
+
+## 한계
+
+법률 자문이 아닙니다. 수집일 이후 개정은 변경 신호로만 알려 줍니다.
+
+## 라이선스
+
+코드는 MIT(`LICENSE`). 법령 자료의 출처는 `NOTICE.md`.

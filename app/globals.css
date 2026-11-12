@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+/* 색 토큰: 대비는 화면 작업자가 검증해 채운다(텍스트 4.5:1, 배지·포커스 링 3:1 이상). */
+:root {
+  --color-bg: #ffffff;
+  --color-fg: #1a1a1a;
+  --color-muted: #4a4a4a;
+  --color-focus: #1d4ed8;
+}
+
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-fg: var(--color-fg);
+  --color-muted: var(--color-muted);
+  --color-focus: var(--color-focus);
+  /* 실행 때 외부 글꼴을 받지 않도록 시스템 글꼴 스택만 쓴다. */
+  --font-sans: system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+}
+
+/* 포커스 링은 지우지 않는다(WCAG 2.4.7). */
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}

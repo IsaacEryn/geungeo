@@ -1,0 +1,51 @@
+# 비밀
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# 빌드·의존성
+node_modules/
+.next/
+out/
+dist/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# 실행 산물
+eval/runs/
+logs/
+*.log
+
+# 비밀(키 파일 이름이 liner.env처럼 .env로 끝나는 경우 — .env.* 로는 안 잡힘)
+*.env
+
+# 개인·작업 문서(실수로 복사돼도 안 올라가게)
+.private/
+.claude/
+.vercel/
+NOTES.md
+00__운영/
+1_공고자료/
+2_자료조사/
+3_작업자료/
+4_제출자료/
+9_시험/
+9_임시파일/
+
+# 원문캡처·공고 캡처(저작권 문제 화면, 신청 폼 개인정보 동의 화면 — 폴더 밖으로 복사돼도)
+원문캡처_*/
+*캡처*
+*신청폼*.png
+*참가안내페이지*
+
+# 점검·시험 산물
+gitleaks-report*.json
+결과_*.json
+
+# OS·편집기
+.DS_Store
+.vscode/
+.idea/
