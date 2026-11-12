@@ -6,7 +6,8 @@ import { buildTestCache } from "./support/cache";
 import { createLinerMock } from "./support/liner-mock";
 import { E22_QUESTION, e22Handler } from "./support/scenarios";
 
-vi.mock("@/lib/cache/load", () => ({
+vi.mock("@/lib/cache/load", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/cache/load")>()),
   loadCache: async () => buildTestCache(),
   loadSchoolRules: async () => null,
 }));

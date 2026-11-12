@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { loadCache, type LawCache } from "@/lib/cache/load";
 import { ruleBasedAnalysis } from "@/lib/pipeline/analyze";
-import { collectFromCache, schoolRulesInCache } from "@/lib/pipeline/collect";
+import { collectFromCache, SCHOOL_RULE_SLOT, schoolRulesInCache } from "@/lib/pipeline/collect";
 import { ArticleIndex, expandSynonyms } from "@/lib/cache/index";
 import { runPipeline } from "@/lib/pipeline/run";
 import type { Manifest } from "@/lib/cache/schema";
@@ -45,10 +45,9 @@ describe("학칙 문항 → 캐시 후보", () => {
     });
   }
 
-  // 파이프라인 ② 후보(법령과 학칙이 상위 5개를 나눠 씀)까지: 지금 E08·E21은 법령 조 점수에 밀려 학칙 조가 빠진다.
-  // 학칙 색인은 문서 7개짜리라 BM25 점수가 법령 색인과 비교되지 않기 때문이다(학교를 지정하면 학칙 몫을 따로 두는 식의 보정이 필요).
-  const CUT_BY_SHARED_LIMIT = ["E08", "E21"];
-  for (const id of ["E05", "E07", "E11", "E17", "E18"]) {
+  // 파이프라인 ② 후보: 학교를 지정하면 학칙 색인 상위 SCHOOL_RULE_SLOT개를 법령 상위 5개와 따로 넣는다.
+  // 학칙 색인은 문서 몇 개짜리라 BM25 점수가 법령 색인과 비교되지 않아, 한 줄로 세우면 E08·E21의 학칙 조가 밀려났다.
+  for (const id of ["E05", "E07", "E08", "E11", "E17", "E18", "E21"]) {
     it(`${id}: 정답 학칙 조가 ② 후보에 든다`, () => {
       const q = questions.find((x) => x.id === id)!;
       const schoolRules = schoolRulesInCache(cache, q.school!);
@@ -57,14 +56,15 @@ describe("학칙 문항 → 캐시 후보", () => {
       for (const want of q.school_article_ids) expect(ids.has(want), `${want} 후보 ${[...ids].join(",")}`).toBe(true);
     });
   }
-  it("E08·E21은 ② 후보에서 학칙 조가 빠지는 알려진 한계(위 주석)", () => {
-    for (const id of CUT_BY_SHARED_LIMIT) {
-      const q = questions.find((x) => x.id === id)!;
-      const out = collectFromCache({ question: q.question, analysis: ruleBasedAnalysis(q.question, cache.synonyms), asOf: "2026-11-05", cache, schoolRules: schoolRulesInCache(cache, q.school!) });
-      const ids = new Set(out.candidates.map((c) => c.id.split("@")[0]));
-      // 보정이 들어가면 이 시험을 위 목록으로 옮긴다
-      expect(q.school_article_ids.every((w) => ids.has(w))).toBe(false);
-    }
+
+  it("학칙 몫은 법령 후보 수를 줄이지 않는다(검색으로 고른 법령 조는 학교를 지정해도 그대로)", () => {
+    const q = questions.find((x) => x.id === "E21")!;
+    const analysis = ruleBasedAnalysis(q.question, cache.synonyms);
+    const without = collectFromCache({ question: q.question, analysis, asOf: "2026-11-05", cache, schoolRules: null });
+    const withSchool = collectFromCache({ question: q.question, analysis, asOf: "2026-11-05", cache, schoolRules: schoolRulesInCache(cache, "snu") });
+    const searched = (o: typeof without) => o.candidates.filter((c) => c.via !== "delegation" && c.grade === "L1").map((c) => c.id);
+    expect(searched(withSchool)).toEqual(searched(without));
+    expect(withSchool.candidates.filter((c) => c.grade === "L2" && c.via !== "delegation").length).toBeLessThanOrEqual(SCHOOL_RULE_SLOT);
   });
 
   it("E13(화면 예시 질문, 서울대 지정): 제113조가 후보에 든다", () => {

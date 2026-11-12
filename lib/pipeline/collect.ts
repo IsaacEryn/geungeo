@@ -1,14 +1,15 @@
 // ② 근거 수집(설계 2-2). ②-a 캐시 조문 검색 → ②-b 공고·안내 검색과 ②-c 변경 신호를 병렬로.
-import type { LawCache } from "@/lib/cache/load";
+import { checkedNotices, type LawCache, type NoticeEntry } from "@/lib/cache/load";
 import type { LawArticle, LawDocument, SchoolId } from "@/lib/cache/schema";
 import { ArticleIndex, expandSynonyms, type SearchHit } from "@/lib/cache/index";
-import { followDelegations } from "@/lib/cache/links";
+import { followDelegations, followUpward } from "@/lib/cache/links";
 import { resolveVersions } from "@/lib/cache/status";
 import { duplicatesOfOriginals, gradeWebResult } from "@/lib/grade";
 import { SEARCH_COST_USD } from "@/lib/liner/cost";
 import { LinerError, type LinerCallOptions } from "@/lib/liner/client";
 import { searchWeb, type RawSearchResult, type SearchQuery } from "@/lib/liner/search";
 import type { ArticleCandidate, ChangeSignal, QuestionAnalysis, TraceCall, WebResult } from "./types";
+import { bigrams } from "./text";
 
 // ───────── ②-a 캐시 ─────────
 
@@ -64,44 +65,61 @@ export function versionTitle(text: string, fallback: string): string {
   return m ? m[1] : fallback;
 }
 
+/** 학교를 지정했을 때 학칙 색인에서 따로 넣는 조 수(법령 상위 조와 점수를 겨루지 않게) */
+export const SCHOOL_RULE_SLOT = 3;
+
+type Ranked = SearchHit & { hitsCount: number };
+
+/** 여러 검색어 결과를 합쳐 순위를 매기고, 상위 점수의 25% 미만은 버린 뒤 limit개 */
+function rankHits(scores: Map<string, Ranked>, limit: number): { chosen: Ranked[]; top: number } {
+  // 여러 검색어에서 함께 나온 조를 조금 올린다
+  const ranked = [...scores.values()]
+    .map((h) => ({ ...h, score: h.score * (1 + 0.1 * Math.min(h.hitsCount - 1, 3)) }))
+    .sort((a, b) => b.score - a.score);
+  const top = ranked.find((h) => h.via === "search")?.score ?? (ranked.length ? ranked[0].score : 0);
+  // 상위 점수의 25% 미만은 버린다(관계 적은 조가 프롬프트를 채우지 않게)
+  const floor = top * 0.25;
+  return { chosen: ranked.filter((h) => h.via === "direct" || h.score >= floor).slice(0, limit), top };
+}
+
 export function collectFromCache(input: CacheCollectInput): CacheCollectOutcome {
   const started = Date.now();
   const { cache, analysis, asOf } = input;
   const lawIndex = lawIndexFor(cache);
   const schoolIndex = input.schoolRules ? new ArticleIndex([input.schoolRules]) : null;
-  const lookup = (id: string): { article: LawArticle; law: LawDocument } | undefined =>
+  const lookupRef = (id: string): { article: LawArticle; law: LawDocument } | undefined =>
     lawIndex.byId.get(id) ?? schoolIndex?.byId.get(id);
 
   const queries = [...new Set([input.question, ...analysis.queries_cache])];
-  const scores = new Map<string, SearchHit & { hitsCount: number }>();
-  const add = (hit: SearchHit) => {
-    const prev = scores.get(hit.id);
-    if (!prev) scores.set(hit.id, { ...hit, hitsCount: 1 });
-    else {
-      prev.score = Math.max(prev.score, hit.score);
-      prev.hitsCount += 1;
-      if (hit.via === "direct") prev.via = "direct";
-    }
-  };
-  for (const index of [lawIndex, schoolIndex]) {
-    if (!index) continue;
+  const searchIndex = (index: ArticleIndex): Map<string, Ranked> => {
+    const scores = new Map<string, Ranked>();
+    const add = (hit: SearchHit) => {
+      const prev = scores.get(hit.id);
+      if (!prev) scores.set(hit.id, { ...hit, hitsCount: 1 });
+      else {
+        prev.score = Math.max(prev.score, hit.score);
+        prev.hitsCount += 1;
+        if (hit.via === "direct") prev.via = "direct";
+      }
+    };
     for (const hit of index.direct(input.question)) add(hit);
     for (const q of queries) {
       const expanded = expandSynonyms(q, cache.synonyms);
       for (const hit of index.search(expanded, { limit: 20, boost: analysis.concepts })) add(hit);
     }
-  }
-  // 여러 검색어에서 함께 나온 조를 조금 올린다
-  const ranked = [...scores.values()]
-    .map((h) => ({ ...h, score: h.score * (1 + 0.1 * Math.min(h.hitsCount - 1, 3)) }))
-    .sort((a, b) => b.score - a.score);
-  const topScore = ranked.find((h) => h.via === "search")?.score ?? (ranked.length ? ranked[0].score : 0);
-  // 상위 점수의 25% 미만은 버린다(관계 적은 조가 프롬프트를 채우지 않게)
-  const floor = topScore * 0.25;
-  const chosen = ranked.filter((h) => h.via === "direct" || h.score >= floor).slice(0, input.limit ?? DEFAULT_CANDIDATE_LIMIT);
+    return scores;
+  };
 
-  const startArticles = chosen.map((h) => lookup(h.id)?.article).filter((a): a is LawArticle => Boolean(a));
-  const delegation = followDelegations(startArticles.slice(0, 5), (id) => lookup(id)?.article, {
+  // 법령 상위 limit개와 학칙 상위 SCHOOL_RULE_SLOT개를 따로 고른다.
+  // 학칙 색인은 조 몇 개짜리라 BM25 점수가 법령 색인과 견줄 수 없어서, 한 줄로 세우면 학칙 조가 밀려난다.
+  const law = rankHits(searchIndex(lawIndex), input.limit ?? DEFAULT_CANDIDATE_LIMIT);
+  const school = schoolIndex ? rankHits(searchIndex(schoolIndex), SCHOOL_RULE_SLOT) : { chosen: [], top: 0 };
+  const chosen = [...law.chosen, ...school.chosen];
+  const topScore = Math.max(law.top, school.top);
+
+  const lawStart = law.chosen.map((h) => lookupRef(h.id)?.article).filter((a): a is LawArticle => Boolean(a));
+  const schoolStart = school.chosen.map((h) => lookupRef(h.id)?.article).filter((a): a is LawArticle => Boolean(a));
+  const delegation = followDelegations([...lawStart.slice(0, 5), ...schoolStart], (id) => lookupRef(id)?.article, {
     schoolRules: input.schoolRules,
     schoolIndex,
   });
@@ -115,6 +133,22 @@ export function collectFromCache(input: CacheCollectInput): CacheCollectOutcome 
     if (!entries.some((e) => e.id === id)) entries.push({ id, score: 0, via: "delegation" });
   }
 
+  // 위로 거슬러 올라가기: 학칙·훈령·시행령 조에서 그 조에 맡긴 상위 조로
+  // 학칙 쪽은 검색으로 고른 조에서만 올라간다(법령 위임 문구로 끌려온 학칙 조는 주제가 느슨하다)
+  const upwardStart = entries
+    .filter((e) => !delegation.schoolArticles.has(e.id))
+    .map((e) => lookupRef(e.id))
+    .filter((r): r is { article: LawArticle; law: LawDocument } => Boolean(r));
+  const upward = followUpward(upwardStart, lawIndex.byId, { exclude: new Set(entries.map((e) => e.id)) });
+  for (const id of [...upward.articles.keys(), ...upward.scope.keys()]) {
+    if (!entries.some((e) => e.id === id)) entries.push({ id, score: 0, via: "delegation" });
+  }
+  const entryIds = new Set(entries.map((e) => e.id));
+  const upperOf = (id: string) =>
+    upward.relations.filter((r) => r.from === id && entryIds.has(r.upper)).map((r) => ({ id: r.upper, phrase: r.phrase, quote: r.quote }));
+  const lowerOf = (id: string) => [...new Set(upward.relations.filter((r) => r.upper === id && entryIds.has(r.from)).map((r) => r.from))];
+  const lookup = lookupRef;
+
   const candidates: ArticleCandidate[] = [];
   for (const entry of entries) {
     const found = lookup(entry.id);
@@ -123,6 +157,7 @@ export function collectFromCache(input: CacheCollectInput): CacheCollectOutcome 
     const versions = resolveVersions(article, asOf);
     const hasCurrent = versions.some((v) => v.status === "in_force");
     for (const { version, status } of versions) {
+      const amended = article.versions.some((v) => v.effective_from < version.effective_from);
       // 시행 중인 판이 따로 있으면 예정 판은 "<조 ID>@<시행일>"로 구분한다(같은 조의 두 판을 따로 인용하게)
       const id = hasCurrent && status === "not_yet" ? `${article.id}@${version.effective_from}` : article.id;
       candidates.push({
@@ -141,6 +176,11 @@ export function collectFromCache(input: CacheCollectInput): CacheCollectOutcome 
         score: Math.round(entry.score * 100) / 100,
         via: entry.via,
         delegated_to_school_rule: delegation.schoolRuleDelegated.has(article.id),
+        ...(article.excerpt?.note ? { excerpt_note: article.excerpt.note } : {}),
+        ...(amended ? { amended } : {}),
+        ...(upperOf(article.id).length ? { upper: upperOf(article.id) } : {}),
+        ...(lowerOf(article.id).length ? { upper_of: lowerOf(article.id) } : {}),
+        ...(upward.scope.has(article.id) ? { scope_of: upward.scope.get(article.id) } : {}),
       });
     }
   }
@@ -155,7 +195,8 @@ export function collectFromCache(input: CacheCollectInput): CacheCollectOutcome 
       api: "cache",
       query: queries.slice(1).join(" | ") || queries[0],
       duration_ms: Date.now() - started,
-      note: `조 ${chosen.length}개, 위임 ${delegation.articles.size + delegation.schoolArticles.size}개`,
+      note: `조 ${chosen.length}개(학칙 ${school.chosen.length}), 위임 ${delegation.articles.size + delegation.schoolArticles.size}개, 상위 ${upward.articles.size + upward.scope.size}개`,
+      candidate_ids: candidates.map((c) => c.id),
     },
   };
 }
@@ -318,6 +359,21 @@ function mentionsLaw(lawName: string, text: string): boolean {
 }
 
 /**
+ * 신호가 다루는 법령 이름. 제목이 낫표로 법령 이름을 적었으면(「고등교육법 시행령」) 그 가운데 검색한 법령과 같은 것,
+ * 없으면 검색한 법령 이름을 품은 것(고등교육법으로 찾았는데 「고등교육법 시행령」 입법예고면 시행령)을 돌려준다.
+ * 낫표가 없으면 제목·설명에 법령 이름 전체가 있을 때 그 이름. 관계없으면 null
+ */
+export function signalLawName(lawName: string, title: string, description: string): string | null {
+  const flat = (x: string) => x.replace(/\s+/g, "");
+  const quoted = [...title.matchAll(/[「｢『]([^」｣』]+)[」｣』]/g)].map((m) => m[1].trim());
+  if (quoted.length) {
+    if (quoted.some((q) => flat(q) === flat(lawName))) return lawName;
+    return quoted.find((q) => flat(q).includes(flat(lawName))) ?? null;
+  }
+  return mentionsLaw(lawName, `${title} ${description}`) ? lawName : null;
+}
+
+/**
  * ②-b·②-c 결과를 합쳐 요청 안 ID(web:1…)를 매기고, W1 원문이 있는 재게시본은 뺀다.
  * 목록·메뉴 페이지는 결과에 남기되 excluded 표시(처리 과정용, 프롬프트·카드에는 안 씀).
  */
@@ -358,8 +414,9 @@ export function mergeWeb(
       ...(p.outcome.excluded ? { excluded: p.outcome.excluded } : {}),
     };
     results.push(result);
-    if (p.signalLaw && !p.outcome.excluded && mentionsLaw(p.signalLaw, `${p.raw.title} ${p.raw.description}`)) {
-      const kind = signalKind(p.raw.title, p.raw.description, p.signalLaw);
+    const signalLaw = p.signalLaw ? signalLawName(p.signalLaw, p.raw.title, p.raw.description) : null;
+    if (signalLaw && !p.outcome.excluded) {
+      const kind = signalKind(p.raw.title, p.raw.description, signalLaw);
       if (kind === "other") return;
       out.push({
         web_id: result.id,
@@ -368,11 +425,155 @@ export function mergeWeb(
         hostname: result.hostname,
         date: result.date,
         kind,
-        related_law: p.signalLaw,
+        related_law: signalLaw,
         opinion_deadline: kind === "legislative_notice" ? parseOpinionDeadline(p.raw.description, result.date) : undefined,
         after_collection: Boolean(result.date && collectedDate && result.date > collectedDate),
       });
     }
   });
   return { results, signals: out.slice(0, 6) };
+}
+
+// ───────── 공고 캐시(data/notices.json) ─────────
+// 교육부 공고·안내 가운데 원문에서 수치를 확인한 것(checked)과, 찾았지만 수치를 확인하지 못한 것(needs_source_check)을
+// 웹 근거 단계에 "notice:N"으로 붙인다. 확인 못 한 공고는 숫자 없이 "원문 확인 필요"로만 보낸다.
+// 입법예고 공고는 후보 조의 법령 이름이 제목에 있으면 변경 신호로도 올린다.
+
+/** 질문이 가리키는 학년도(없으면 undefined). "내년"은 기준일 다음 해 */
+export function targetYear(question: string, asOf: string): number | undefined {
+  const m = question.match(/(20\d{2})\s*학년도/) ?? question.match(/(20\d{2})\s*년/);
+  if (m) return Number(m[1]);
+  const y = Number(asOf.slice(0, 4));
+  if (/내년|다음\s*학년도|다음\s*해/.test(question)) return y + 1;
+  if (/올해|금년|이번\s*학년도/.test(question)) return y;
+  return undefined;
+}
+
+/** 질문과 공고가 겹치는 정도(질문 2-gram 가운데 공고 제목·수치 이름에 있는 비율) */
+export function noticeRelevance(question: string, concepts: string[], notice: NoticeEntry): number {
+  const q = new Set(bigrams([question, ...concepts].join(" ")).filter((g) => g.length === 2));
+  if (!q.size) return 0;
+  const n = new Set(bigrams([notice.title, ...(notice.figures ?? []).map((f) => f.label)].join(" ")));
+  let hit = 0;
+  for (const g of q) if (n.has(g)) hit += 1;
+  return hit / q.size;
+}
+
+/** 이보다 겹치면 공고를 붙인다. 공고 위임 조("교육부장관이 정하여 공고")가 후보에 있으면 낮은 쪽 */
+export const NOTICE_MIN_RELEVANCE = 0.3;
+export const NOTICE_MIN_RELEVANCE_DELEGATED = 0.15;
+const MAX_NOTICES = 3;
+const NOTICE_RELATIVE = 0.75;
+const LEGISLATIVE = /입법\s*예고/;
+
+function noticeHost(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+function noticeDescription(n: NoticeEntry): string {
+  if ((n.status ?? "checked") === "needs_source_check") {
+    return `${n.issuer} 공고. 원문 확인 필요 — 이 공고의 수치는 원문에서 확인하지 못했다.`;
+  }
+  return [`${n.issuer} 게시${n.posted ? ` ${n.posted}` : ""}.`, ...(n.figures ?? []).map((f) => `${f.label}: ${f.value}${f.unit && !f.value.endsWith(f.unit) ? f.unit : ""}.`)].join(" ");
+}
+
+/** "2026년 12월 7일까지" 같은 수치에서 의견 제출 마감일 */
+function noticeDeadline(n: NoticeEntry): string | undefined {
+  for (const f of n.figures ?? []) {
+    if (!/의견/.test(f.label)) continue;
+    const m = f.value.match(/(\d{4})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일/) ?? f.value.match(/(\d{4})\s*\.\s*(\d{1,2})\s*\.\s*(\d{1,2})/);
+    if (m) return `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
+    const d = parseOpinionDeadline(f.value, n.posted);
+    if (d) return d;
+  }
+  return undefined;
+}
+
+export interface NoticeCollectInput {
+  cache: LawCache;
+  question: string;
+  analysis: QuestionAnalysis;
+  asOf: string;
+  candidates: ArticleCandidate[];
+  /** 후보 조의 공고 위임(collectFromCache의 notices) */
+  delegations: { from: string; issuer: string; phrase: string }[];
+  /** 변경 신호를 볼 법령(점수 순 상위 법령 이름). 입법예고 공고는 이 법령을 다룰 때만 붙인다 */
+  signalLaws: string[];
+}
+
+export interface NoticeCollectOutcome {
+  results: WebResult[];
+  signals: ChangeSignal[];
+}
+
+export function collectNotices(input: NoticeCollectInput): NoticeCollectOutcome {
+  const { cache, question, analysis, asOf } = input;
+  const all = (cache.notices?.notices ?? []).filter((n) => !n.posted || n.posted <= asOf);
+  const year = targetYear(question, asOf);
+  const checked = new Set(checkedNotices(cache, year).map((n) => n.id));
+  const unchecked = all.filter((n) => n.status === "needs_source_check" && (year === undefined || n.year === year));
+  const delegated = input.delegations.length > 0;
+  const threshold = delegated ? NOTICE_MIN_RELEVANCE_DELEGATED : NOTICE_MIN_RELEVANCE;
+
+  const flat = (x: string) => x.replace(/\s+/g, "");
+  const picked: { n: NoticeEntry; law?: string }[] = [];
+  for (const n of all) {
+    if (LEGISLATIVE.test(n.title)) {
+      // 입법예고: 후보 조의 법령을 다루면(제목에 법령 이름) 관련성과 상관없이 신호로 올린다
+      // 낫표로 법령 이름을 적었으면 그 이름과 똑같아야 한다(「고등교육법 시행령」을 고등교육법으로 잡지 않게)
+      const quoted = [...n.title.matchAll(/[「｢『]([^」｣』]+)[」｣』]/g)].map((m) => flat(m[1]));
+      const title = flat(n.title);
+      const law = quoted.length
+        ? input.signalLaws.find((name) => quoted.includes(flat(name)))
+        : input.signalLaws.filter((name) => title.includes(flat(name))).sort((a, b) => b.length - a.length)[0];
+      if (law && (n.status ?? "checked") === "checked") picked.push({ n, law });
+      continue;
+    }
+    if (!checked.has(n.id) && !unchecked.includes(n)) continue;
+    if (noticeRelevance(question, analysis.concepts, n) >= threshold) picked.push({ n });
+  }
+  // 공고는 가장 많이 겹친 것의 NOTICE_RELATIVE 배 이상만(비슷한 주제의 다른 공고가 끼지 않게)
+  const scored = picked
+    .filter((p) => !p.law)
+    .map((p) => ({ ...p, score: noticeRelevance(question, analysis.concepts, p.n) }))
+    .sort((a, b) => b.score - a.score);
+  const best = scored[0]?.score ?? 0;
+  const ranked = [...picked.filter((p) => p.law), ...scored.filter((p) => p.score >= best * NOTICE_RELATIVE).slice(0, MAX_NOTICES)];
+
+  const results: WebResult[] = [];
+  const signals: ChangeSignal[] = [];
+  ranked.forEach(({ n, law }, i) => {
+    const status = n.status ?? "checked";
+    const hostname = noticeHost(n.url);
+    const result: WebResult = {
+      id: `notice:${i + 1}`,
+      title: n.title,
+      url: n.url,
+      hostname,
+      date: n.posted,
+      description: noticeDescription(n),
+      grade: "W1",
+      query: "공고 캐시",
+      notice: { id: n.id, issuer: n.issuer, status, figures: status === "checked" ? (n.figures ?? []) : [] },
+    };
+    results.push(result);
+    if (law) {
+      signals.push({
+        web_id: result.id,
+        title: n.title,
+        url: n.url,
+        hostname,
+        date: n.posted,
+        kind: "legislative_notice",
+        related_law: law,
+        opinion_deadline: noticeDeadline(n),
+        after_collection: Boolean(n.posted && n.posted > cache.collectedAt.slice(0, 10)),
+      });
+    }
+  });
+  return { results, signals };
 }

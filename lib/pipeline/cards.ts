@@ -80,6 +80,10 @@ export function buildCards(input: CardInput): EvidenceCard[] {
       if (cand.status === "not_yet") notes.push(`${formatKoreanDate(cand.effective_from)} 시행 예정 — 기준일 현재 적용 안 됨`);
       if (cand.status === "superseded") notes.push("이전 판");
       if (cand.delegated_to_school_rule) notes.push("학칙으로 위임 — 학교별 확인");
+      if (cand.amended && cand.status === "in_force") notes.push(`개정 — ${formatKoreanDate(cand.effective_from)}부터 시행`);
+      if (cand.excerpt_note) notes.push(cand.excerpt_note);
+      if (cand.upper_of?.length && c.role === "delegation") notes.push("상위 위임 근거");
+      if (cand.scope_of) notes.push("적용 범위 조");
       const changed = changedLaws.has(cand.law_name);
       if (changed) notes.push("수집 뒤 변경 가능성 — 최근 변경 신호 확인");
       cards.push({
@@ -110,7 +114,16 @@ export function buildCards(input: CardInput): EvidenceCard[] {
         `입법예고(확정 전)${signal.opinion_deadline ? ` — 의견 제출 ~${formatKoreanDate(signal.opinion_deadline)}` : ""}`,
       );
     }
-    notes.push("검색 결과 게시일(참고)");
+    if (w.notice?.status === "needs_source_check") notes.unshift("원문 확인 필요");
+    if (w.notice?.status === "checked") {
+      // 인용에 든 수치를 원문 어디서 확인했는지(공고 캐시)
+      const flat = (x: string) => x.replace(/\s+/g, "");
+      const figures = w.notice.figures.filter((f) => flat(c.quote).includes(flat(f.value)));
+      for (const f of figures.length ? figures : w.notice.figures.slice(0, 1)) {
+        notes.push(`원문 확인: ${f.location}${f.checked_url !== w.url ? ` (${f.checked_url})` : ""}`);
+      }
+    }
+    notes.push(w.notice ? "공고 게시일" : "검색 결과 게시일(참고)");
     cards.push({
       id: c.id,
       grade: w.grade,

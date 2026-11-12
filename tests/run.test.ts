@@ -52,7 +52,8 @@ describe("runPipeline E22형(시행 예정)", () => {
 
     // 신호: 블로그 재게시본·목록 페이지는 빠지고 교육부 원문과 공포 소식만, 최근 것부터
     expect(result.change_signals.map((s) => s.kind)).toEqual(["amendment_news", "legislative_notice"]);
-    expect(result.change_signals[1]).toMatchObject({ opinion_deadline: "2026-12-07", after_collection: false, related_law: "고등교육법" });
+    // 고등교육법으로 찾았지만 제목의 「고등교육법 시행령」 입법예고라 다루는 법령은 시행령으로 적는다
+    expect(result.change_signals[1]).toMatchObject({ opinion_deadline: "2026-12-07", after_collection: false, related_law: "고등교육법 시행령" });
     expect(result.change_signals[0].after_collection).toBe(true);
     const webCard = result.cards.find((c) => c.id === "web:1")!;
     expect(webCard).toMatchObject({ grade: "W1", badge: "proposed", role: "reference", posted_date: "2026-10-27" });
