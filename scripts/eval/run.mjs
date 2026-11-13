@@ -21,6 +21,7 @@
 //   --out <dir>              결과 폴더(기본 eval/runs/<시각>, .gitignore됨)
 //
 // .env는 있으면 읽는다(process.loadEnvFile, 이미 있는 환경변수는 덮지 않음). 키 값은 출력·저장하지 않는다.
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -125,6 +126,44 @@ export function findSecrets(text, env = process.env) {
   return hits;
 }
 
+// ───────── 실행 조건 기록 ─────────
+/**
+ * summary.json의 추론 강도 칸. 실제로 보낸 값(sent)과 환경변수 원문(env)을 함께 남긴다.
+ * 모르는 값은 파이프라인이 무시하므로 두 값이 다를 수 있다. sent를 모르면(대역 파이프라인) null
+ * @param {{ analyze?: string, answer?: string } | null | undefined} sent
+ * @param {Record<string, string | undefined>} [env]
+ */
+export function reasoningRecord(sent, env = process.env) {
+  const shown = (v) => (sent ? v ?? "(보내지 않음)" : null);
+  return {
+    analyze: shown(sent?.analyze),
+    answer: shown(sent?.answer),
+    env: { analyze: env.LINER_REASONING_ANALYZE ?? null, answer: env.LINER_REASONING_ANSWER ?? null },
+  };
+}
+
+/**
+ * 실행한 코드의 커밋 해시와 작업 중 변경 여부. git이 없거나 실패하면 undefined(기록에서 뺀다)
+ * @param {string} [cwd]
+ * @param {typeof execFileSync} [exec]
+ */
+export function codeVersion(cwd = ROOT, exec = execFileSync) {
+  const git = (args) => String(exec("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] })).trim();
+  try {
+    const commit = git(["rev-parse", "--short", "HEAD"]);
+    if (!commit) return undefined;
+    let dirty;
+    try {
+      dirty = git(["status", "--porcelain", "--untracked-files=no"]) !== "";
+    } catch {
+      dirty = undefined;
+    }
+    return dirty === undefined ? { commit } : { commit, dirty };
+  } catch {
+    return undefined;
+  }
+}
+
 // ───────── 파이프라인 불러오기 ─────────
 async function loadPipeline(opts) {
   if (opts.mockRunner) {
@@ -144,15 +183,18 @@ async function loadPipeline(opts) {
   });
   const run = await server.ssrLoadModule("/lib/pipeline/run.ts");
   const load = await server.ssrLoadModule("/lib/cache/load.ts");
+  const analyze = await server.ssrLoadModule("/lib/pipeline/analyze.ts");
+  const answer = await server.ssrLoadModule("/lib/pipeline/answer.ts");
+  const reasoning = () => ({ analyze: analyze.analyzeReasoning(), answer: answer.answerReasoning() });
   const cache = await load.loadCache();
   if (opts.mock) {
     const { createOfflineLiner } = await import(pathToFileURL(join(ROOT, "scripts/eval/offline-liner.mjs")).href);
     const offline = createOfflineLiner();
     // 파이프라인은 키가 있어야 시작한다. 오프라인 대역은 키를 어디에도 보내지 않는다
     if (!process.env.LINER_API_KEY) process.env.LINER_API_KEY = "offline-no-network";
-    return { runPipeline: run.runPipeline, cache, fetchImpl: offline.fetchImpl, offlineCalls: offline.calls, close: () => server.close() };
+    return { runPipeline: run.runPipeline, cache, reasoning, fetchImpl: offline.fetchImpl, offlineCalls: offline.calls, close: () => server.close() };
   }
-  return { runPipeline: run.runPipeline, cache, close: () => server.close() };
+  return { runPipeline: run.runPipeline, cache, reasoning, close: () => server.close() };
 }
 
 // ───────── 한 후보 실행 ─────────
@@ -367,6 +409,8 @@ export async function main(argv = process.argv.slice(2), log = console.log) {
   const startedAt = new Date(Date.now() + 9 * 3600e3).toISOString().replace(/[:.]/g, "-").slice(0, 19);
   const outDir = resolve(opts.out ?? join(ROOT, "eval/runs", `${opts.compare ? "compare-" : ""}${startedAt}`));
   const pipeline = await loadPipeline(opts);
+  const reasoning = reasoningRecord(pipeline.reasoning?.(), env);
+  const code = codeVersion();
   log(`평가 시작: 문항 ${questions.length} × 반복 ${opts.repeat}, ③ 후보 ${candidates.join(", ")}, 기준일 ${opts.asof}${opts.mock ? " (오프라인: Liner 호출 없음)" : opts.mockRunner ? " (목 파이프라인)" : ""}`);
 
   const results = [];
@@ -397,7 +441,7 @@ export async function main(argv = process.argv.slice(2), log = console.log) {
   const resultsJsonl = allRows.map((r) => JSON.stringify(r)).join("\n") + "\n";
   const md = summaryMarkdown({ opts, models: base, results, stoppedAll, startedAt });
   const summaryJson = JSON.stringify(
-    { started_at: startedAt, options: { ...opts }, models: base, reasoning: { analyze: process.env.LINER_REASONING_ANALYZE || "(기본)", answer: process.env.LINER_REASONING_ANSWER || "(기본)" }, spent_usd: spent, stopped: stoppedAll, candidates: results.map(({ model, s, stopped }) => ({ model, stopped, ...s })) },
+    { started_at: startedAt, ...(code ? { code } : {}), options: { ...opts }, models: base, reasoning, spent_usd: spent, stopped: stoppedAll, candidates: results.map(({ model, s, stopped }) => ({ model, stopped, ...s })) },
     null,
     2,
   );

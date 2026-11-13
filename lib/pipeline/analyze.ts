@@ -48,6 +48,11 @@ export interface AnalyzeContext {
  */
 export const DEFAULT_ANALYZE_REASONING: ReasoningEffort = "low";
 
+/** 이번 ① 호출에 쓸 추론 강도: 인자 → LINER_REASONING_ANALYZE → 기본값 */
+export function analyzeReasoning(override?: ReasoningEffort): ReasoningEffort {
+  return override ?? reasoningFromEnv("LINER_REASONING_ANALYZE") ?? DEFAULT_ANALYZE_REASONING;
+}
+
 /** ①은 짧은 JSON이라 보통 몇 초면 끝난다. 10초 안에 안 오면 같은 요청을 하나 더 보내고, 요청마다 25초가 넘으면 규칙 기반으로 대신한다 */
 export const ANALYZE_HEDGE = { afterMs: 10_000, timeoutMs: 25_000 };
 
@@ -153,7 +158,7 @@ export async function analyzeQuestion(request: AskRequest, asOf: string, ctx: An
           { role: "user", content: user },
         ],
         jsonSchema: { name: "question_analysis", schema: ANALYZE_SCHEMA as unknown as Record<string, unknown> },
-        reasoningEffort: ctx.reasoningEffort ?? reasoningFromEnv("LINER_REASONING_ANALYZE") ?? DEFAULT_ANALYZE_REASONING,
+        reasoningEffort: analyzeReasoning(ctx.reasoningEffort),
       },
       ctx.call ?? {},
       ANALYZE_HEDGE,
