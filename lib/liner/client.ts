@@ -42,6 +42,8 @@ export interface LinerCallOptions {
   fetchImpl?: typeof fetch;
   /** 재시도 횟수(기본 1) */
   retries?: number;
+  /** 제한 시간에 걸린 시도도 다시 부를지(기본 true). 겹쳐 보내기(hedge)를 쓰는 호출은 false로 둬 같은 지연을 두 번 기다리지 않는다 */
+  retryOnTimeout?: boolean;
 }
 
 export function getApiKey(): string {
@@ -94,7 +96,11 @@ export async function linerRequest<T>(
     const controller = new AbortController();
     const onAbort = () => controller.abort();
     options.signal?.addEventListener("abort", onAbort, { once: true });
-    const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 60_000);
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, options.timeoutMs ?? 60_000);
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (auth === "bearer") headers.Authorization = `Bearer ${key}`;
     else headers["x-api-key"] = key;
@@ -118,6 +124,9 @@ export async function linerRequest<T>(
     if (options.signal?.aborted) throw new LinerError("aborted", "요청이 취소되었습니다.", undefined, elapsed);
 
     if (networkFailed || !res) {
+      if (timedOut && options.retryOnTimeout === false) {
+        throw new LinerError("liner_unavailable", "Liner API 응답이 제한 시간 안에 오지 않았습니다.", undefined, elapsed);
+      }
       if (attempt < retries) {
         await sleep(retryAfterMs(null, attempt), options.signal);
         attempt += 1;

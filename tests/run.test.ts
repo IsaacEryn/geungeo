@@ -67,6 +67,9 @@ describe("runPipeline E22형(시행 예정)", () => {
     // 호출: 신호 검색 1(질문 분석과 겹쳐 먼저 띄움) + 분석 1 + 답 1. 공고 검색은 건너뜀. 분석 검색어의 날짜는 지워진다
     expect(mock.calls.map((c) => c.path)).toEqual(["/tools/search/web", "/chat/completions", "/chat/completions"]);
     expect(schemaName(mock.calls[1].body)).toBe("question_analysis");
+    // ①은 추론 강도 low, ③은 보내지 않아 Liner 기본값(medium)
+    expect(mock.calls[1].body.reasoning_effort).toBe("low");
+    expect("reasoning_effort" in mock.calls[2].body).toBe(false);
     expect(mock.calls[0].body).toMatchObject({ query: "고등교육법 개정 입법예고", include_knowledge: false, lang: "ko", country_code: "kr", date_range: "past_year" });
     expect(mock.calls[0].headers["x-api-key"]).toBe("test-key-not-real");
     expect(mock.calls[1].headers.Authorization).toBe("Bearer test-key-not-real");
@@ -76,6 +79,11 @@ describe("runPipeline E22형(시행 예정)", () => {
     // 비용 = 모델 2회(입력 1000·출력 300) + Search 1회
     expect(result.trace.total_cost_usd).toBeCloseTo(2 * (1000 * 1 + 300 * 5) / 1e6 + 0.001, 9);
     expect(result.trace.models).toEqual({ analyze: "liner-mark-1.3", answer: "liner-mark-1.3" });
+    // 응답 본문의 model(실제로 답한 모델)과 단계별 소요가 처리 과정에 남는다
+    expect(result.trace.calls.filter((c) => c.api === "router").map((c) => c.served_model)).toEqual(["liner-mark-1.3", "liner-mark-1.3"]);
+    expect(Object.keys(result.trace.stage_ms ?? {})).toEqual(
+      expect.arrayContaining(["prepare", "analyze", "collect_cache", "collect_web", "collect_signals", "answer", "verify"]),
+    );
 
     // 처리 과정에는 허용 필드만(키·본문 없음)
     expect(JSON.stringify(result)).not.toContain("test-key-not-real");

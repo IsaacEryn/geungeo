@@ -1,6 +1,6 @@
 // ③ 대조·답변(설계 2-3). LINER_MODEL_ANSWER, json_schema(strict), 고정 흐름(fixed).
 import type { LinerCallOptions } from "@/lib/liner/client";
-import { chat, modelFor, parseJsonObject } from "@/lib/liner/router";
+import { chatHedged, modelFor, parseJsonObject } from "@/lib/liner/router";
 import { statusLabel } from "@/lib/cache/status";
 import type { ArticleCandidate, ChangeSignal, Citation, ChecklistItem, DraftAnswer, QuestionAnalysis, TraceCall, Verdict, WebResult } from "./types";
 
@@ -184,12 +184,18 @@ export interface AnswerOutcome {
   model: string;
 }
 
+/**
+ * ③ 호출 겹쳐 보내기 기준. 11/13 평가(28문항)에서 ③ 시간 중앙값은 17.6초, 긴 답(출력 2천 토큰대)도 33초 안이었고,
+ * 25초를 넘긴 첫 호출은 4건(그중 2건은 60초 제한까지 멈춤)이었다. 25초가 지나면 같은 요청을 하나 더 보내고, 요청마다 55초에서 끊는다.
+ */
+export const ANSWER_HEDGE = { afterMs: 25_000, timeoutMs: 55_000 };
+
 export async function answerQuestion(
   input: AnswerInput,
   options: { model?: string; call?: LinerCallOptions } = {},
 ): Promise<AnswerOutcome> {
   const model = modelFor("answer", options.model);
-  const res = await chat(
+  const res = await chatHedged(
     {
       model,
       messages: [
@@ -198,7 +204,8 @@ export async function answerQuestion(
       ],
       jsonSchema: { name: "grounded_answer", schema: ANSWER_SCHEMA as unknown as Record<string, unknown> },
     },
-    options.call,
+    options.call ?? {},
+    ANSWER_HEDGE,
   );
   const draft = coerceDraft(parseJsonObject(res.content));
   return {
@@ -208,6 +215,8 @@ export async function answerQuestion(
       stage: "answer",
       api: "router",
       model,
+      ...(res.served_model ? { served_model: res.served_model } : {}),
+      ...(res.duplicate_requests ? { duplicate_requests: res.duplicate_requests } : {}),
       http_status: res.status,
       duration_ms: res.duration_ms,
       usage: {
@@ -217,7 +226,7 @@ export async function answerQuestion(
         cost_usd: res.usage.cost_usd,
       },
       note:
-        [input.feedback ? "검증 뒤 재시도" : "", res.json_fallback ? "json_object 대체" : "", res.usage.priced ? "" : "단가 미확인", draft ? "" : "형식 오류"]
+        [input.feedback ? "검증 뒤 재시도" : "", res.json_fallback ? "json_object 대체" : "", res.duplicate_requests ? "늦어서 한 번 더 보냄" : "", res.usage.priced ? "" : "단가 미확인", draft ? "" : "형식 오류"]
           .filter(Boolean)
           .join(", ") || undefined,
     },

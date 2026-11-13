@@ -169,15 +169,21 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
   const call: LinerCallOptions = { signal: options.signal, fetchImpl: options.fetchImpl };
   const calls: TraceCall[] = [];
   const warnings: string[] = [];
+  const stageMs: Partial<Record<StageName | "prepare", number>> = {};
+  const addStageMs = (name: StageName | "prepare", ms: number) => {
+    stageMs[name] = (stageMs[name] ?? 0) + ms;
+  };
 
   async function stage<T>(name: StageName, fn: () => Promise<T> | T): Promise<T> {
     const t = Date.now();
     emit({ type: "stage_start", stage: name, at: nowIso() });
     try {
       const value = await fn();
+      addStageMs(name, Date.now() - t);
       emit({ type: "stage_end", stage: name, at: nowIso(), duration_ms: Date.now() - t, ok: true });
       return value;
     } catch (error) {
+      addStageMs(name, Date.now() - t);
       emit({ type: "stage_end", stage: name, at: nowIso(), duration_ms: Date.now() - t, ok: false });
       throw error;
     }
@@ -201,6 +207,7 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
   const earlySignals = preLaw ? collectSignals([preLaw], webCtx) : null;
   earlySignals?.catch(() => undefined); // ①이 먼저 실패해도 처리 안 된 거부가 남지 않게
   const earlyRules = requestedSchool ? readSchoolRules(cache, requestedSchool, options.schoolRules) : null;
+  addStageMs("prepare", Date.now() - started);
 
   const analyzed = await stage("analyze", () =>
     analyzeQuestion({ ...request, question }, asOf, { synonyms: cache.synonyms, model: options.models?.analyze, call }),
@@ -367,6 +374,7 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
       total_duration_ms: Date.now() - started,
       total_cost_usd: totalCost,
       models: { analyze: analyzed.model, answer: answered.model },
+      stage_ms: stageMs,
     },
   };
 }
