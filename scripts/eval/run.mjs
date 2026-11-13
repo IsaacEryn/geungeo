@@ -216,6 +216,8 @@ async function runCandidate({ questions, opts, models, pipeline, costOf, spentBe
         duplicate_requests: (result?.trace?.calls ?? []).reduce((n, c) => n + (c.duplicate_requests ?? 0), 0),
         // 겹쳐 보낸 호출에서 쓴 요청 번호(단계:1 = 처음 요청, 단계:2 = 겹친 요청)
         hedge_winners: (result?.trace?.calls ?? []).filter((c) => c.hedge_winner).map((c) => `${c.stage}:${c.hedge_winner}`),
+        // 최종 결과의 필드별 글자 수(출력 길이가 어디서 나오는지 보려는 것. ④가 덧붙인 주의·상위 조 카드 포함)
+        output_chars: result ? outputChars(result) : null,
         calls: cost.calls,
         tokens: cost.tokens,
         cost_usd: cost.usd,
@@ -234,6 +236,19 @@ async function runCandidate({ questions, opts, models, pipeline, costOf, spentBe
     }
   }
   return { rows, spent, stopped };
+}
+
+/** 결론·인용·체크리스트·주의·찾아본 범위의 글자 수 */
+export function outputChars(result) {
+  const len = (xs) => xs.reduce((n, x) => n + (x ?? "").length, 0);
+  const scope = result.searched_scope;
+  return {
+    summary: (result.summary ?? "").length,
+    quotes: len((result.cards ?? []).map((c) => c.quote)),
+    checklist: len((result.checklist ?? []).flatMap((c) => [c.step, c.deadline])),
+    caveats: len(result.caveats ?? []),
+    searched_scope: scope ? len([...scope.laws, ...scope.queries, ...scope.where_to_check]) : 0,
+  };
 }
 
 // ───────── 집계 ─────────
@@ -382,7 +397,7 @@ export async function main(argv = process.argv.slice(2), log = console.log) {
   const resultsJsonl = allRows.map((r) => JSON.stringify(r)).join("\n") + "\n";
   const md = summaryMarkdown({ opts, models: base, results, stoppedAll, startedAt });
   const summaryJson = JSON.stringify(
-    { started_at: startedAt, options: { ...opts }, models: base, spent_usd: spent, stopped: stoppedAll, candidates: results.map(({ model, s, stopped }) => ({ model, stopped, ...s })) },
+    { started_at: startedAt, options: { ...opts }, models: base, reasoning: { analyze: process.env.LINER_REASONING_ANALYZE || "(기본)", answer: process.env.LINER_REASONING_ANSWER || "(기본)" }, spent_usd: spent, stopped: stoppedAll, candidates: results.map(({ model, s, stopped }) => ({ model, stopped, ...s })) },
     null,
     2,
   );

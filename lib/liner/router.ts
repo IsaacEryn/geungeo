@@ -67,6 +67,14 @@ export interface ChatResult {
 
 export type ReasoningEffort = "none" | "low" | "medium" | "high" | "max";
 
+const EFFORTS: readonly ReasoningEffort[] = ["none", "low", "medium", "high", "max"];
+
+/** 환경변수의 추론 강도. 비었거나 모르는 값이면 undefined(부르는 쪽 기본값을 쓴다) */
+export function reasoningFromEnv(name: string): ReasoningEffort | undefined {
+  const v = process.env[name]?.trim().toLowerCase();
+  return v && (EFFORTS as readonly string[]).includes(v) ? (v as ReasoningEffort) : undefined;
+}
+
 export interface ChatRequest {
   model: string;
   messages: ChatMessage[];
