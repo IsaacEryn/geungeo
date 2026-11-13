@@ -44,6 +44,19 @@ const DISCLAIMED_BASIS =
   /(?:자체|직접)[가-힣·\s]{0,10}?(?:명시|정하|정한|정함|규정|규율)[가-힣]{0,3}\s*(?:규정|조항|조문|근거|것)[이가은는]?\s*아(?:니|닙)|직접(?:적인|적)?\s*근거[가는]?\s*아(?:니|닙)/;
 /** "근거로" 뒤에서 그 조문을 근거로 쓰지 말라고 하는 말("근거로 삼을 수 없다", "근거로 쓰면 안 된다") */
 const NEGATED_BASIS = /수\s*없|안\s*(?:됩|된|되|돼)|않|못|아니/;
+/**
+ * 부정 문구 앞에 새로 온 다른 자료 주어("시행령의 관련 조항은", "교육부 공고는", "언론 보도도").
+ * "이 조항은"·"해당 규정은"처럼 앞 조문을 가리키는 말은 따로 거른다
+ */
+const SOURCE_NOUN =
+  "시행령|시행규칙|법률|(?<!방)법|규정|규칙|조항|조문|지침|공고|보도자료|보도|기사|학칙|훈령|고시|예규|세칙|내규|정관|조례|자료|공문|안내문?|편람|매뉴얼|가이드라인|해석|판례|회신";
+const OTHER_SOURCE_SUBJECT = new RegExp(`([가-힣·]*(?:${SOURCE_NOUN}))\\s*(?:은|는|도)(?=\\s|$)`, "g");
+/** 부정 문구가 "자체"로 시작할 때("시행령 자체는 …") 그 바로 앞에 붙은 자료 이름 */
+const SOURCE_BEFORE_ITSELF = new RegExp(`([가-힣·]*(?:${SOURCE_NOUN}))\\s*$`);
+/** 어느 자료든 가리킬 수 있는 일반 명사(근거로 든 이름과 겹치는지 따지지 않는다) */
+const GENERIC_SOURCE = new Set(["조항", "조문", "규정", "규칙", "자료", "법"]);
+/** 그 주어가 앞 조문을 가리키는 지시어로 시작하는지("이 조항", "같은 규정") */
+const DEMONSTRATIVE_TAIL = /(?:^|[\s,])(?:이|그|해당|위|같은|앞의)\s*$/;
 /** 조 번호 */
 const ARTICLE_NUMBER = /제\s*(\d+)\s*조(?:\s*의\s*(\d+))?/g;
 /** 앞에서 말한 조문을 가리키는 말("이 조항", "해당 규정", "같은 조") */
@@ -91,9 +104,35 @@ function articleKeys(text: string): string[] {
 }
 
 /**
+ * "근거로" 뒤, 부정 문구 앞에 다른 자료를 가리키는 주어가 새로 왔는지.
+ * "…를 근거로 인정하며, 시행령의 관련 조항은 직접 근거는 아닙니다"는 근거로 든 조문이 아니라 다른 자료를 부정한 것이다.
+ * "이 조항은"처럼 앞 조문을 가리키거나 "근거로" 앞에서 이미 든 이름("학칙 제7조를 근거로 … 학칙은")이면 다른 자료로 보지 않는다
+ */
+function namesOtherSource(basis: string, head: string, disclaim: string): boolean {
+  const found = [...head.matchAll(OTHER_SOURCE_SUBJECT)].map((m) => ({ at: m.index, word: m[1] }));
+  if (disclaim.startsWith("자체")) {
+    const m = SOURCE_BEFORE_ITSELF.exec(head);
+    if (m) found.push({ at: m.index, word: m[1] });
+  }
+  return found.some(({ at, word }) => {
+    const before = head.slice(0, at);
+    if (DEMONSTRATIVE_TAIL.test(before)) return false;
+    // "기숙사 운영 규정은"처럼 근거로 든 이름을 다시 쓰면 같은 자료다(일반 명사 한 낱말만으로는 판단하지 않는다)
+    const words = [...before.trim().split(/\s+/).filter(Boolean).slice(-2), word];
+    for (let k = 1; k <= words.length; k += 1) {
+      const name = words.slice(-k).join(" ");
+      if (k === 1 && GENERIC_SOURCE.has(word)) continue;
+      if (basis.includes(name)) return false;
+    }
+    return true;
+  });
+}
+
+/**
  * "근거로"로 든 조문을 같은 결론에서 "직접 정한 조항은 아니다"라고 스스로 부정했는지.
  * 부정은 같은 문장의 "근거로" 뒤, 또는 바로 다음 문장이 "이 조항은"·"해당 규정은"처럼 그 조문을 가리키거나 같은 조 번호를 들 때만 본다.
- * 다른 참고 조문을 "직접 근거는 아니다"라고 밝힌 것은 정상 답이다
+ * 다른 참고 조문을 "직접 근거는 아니다"라고 밝힌 것은 정상 답이다. 같은 문장이라도 부정 문구 앞에
+ * 다른 자료 주어("시행령은", "교육부 공고는")가 새로 오면 그 자료를 부정한 것으로 본다
  */
 function disclaimsOwnBasis(summary: string): boolean {
   const list = sentences(summary);
@@ -108,8 +147,9 @@ function disclaimsOwnBasis(summary: string): boolean {
     if (negated && (!disclaim || negated.index < disclaim.index)) continue;
     const own = articleKeys(sentence.slice(0, at)).at(-1);
     if (disclaim) {
-      const between = articleKeys(after.slice(0, disclaim.index));
-      if (between.every((k) => k === own)) return true;
+      const head = after.slice(0, disclaim.index);
+      const between = articleKeys(head);
+      if (between.every((k) => k === own) && !namesOtherSource(sentence.slice(0, at), head, disclaim[0])) return true;
     }
     const next = list[i + 1];
     if (!next) continue;
