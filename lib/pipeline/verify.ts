@@ -31,8 +31,20 @@ export interface VerifyOutcome {
 const QUANTITY_QUESTION = /몇|며칠|얼마|최대|최소|상한|하한|한도|기간/;
 /** 학칙에 맡기는 문구 */
 const SCHOOL_RULE_PHRASE = /학칙(?:으로|이|에서|에)\s*(?:정하|정한|정해|따라|위임)/;
-/** 조문을 직접 근거라 하지 않고 "근거로 제시할 수 있다"처럼 에둘러 쓴 표현 */
-const HEDGED_BASIS = /근거로\s*(?:제시|삼|활용|원용)[가-힣]{0,2}\s*수\s*있|근거가\s*될\s*수\s*있/;
+/**
+ * 조문을 직접 근거라 하지 않고 "근거로 제시할 수 있다", "근거로 기안할 수 있다"처럼 에둘러 쓴 표현.
+ * "근거로" 뒤 네 어절 안에서 "… 수 있"으로 끝나면 잡는다("제5조에 따라 …해야 한다"처럼 단정한 답은 걸리지 않는다)
+ */
+const HEDGED_BASIS =
+  /근거로\s*(?:제시|삼|활용|원용)[가-힣]{0,2}\s*수\s*있|근거가\s*될\s*수\s*있|근거로\s*(?:[가-힣]{1,8}\s+){0,3}[가-힣]{1,8}\s*수\s*있/;
+/** 인용한 조문이 질문 주제를 "직접 정한 조항은 아니다", "직접 근거는 아니다"라고 스스로 밝힌 표현 */
+const DISCLAIMED_BASIS =
+  /(?:자체|직접)[가-힣·\s]{0,10}?(?:명시|정하|정한|정함|규정|규율)[가-힣]{0,3}\s*(?:규정|조항|조문|근거|것)[이가은는]?\s*아(?:니|닙)|직접(?:적인|적)?\s*근거[가는]?\s*아(?:니|닙)/;
+/** 조 번호 없이 조문을 가리키는 말("적용 범위의 단서", "신설 조항에 따라") */
+const UNNUMBERED_REFERENCE = /단서|조항(?:에\s*따라|에\s*따르면|에\s*의하면|에\s*의해|상)/g;
+/** 그 말 바로 앞(같은 문장, 25자 안)에 조·항·호 번호가 있으면 번호를 쓴 것으로 본다 */
+const NUMBER_NEARBY = /제\s*\d+\s*(?:조(?:의\s*\d+)?|항|호)|같은\s*조/;
+const NEARBY_CHARS = 25;
 /** 개정 판 시행일을 알릴 만큼 최근인지(기준일 기준) */
 const RECENT_AMENDMENT_YEARS = 3;
 const MAX_AMENDMENT_NOTES = 2;
@@ -49,6 +61,40 @@ function segments(text: string): string[] {
     .split(/\n|(?<=다\.)\s+|(?<=\.)\s+(?=[①-⑮])/)
     .map((s) => s.trim())
     .filter((s) => s.length >= 8);
+}
+
+/**
+ * 결론이 조문을 에둘러 근거로 삼았는지. "근거로 …할 수 있다"이거나,
+ * "근거로"를 쓰면서 그 조문이 주제를 직접 정한 것은 아니라고 스스로 밝히면 참
+ */
+export function isHedgedBasis(summary: string): boolean {
+  return HEDGED_BASIS.test(summary) || (DISCLAIMED_BASIS.test(summary) && summary.includes("근거로"));
+}
+
+/** 결론에 조 번호 없이 조문을 가리키는 말이 있는지 */
+export function hasUnnumberedReference(summary: string): boolean {
+  for (const m of summary.matchAll(UNNUMBERED_REFERENCE)) {
+    const before = summary.slice(Math.max(0, m.index - NEARBY_CHARS), m.index).split(/[.。]\s/).at(-1) ?? "";
+    if (!NUMBER_NEARBY.test(before)) return true;
+  }
+  return false;
+}
+
+/** 결론에 그 조 번호("제11조의2")가 나오는지. "제11조"는 "제11조의2"와 구분한다 */
+export function mentionsArticle(summary: string, number: string): boolean {
+  const m = number.match(/^제\s*(\d+)\s*조(?:\s*의\s*(\d+))?/);
+  if (!m) return true;
+  const pattern = m[2] ? `제\\s*${m[1]}\\s*조\\s*의\\s*${m[2]}(?!\\d)` : `제\\s*${m[1]}\\s*조(?!\\s*의\\s*\\d)`;
+  return new RegExp(pattern).test(summary);
+}
+
+/**
+ * 결론이 조 번호 없이 조문을 가리키는데("…의 단서에 따라") 근거로 인용한 조 중 결론에 번호가 없는 조.
+ * 어느 조를 말하는지 결론만으로는 알 수 없으므로 ③에 번호를 붙여 다시 쓰게 한다
+ */
+export function unnamedBasisArticles<T extends Pick<ArticleCandidate, "number">>(summary: string, basis: T[]): T[] {
+  if (!hasUnnumberedReference(summary)) return [];
+  return basis.filter((c) => !mentionsArticle(summary, c.number));
 }
 
 type QuoteCheck = { status: "exact"; quote: string } | { status: "corrected"; quote: string } | { status: "missing" };
@@ -280,15 +326,34 @@ export function verifyDraft(input: VerifyInput): VerifyOutcome {
   }));
 
   // 결론이 인접 조문을 "근거로 제시할 수 있다"처럼 에둘러 근거로 삼으면 한 번 다시 묻는다(직접 근거인지 판단을 미룬 표현)
-  const hedged = verdict !== "no_basis" && HEDGED_BASIS.test(summary);
-  if (hedged) issues.push({ kind: "hedged_basis", detail: "결론이 조문을 '근거로 제시할 수 있다'처럼 에둘러 근거로 삼았습니다." });
-  const needsRetry = (forcedNoBasis && removed > 0) || removed >= 2 || hedged || schoolRuleUnused.length > 0;
+  const hedged = verdict !== "no_basis" && isHedgedBasis(summary);
+  if (hedged) issues.push({ kind: "hedged_basis", detail: "결론이 조문을 '근거로 …할 수 있다'처럼 에둘러 근거로 삼았습니다." });
+  // 결론이 "단서에 따라"처럼 번호 없이 조문을 가리키고, 근거로 든 조의 번호가 결론에 없으면 번호를 붙여 다시 쓰게 한다
+  const basisArticles = [
+    ...new Map(
+      kept
+        .filter((c) => c.role === "basis")
+        .map((c) => candidates.get(c.id))
+        .filter((c): c is ArticleCandidate => Boolean(c))
+        .map((c) => [`${c.law_id}|${c.number}`, c] as const),
+    ).values(),
+  ];
+  const unnamed = verdict !== "no_basis" ? unnamedBasisArticles(summary, basisArticles) : [];
+  for (const c of unnamed) {
+    issues.push({ kind: "unnamed_article", citation_id: c.id, detail: `결론이 조 번호 없이 조문을 가리켰고 근거로 든 ${c.law_name} ${c.number}의 번호가 결론에 없습니다.` });
+  }
+  const needsRetry = (forcedNoBasis && removed > 0) || removed >= 2 || hedged || schoolRuleUnused.length > 0 || unnamed.length > 0;
   const feedback = [
     ...issues
       .filter((i) => i.kind === "unknown_id" || i.kind === "quote_not_found" || i.kind === "not_yet_as_current")
       .map((i) => `- ${i.citation_id ?? ""}: ${i.detail}`),
     ...(hedged
-      ? ["- 결론이 조문을 '근거로 제시할 수 있다'처럼 썼습니다. 질문 주제를 직접 정한 조문이 아니면 reference로 두고 '직접 근거는 아니다'라고 쓴 뒤 판정(verdict)을 다시 정하세요."]
+      ? ["- 결론이 조문을 '근거로 제시할(기안할) 수 있다'처럼 쓰거나, 질문 주제를 직접 정한 조항이 아니라고 하면서 근거로 삼았습니다. 질문 주제를 직접 정한 조문이 아니면 reference로 두고 '직접 근거는 아니다'라고 쓴 뒤 판정(verdict)을 다시 정하세요."]
+      : []),
+    ...(unnamed.length
+      ? [
+          `- 결론이 '단서', '…조항에 따라'처럼 조 번호 없이 조문을 가리켰습니다. 근거로 든 조(${unnamed.map((c) => `${c.law_name} ${c.number}`).join(", ")})를 결론에서 말할 때는 '제N조 단서'처럼 조 번호를 함께 쓰세요. 내용과 판정이 맞다면 바꾸지 마세요.`,
+        ]
       : []),
     ...(schoolRuleUnused.length
       ? [
