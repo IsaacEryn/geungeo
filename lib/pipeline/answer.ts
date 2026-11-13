@@ -1,6 +1,6 @@
 // ③ 대조·답변(설계 2-3). LINER_MODEL_ANSWER, json_schema(strict), 고정 흐름(fixed).
 import type { LinerCallOptions } from "@/lib/liner/client";
-import { chatHedged, modelFor, parseJsonObject } from "@/lib/liner/router";
+import { chatHedged, hedgeTraceFields, modelFor, parseJsonObject } from "@/lib/liner/router";
 import { statusLabel } from "@/lib/cache/status";
 import type { ArticleCandidate, ChangeSignal, Citation, ChecklistItem, DraftAnswer, QuestionAnalysis, TraceCall, Verdict, WebResult } from "./types";
 
@@ -216,7 +216,7 @@ export async function answerQuestion(
       api: "router",
       model,
       ...(res.served_model ? { served_model: res.served_model } : {}),
-      ...(res.duplicate_requests ? { duplicate_requests: res.duplicate_requests } : {}),
+      ...hedgeTraceFields(res),
       http_status: res.status,
       duration_ms: res.duration_ms,
       usage: {
@@ -226,7 +226,7 @@ export async function answerQuestion(
         cost_usd: res.usage.cost_usd,
       },
       note:
-        [input.feedback ? "검증 뒤 재시도" : "", res.json_fallback ? "json_object 대체" : "", res.duplicate_requests ? "늦어서 한 번 더 보냄" : "", res.usage.priced ? "" : "단가 미확인", draft ? "" : "형식 오류"]
+        [input.feedback ? "검증 뒤 재시도" : "", res.json_fallback ? "json_object 대체" : "", res.duplicate_requests ? "늦어서 한 번 더 보냄(금액에 겹친 요청 추정치 포함)" : "", res.usage.priced ? "" : "단가 미확인", draft ? "" : "형식 오류"]
           .filter(Boolean)
           .join(", ") || undefined,
     },

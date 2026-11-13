@@ -133,7 +133,7 @@ describe("실행기", () => {
       },
     });
     expect(c.calls).toMatchObject({ router: 2, search: 2 });
-    // 단가를 모르는 라우터 호출은 trace 금액(0일 수 있음) 대신 보수적 대용값으로 센다 → credit-limit가 듣는다
+    // 단가를 모르는 라우터 호출은 trace 금액(0일 수 있음) 대신 확인된 최고 단가를 임시로 쓴 대용값으로 센다 → credit-limit가 듣는다
     const ceiling = pricing.unpriced_router_ceiling;
     expect(c.usd).toBeCloseTo(
       pricing.router["liner-mark-1.3"].input_per_million + pricing.search_per_call + (10 * ceiling.input_per_million + 10 * ceiling.output_per_million) / 1e6,
@@ -163,6 +163,15 @@ describe("실행기", () => {
     expect(routerPrice(pricing, { model: "liner-claude-router", served_model: "claude-haiku-5.5" }).estimated).toBe(false);
     expect(routerPrice(pricing, { model: "liner-gpt-router", served_model: "gpt-6.1-sol" })).toEqual({ price: pricing.unpriced_router_ceiling, estimated: true });
     expect(routerPrice({ router: {} }, { model: "x" })).toEqual({ price: null, estimated: true });
+  });
+
+  it("미확인 모델 대용값은 문서에서 확인된 단가 가운데 가장 높은 값을 임시로 쓴다", () => {
+    const listed = [...Object.entries(pricing.router), ...Object.entries(pricing.served)].filter(([k]) => !k.startsWith("$")).map(([, v]) => v as { input_per_million: number; output_per_million: number });
+    expect(pricing.unpriced_router_ceiling.input_per_million).toBe(Math.max(...listed.map((p) => p.input_per_million)));
+    expect(pricing.unpriced_router_ceiling.output_per_million).toBe(Math.max(...listed.map((p) => p.output_per_million)));
+    // 상한이라는 보장이 없으므로 '보수적'이라 부르지 않는다
+    expect(pricing.unpriced_router_ceiling.$comment).not.toMatch(/보수적/);
+    expect(pricing.unpriced_router_ceiling.$comment).toMatch(/임시/);
   });
 
   it("단계별 소요 중앙값을 낸다", () => {

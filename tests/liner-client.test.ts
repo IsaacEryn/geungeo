@@ -2,7 +2,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LinerError, linerRequest } from "@/lib/liner/client";
 import { usageCost } from "@/lib/liner/cost";
-import { chat, chatHedged } from "@/lib/liner/router";
+import { chat, chatHedged, hedgeTraceFields } from "@/lib/liner/router";
+import { traceTotalCost } from "@/lib/pipeline/run";
 import { chatBody } from "./support/liner-mock";
 
 beforeEach(() => vi.stubEnv("LINER_API_KEY", "test-key-not-real"));
@@ -44,6 +45,7 @@ describe("chatHedged", () => {
     const res = await chatHedged(request, { fetchImpl }, { afterMs: 200, timeoutMs: 1000 });
     expect(log).toHaveLength(1);
     expect(res.duplicate_requests).toBeUndefined();
+    expect(res.hedge_winner).toBeUndefined();
     expect(JSON.parse(res.content!)).toEqual({ ok: 0 });
   });
 
@@ -56,6 +58,7 @@ describe("chatHedged", () => {
     expect(log[1].body).toEqual(log[0].body); // 같은 요청
     expect(log[0].aborted).toBe(true);
     expect(res.duplicate_requests).toBe(1);
+    expect(res.hedge_winner).toBe(2);
     expect(JSON.parse(res.content!)).toEqual({ ok: 1 });
     expect(res.duration_ms).toBeGreaterThanOrEqual(30);
   });
@@ -66,6 +69,7 @@ describe("chatHedged", () => {
     expect(JSON.parse(res.content!)).toEqual({ ok: 0 });
     expect(log[1].aborted).toBe(true);
     expect(res.duplicate_requests).toBe(1);
+    expect(res.hedge_winner).toBe(1);
   });
 
   it("첫 요청이 기준 전에 실패하면 겹쳐 보내지 않고 실패를 돌려준다", async () => {
@@ -90,6 +94,27 @@ describe("chatHedged", () => {
     setTimeout(() => controller.abort(), 60);
     await expect(p).rejects.toMatchObject({ code: "aborted" });
     expect(log.every((l) => l.aborted)).toBe(true);
+  });
+});
+
+describe("겹친 요청 기록과 화면 금액", () => {
+  const usage = { prompt_tokens: 1000, completion_tokens: 300, reasoning_tokens: 0, cost_usd: 0.0025, priced: true };
+
+  it("겹쳐 보내지 않았으면 trace에 아무것도 더하지 않는다", () => {
+    expect(hedgeTraceFields({ usage })).toEqual({});
+  });
+
+  it("겹쳐 보냈으면 이긴 요청 번호와 취소된 요청 몫(먼저 끝난 요청과 같은 크기로 추정)을 남긴다", () => {
+    expect(hedgeTraceFields({ usage, duplicate_requests: 1, hedge_winner: 2 })).toEqual({ duplicate_requests: 1, hedge_winner: 2, duplicate_cost_usd: 0.0025 });
+  });
+
+  it("total_cost_usd는 겹친 요청 추정치를 포함한다", () => {
+    const calls = [
+      { usage: { ...usage, cost_usd: 0.002 } },
+      { usage: { ...usage, cost_usd: 0.0025 }, ...hedgeTraceFields({ usage, duplicate_requests: 1, hedge_winner: 1 }) },
+      {},
+    ];
+    expect(traceTotalCost(calls)).toBeCloseTo(0.002 + 0.0025 * 2, 9);
   });
 });
 

@@ -1,5 +1,5 @@
 // Liner API 공통 호출. 키는 서버 환경변수 LINER_API_KEY에서만 읽고, 오류 메시지·로그에 키나 응답 원문을 넣지 않는다.
-// 재시도: 429는 Retry-After를 따르고(최대 5초), 500·502·503·504와 네트워크 오류는 한 번 더 부른다(설계 13절, 조사 문서 한도 절).
+// 재시도: 429는 Retry-After를 따르고(최대 5초), 500·502·503·504와 네트워크 오류는 한 번 더 부른다(설계 13절, https://liner.com/ko/developers/docs/rate-limits).
 
 export const LINER_BASE_URL = "https://platform.liner.com/api/v1";
 
