@@ -1,13 +1,11 @@
 # 근거(geungeo) — 대학 행정 근거 찾기 에이전트
 
-> 작업 중입니다. 아래에서 '(작업 중)'으로 표시한 기능은 아직 동작하지 않습니다.
-
 업무 중 "무슨 규정이냐"와 새 업무 기안 때 필요한 근거 조항·절차·선행 요건을
 시행일·출처와 함께 찾아 주고, 근거가 없으면 '근거 없음'이라고 답합니다.
 
 ## 실행 (5분)
 
-필요: Node.js 22.12 이상(`.nvmrc`), Liner API 키
+필요: Node.js 22.12 이상(`.nvmrc`, 22.13과 24에서 확인), Liner API 키
 
 평가 실행기(`npm run eval`)가 쓰는 vite와 수집기(`npm run collect`)가 22.12 이상을 요구해 이 버전에 맞췄습니다.
 
@@ -17,7 +15,13 @@ cp .env.example .env    # .env의 LINER_API_KEY= 뒤에 발급받은 키를 넣�
 npm run dev             # http://localhost:3000
 ```
 
-(선택) `npm run eval` — 평가 문항 28개를 돌려 통과율을 출력합니다(`.env`를 같은 방식으로 읽음). 키 없이 흐름만 보려면 `npm run eval -- --mock`(Liner를 부르지 않고 Search 고정 응답과 규칙 기반 대역으로 돕니다).
+운영 빌드로 띄우려면 `npm run build && npm start`를 씁니다(주소는 같습니다). 운영 빌드에는 아래 '화면' 절의 목 데이터 기능이 빠져 있습니다.
+
+질문 하나에 답이 나오기까지 보통 30~40초가 걸리고, Liner API 비용은 질문당 약 $0.02입니다. 진행 중에는 화면에 단계별 상태가 표시됩니다.
+
+설치 중 eslint 지원 종료 경고와 moderate 취약점 경고(개발용 의존성 minimatch)가 나오지만 실행에는 영향이 없습니다.
+
+(선택) `npm run eval` — 평가 문항 28개를 돌려 통과율을 출력합니다(`.env`를 같은 방식으로 읽음). 키 없이 흐름만 보려면 `npm run eval -- --mock`(Liner를 부르지 않고 Search 고정 응답과 규칙 기반 대역으로 돕니다). 대역은 흐름 확인용이라 `--mock`의 통과율은 20%대(28문항 중 6개 안팎)로 낮게 나오는 것이 정상이며 품질 지표가 아닙니다. 결과는 `eval/runs/` 아래에 남습니다.
 
 키는 서버 쪽에서만 읽고 브라우저로 보내지 않습니다. `.env`는 커밋되지 않습니다.
 
@@ -41,7 +45,7 @@ npm run dev             # http://localhost:3000
 - 질문 분석의 추론 강도는 `LINER_REASONING_ANALYZE`(none|low|medium|high|max, 비우면 low)로 바꿉니다. 질문 분석에만 적용되며, Liner 기본값으로 되돌리려면 `LINER_REASONING_ANALYZE=medium`으로 둡니다
 - 답변 단계(조문 대조·판정)의 추론 강도는 `LINER_REASONING_ANSWER`(none|low|medium|high|max)로 따로 바꿉니다. 비우면 값을 보내지 않아 Liner 기본값(medium)으로 답합니다. `low`로 두면 답이 빨라지지만 평가에서 판정이 흔들려 기본값으로 쓰지 않습니다
 - 두 추론 강도 변수에 위 다섯 값이 아닌 값(오타 등)을 주면 경고 없이 무시하고 비운 것과 같게 처리합니다. 질문 분석은 low로, 답변 단계는 값을 보내지 않습니다. 평가 실행기의 `summary.json`에는 실제로 보낸 값과 환경변수 원문, 실행한 커밋 해시가 함께 남습니다
-- (선택) 단계별 값을 다른 라우터(`liner-gpt-router`·`liner-claude-router`)로 바꾸면 같은 흐름으로 실행됩니다. 모델별 평가 결과는 비교 실험 뒤 채웁니다
+- (선택) 단계별 값을 다른 라우터(`liner-gpt-router`·`liner-claude-router`)로 바꾸면 같은 흐름으로 실행됩니다. 평가 28문항에서 답변 단계 모델만 바꿔 돌린 결과는 `liner-mark-1.3` 28/28, `liner-claude-router` 27/28, `liner-gpt-router` 27/28이었고, 그래서 기본값을 `liner-mark-1.3`으로 두었습니다. 문항마다 한 번씩 돌린 값이고, 이 28문항의 실패를 보며 고친 뒤 같은 문항으로 잰 것이라 처음 보는 질문에서도 같은 통과율이 나온다는 뜻은 아닙니다
 
 ## 데이터
 
