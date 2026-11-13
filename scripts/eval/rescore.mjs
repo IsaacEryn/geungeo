@@ -6,13 +6,17 @@
 // results.jsonl에는 결론(summary)·판정·카드 ID·지운 인용 수만 남아 있고 카드 인용문·확인 사항·체크리스트는 없다.
 // 그래서 저장된 값만으로 다시 셀 수 있는 항목(근거 조, 판정, 지어낸 인용)만 새로 매기고,
 // 나머지(세부 위치, 시행일 함정, 핵심 표현)는 저장된 채점 결과를 그대로 쓴다.
-// 판정은 저장된 결과가 통과였으면 통과로 둔다(새 문구 규칙은 옛 규칙을 넓히기만 하므로 전체 글로 통과한 것은 새 규칙으로도 통과).
+// 판정은 저장된 결과가 통과였으면 통과로 둔다(저장 당시 결론·확인 사항 전체로 매긴 결과라 결론만으로는 다시 판단할 수 없다).
+// 그래서 근거 없음 문구 규칙을 좁힌 뒤에도 저장된 통과는 내려가지 않는다.
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { loadQuestions, summarize } from "./run.mjs";
 import { scoreOne } from "./score.mjs";
 
 const RECOUNTED = ["article", "verdict", "fabricated"];
+
+/** 기준선과 새 실행을 비교할 때 같이 적을 한 줄 */
+export const NOTE = "참고: 기준선 재채점은 결론(summary)만 보고, 새 실행은 결론·체크리스트·확인 사항을 모두 본다. 기준선 쪽이 조금 불리하다.";
 
 export function rescoreRow(q, row, opts = {}) {
   const partial = {
@@ -57,5 +61,6 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
     console.log(`저장된 채점: ${line(before)}`);
     console.log(`지금 채점:   ${line(after)}`);
     console.log(`바뀐 문항: ${changed.length ? changed.join(", ") : "없음"}`);
+    console.log(NOTE);
   }
 }
