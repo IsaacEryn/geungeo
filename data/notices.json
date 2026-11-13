@@ -71,7 +71,7 @@
         }
       ],
       "note": "상한 %는 이 게시글에 없다. 연도별 상한 %는 교육부 공고에서 확인한다(moe-tuition-cap-2026·2027 항목).",
-      "redistribution": "홍보자료(카드뉴스), 공공누리 표시는 확인 못 함. 수치·날짜와 제목·URL만 수록(문장 발췌 없음)",
+      "redistribution": "홍보자료(카드뉴스). 저작권법 제7조 해당 아님, 제24조의2(공공저작물의 자유이용)·공공누리 표시 없음 확인(저작권법 [시행 2026. 10. 29.] 법률 제21595호 기준). 그림·디자인은 싣지 않고 수치·날짜와 제목·URL만 수록(문장 발췌 없음)",
       "excerpt": null,
       "kogl_type1_confirmed": false,
       "collected_at": "2026-11-13T02:21:00+09:00"
@@ -89,7 +89,7 @@
       "status": "needs_source_check",
       "figures": [],
       "note": "원문 확인 필요. 2026-11-13 moe.go.kr 보도자료 게시판(boardID=294)을 '등록금 법정 인상'·'인상한도'·'등록금'으로, 공지사항 게시판(boardID=333)을 '인상'으로 검색했으나 2026학년도 한도 공고 게시글을 찾지 못했다(같은 제목 형식의 2024학년도 공고는 boardSeq=97550, 2023-12-27 게시). 언론 보도 수치는 넣지 않는다. 원문을 찾으면 게시글 HTML이나 첨부의 synap 미리보기 HTML에서 % 값을 확인해 채운다.",
-      "redistribution": "공고문은 저작권법 제7조제2호(국가의 고시·공고)로 봄(별도 대조 예정). 수치·날짜와 제목·URL만 수록(문장 발췌 없음)",
+      "redistribution": "공고문은 저작권법 제7조제2호(국가 또는 지방자치단체의 고시ㆍ공고ㆍ훈령 그 밖에 이와 유사한 것) 해당 — 교육부 등록금 법정 인상 한도 공고(저작권법 [시행 2026. 10. 29.] 법률 제21595호 기준). 수치·날짜와 제목·URL만 수록(문장 발췌 없음)",
       "excerpt": null,
       "kogl_type1_confirmed": false,
       "collected_at": "2026-11-13T02:21:00+09:00"
@@ -107,7 +107,7 @@
       "status": "needs_source_check",
       "figures": [],
       "note": "원문 확인 필요. 2026-11-13 같은 게시판 검색에서 2027학년도 한도 공고를 찾지 못했다(예년처럼 연말 공고로 보임). 공고 전에는 숫자를 추정하지 않는다.",
-      "redistribution": "공고문은 저작권법 제7조제2호(국가의 고시·공고)로 봄(별도 대조 예정). 수치·날짜와 제목·URL만 수록(문장 발췌 없음)",
+      "redistribution": "공고문은 저작권법 제7조제2호(국가 또는 지방자치단체의 고시ㆍ공고ㆍ훈령 그 밖에 이와 유사한 것) 해당 — 교육부 등록금 법정 인상 한도 공고(저작권법 [시행 2026. 10. 29.] 법률 제21595호 기준). 수치·날짜와 제목·URL만 수록(문장 발췌 없음)",
       "excerpt": null,
       "kogl_type1_confirmed": false,
       "collected_at": "2026-11-13T02:21:00+09:00"
@@ -133,36 +133,42 @@
         {
           "label": "의견 제출 기한",
           "value": "2026년 12월 7일까지",
-          "location": "첨부 미리보기 붙임1·붙임2 '3. 의견제출'",
-          "checked_url": "https://www.moe.go.kr/upload/synap/202611/f535976f917d635c94da0e5e50b84557.files/1.html"
+          "location": "첨부 미리보기 4쪽(붙임1)·8쪽(붙임2) '3. 의견제출'",
+          "checked_url": "https://www.moe.go.kr/upload/synap/202611/f535976f917d635c94da0e5e50b84557.files/4.html"
         },
         {
           "label": "공고 번호",
           "value": "교육부 공고 제2026 – 396호(고등교육법 시행령), 제2026 – 397호(대학 등록금에 관한 규칙)",
-          "location": "첨부 미리보기 붙임1·붙임2 머리",
-          "checked_url": "https://www.moe.go.kr/upload/synap/202611/f535976f917d635c94da0e5e50b84557.files/1.html"
+          "location": "첨부 미리보기 3쪽(붙임1 머리, 제2026 – 396호)·7쪽(붙임2 머리, 제2026 – 397호)",
+          "checked_url": "https://www.moe.go.kr/upload/synap/202611/f535976f917d635c94da0e5e50b84557.files/3.html"
         },
         {
           "label": "전문가 위원 임기(규칙 개정안)",
           "value": "2년의 범위에서 정하되, 1회에 한하여 연임",
-          "location": "첨부 미리보기 붙임2 개정령안 제2조제4항 단서",
-          "checked_url": "https://www.moe.go.kr/upload/synap/202611/f535976f917d635c94da0e5e50b84557.files/1.html"
+          "location": "첨부 미리보기 9쪽(붙임2 개정령안 제2조제4항 단서)·10쪽(신구조문대비표)",
+          "checked_url": "https://www.moe.go.kr/upload/synap/202611/f535976f917d635c94da0e5e50b84557.files/9.html"
         },
         {
           "label": "감면 기준(현행, 보도자료 설명)",
           "value": "전체 등록금의 10% 면제·감액, 그중 30%를 경제적 사정이 곤란한 학생에 편성",
-          "location": "첨부 미리보기 1쪽 본문 각주",
-          "checked_url": "https://www.moe.go.kr/upload/synap/202611/f535976f917d635c94da0e5e50b84557.files/1.html"
+          "location": "첨부 보도자료 미리보기 2쪽 각주",
+          "checked_url": "https://www.moe.go.kr/upload/synap/202611/f535976f917d635c94da0e5e50b84557.files/2.html"
         },
         {
           "label": "개정안 부칙 시행일",
           "value": "공포한 날부터 시행(시행령·규칙 모두)",
-          "location": "첨부 미리보기 붙임1·붙임2 개정령안 부칙",
-          "checked_url": "https://www.moe.go.kr/upload/synap/202611/f535976f917d635c94da0e5e50b84557.files/1.html"
+          "location": "첨부 미리보기 5쪽(붙임1 개정령안 부칙)·9쪽(붙임2 개정령안 부칙)",
+          "checked_url": "https://www.moe.go.kr/upload/synap/202611/f535976f917d635c94da0e5e50b84557.files/5.html"
         }
       ],
+      "articles": [
+        "heaf_decree:004-06",
+        "heaf_decree:004-07",
+        "tuition_rule:002-00",
+        "tuition_rule:003-00"
+      ],
       "note": "입법예고안이며 확정·시행 전이다. 규칙 개정안의 '후속 조치 보고' 조항은 주요내용에 '안 제2조 제7항 단서 신설'로 적혀 있으나 개정령안 본문은 제2조에 제8항을 신설한다(제8항·제9항은 제9항·제10항으로).",
-      "redistribution": "보도자료, 공공누리 제1유형(출처표시) 표시 확인. 첨부 입법예고 공고는 저작권법 제7조제2호로 봄(별도 대조 예정). 수치·날짜와 제목·URL만 수록(문장 발췌 없음)",
+      "redistribution": "보도자료는 공공누리 제1유형(출처표시) 표시 확인. 첨부 입법예고 공고와 개정령안은 저작권법 제7조제2호(국가 또는 지방자치단체의 고시ㆍ공고ㆍ훈령 그 밖에 이와 유사한 것) 해당 — 교육부 공고 제2026-396·397호와 개정령안(저작권법 [시행 2026. 10. 29.] 법률 제21595호 기준). 수치·날짜와 제목·URL만 수록(문장 발췌 없음)",
       "excerpt": null,
       "kogl_type1_confirmed": true,
       "collected_at": "2026-11-13T02:21:00+09:00"
