@@ -49,18 +49,30 @@ const NEGATED_BASIS = /수\s*없|안\s*(?:됩|된|되|돼)|않|못|아니/;
  * "이 조항은"·"해당 규정은"처럼 앞 조문을 가리키는 말은 따로 거른다
  */
 const SOURCE_NOUN =
-  "시행령|시행규칙|법률|(?<!방)법|규정|규칙|조항|조문|지침|공고|보도자료|보도|기사|학칙|훈령|고시|예규|세칙|내규|정관|조례|자료|공문|안내문?|편람|매뉴얼|가이드라인|해석|판례|회신";
-const OTHER_SOURCE_SUBJECT = new RegExp(`([가-힣·]*(?:${SOURCE_NOUN}))\\s*(?:은|는|도)(?=\\s|$)`, "g");
+  "시행령|시행규칙|법률|법령|(?<!방)법|규정|규칙|조항|조문|지침|공고|보도자료|보도|기사|학칙|훈령|고시|예규|세칙|내규|정관|조례|자료|공문|안내문?|편람|매뉴얼|가이드라인|해석|판례|회신";
+/** 자료 이름 + 은/는/도. "상위 법령 자체는 … 직접 정한"처럼 "자체"가 부정 문구에 들지 못한 꼴도 본다 */
+const OTHER_SOURCE_SUBJECT = new RegExp(`([가-힣·]*(?:${SOURCE_NOUN}))\\s*(?:자체\\s*)?(?:은|는|도)(?=\\s|$)`, "g");
 /** 부정 문구가 "자체"로 시작할 때("시행령 자체는 …") 그 바로 앞에 붙은 자료 이름 */
 const SOURCE_BEFORE_ITSELF = new RegExp(`([가-힣·]*(?:${SOURCE_NOUN}))\\s*$`);
 /** 어느 자료든 가리킬 수 있는 일반 명사(근거로 든 이름과 겹치는지 따지지 않는다) */
 const GENERIC_SOURCE = new Set(["조항", "조문", "규정", "규칙", "자료", "법"]);
-/** 그 주어가 앞 조문을 가리키는 지시어로 시작하는지("이 조항", "같은 규정") */
-const DEMONSTRATIVE_TAIL = /(?:^|[\s,])(?:이|그|해당|위|같은|앞의)\s*$/;
+/** 앞에서 말한 조문·자료를 가리키는 지시어("이", "해당", "본", "동", "상기", "당해") */
+const DEMONSTRATIVE = "이|그|해당|위|같은|앞의|본|동|상기|당해";
+/** 그 주어가 앞 조문을 가리키는 지시어로 시작하는지("이 조항", "같은 규정", "본 규정") */
+const DEMONSTRATIVE_TAIL = new RegExp(`(?:^|[\\s,])(?:${DEMONSTRATIVE})\\s*$`);
+/** 지시어를 붙여 쓴 주어("이규정", "해당규정", "동규정") */
+const DEMONSTRATIVE_JOINED = new RegExp(`^(?:${DEMONSTRATIVE})(?:조항|조문|규정|규칙|법)$`);
+/**
+ * 꾸미는 말 없이 일반 명사 하나만 주어로 왔는지 보려고, 주어 바로 앞이 쉼표나 앞 절을 잇는 어미("지급하며",
+ * "처리하되", "확인했으나")로 끝나는지 본다
+ */
+const CLAUSE_END = /(?:,|며|되|지만|는데|은데|므로|면서|(?:하|되|이|있|없|었|았|였|했|겠)(?:고|나|서))$/;
 /** 조 번호 */
 const ARTICLE_NUMBER = /제\s*(\d+)\s*조(?:\s*의\s*(\d+))?/g;
 /** 앞에서 말한 조문을 가리키는 말("이 조항", "해당 규정", "같은 조") */
-const DEMONSTRATIVE_ARTICLE = /^(?:다만|그러나|하지만|단|또한|그런데)?[,\s]*(?:이|그|해당|위|같은|앞의)\s*(?:조항|조문|규정|조)(?=[은는이가도의\s,]|에)/;
+const DEMONSTRATIVE_ARTICLE = new RegExp(
+  `^(?:다만|그러나|하지만|단|또한|그런데)?[,\\s]*(?:${DEMONSTRATIVE})\\s*(?:조항|조문|규정|조)(?=[은는이가도의\\s,]|에)`,
+);
 /**
  * 조 번호 없이 조문을 가리키는 말("적용 범위의 단서에 따라", "신설 조항에 따라").
  * "단서"는 '실마리' 뜻("판단할 단서가 없다")을 빼려고 단서 조항을 가리키는 꼴만 본다
@@ -70,7 +82,7 @@ const UNNUMBERED_REFERENCE =
 /** 그 말 바로 앞(같은 문장, 25자 안)에 조·항·호 번호가 있으면 번호를 쓴 것으로 본다 */
 const NUMBER_NEARBY = /제\s*\d+\s*(?:조(?:의\s*\d+)?|항|호)|같은\s*조/;
 /** "이 조항에 따라", "그 단서에 따라"처럼 앞 조문을 가리키는 말 */
-const DEMONSTRATIVE_BEFORE = /(?:^|\s)(?:이|그|해당|위|같은|앞의)\s*$/;
+const DEMONSTRATIVE_BEFORE = new RegExp(`(?:^|\\s)(?:${DEMONSTRATIVE})\\s*$`);
 const NEARBY_CHARS = 25;
 /** 개정 판 시행일을 알릴 만큼 최근인지(기준일 기준) */
 const RECENT_AMENDMENT_YEARS = 3;
@@ -103,10 +115,18 @@ function articleKeys(text: string): string[] {
   return [...text.matchAll(ARTICLE_NUMBER)].map((m) => (m[2] ? `${m[1]}-${m[2]}` : m[1]));
 }
 
+/** 근거로 든 이름의 낱말이 그 낱말로 시작하는지("장학"은 "장학금 지급 규정"의 "장학금"을 줄인 말) */
+function sharesCoreWord(basis: string, token: string): boolean {
+  if (token.length < 2 || !/^[가-힣·]+$/.test(token)) return false;
+  return basis.split(/\s+/).some((w) => w.startsWith(token));
+}
+
 /**
  * "근거로" 뒤, 부정 문구 앞에 다른 자료를 가리키는 주어가 새로 왔는지.
  * "…를 근거로 인정하며, 시행령의 관련 조항은 직접 근거는 아닙니다"는 근거로 든 조문이 아니라 다른 자료를 부정한 것이다.
- * "이 조항은"처럼 앞 조문을 가리키거나 "근거로" 앞에서 이미 든 이름("학칙 제7조를 근거로 … 학칙은")이면 다른 자료로 보지 않는다
+ * 다음은 다른 자료로 보지 않는다: "이 조항은"·"본 규정은"·"이규정은"처럼 앞 조문을 가리킨 주어, 꾸미는 말 없이
+ * 일반 명사 하나만 온 주어("지급하며, 규정은"), "근거로" 앞에서 이미 든 이름("학칙 제7조를 근거로 … 학칙은")과
+ * 그 이름을 줄여 쓴 주어("장학금 지급 규정 제5조를 근거로 … 장학 규정은")
  */
 function namesOtherSource(basis: string, head: string, disclaim: string): boolean {
   const found = [...head.matchAll(OTHER_SOURCE_SUBJECT)].map((m) => ({ at: m.index, word: m[1] }));
@@ -116,7 +136,14 @@ function namesOtherSource(basis: string, head: string, disclaim: string): boolea
   }
   return found.some(({ at, word }) => {
     const before = head.slice(0, at);
-    if (DEMONSTRATIVE_TAIL.test(before)) return false;
+    if (DEMONSTRATIVE_TAIL.test(before) || DEMONSTRATIVE_JOINED.test(word)) return false;
+    const prev = before.trim().split(/\s+/).filter(Boolean).at(-1) ?? "";
+    if (GENERIC_SOURCE.has(word) && (prev === "" || prev === "근거로" || CLAUSE_END.test(prev))) {
+      // "법은"만 따로 오면 근거로 든 학칙이 아니라 상위 법을 말할 수 있다
+      if (word !== "법" || basis.includes("법")) return false;
+    }
+    // 근거로 든 이름의 낱말을 줄여 쓰고 같은 종류 명사를 붙인 주어("장학 규정은")
+    if (basis.includes(word) && sharesCoreWord(basis, prev)) return false;
     // "기숙사 운영 규정은"처럼 근거로 든 이름을 다시 쓰면 같은 자료다(일반 명사 한 낱말만으로는 판단하지 않는다)
     const words = [...before.trim().split(/\s+/).filter(Boolean).slice(-2), word];
     for (let k = 1; k <= words.length; k += 1) {
