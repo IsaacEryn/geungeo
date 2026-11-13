@@ -172,7 +172,8 @@ export type VerificationIssueKind =
   | "school_rule_not_cited" // 위임 조만 인용했는데 그 학교 학칙 조가 후보에 있음 → no_basis로 바꾸지 않고 ③ 한 번 더
   | "notice_delegation" // 공고에 맡긴 사항 + 공고 있음 → no_basis를 partial로
   | "upper_added" // 학칙·하위 규범 근거에 상위 위임 조를 코드가 덧붙임
-  | "hedged_basis"; // 결론이 "근거로 제시할 수 있다"처럼 에둘러 근거로 삼음 → ③ 한 번 더
+  | "hedged_basis" // 결론이 "근거로 제시할 수 있다"처럼 에둘러 근거로 삼음 → ③ 한 번 더
+  | "unnamed_article"; // 결론이 "단서에 따라"처럼 번호 없이 조문을 가리키고 근거 조 번호가 결론에 없음 → ③ 한 번 더
 
 export interface VerificationIssue {
   kind: VerificationIssueKind;
