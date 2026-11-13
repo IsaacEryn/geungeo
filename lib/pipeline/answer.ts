@@ -194,7 +194,8 @@ export const ANSWER_HEDGE = { afterMs: 25_000, timeoutMs: 55_000 };
  * ③의 추론 강도 기본값. undefined면 reasoning_effort를 보내지 않는다(Liner 기본 medium).
  * LINER_REASONING_ANSWER(none|low|medium|high|max)로 바꾼다.
  * 11/13 평가 28문항을 low로 돌리면 ③ 시간 중앙값이 약 15.6초에서 9.1초로 줄었지만 2문항이 틀렸다
- * (근거 없음을 근거 있음으로 판정 1, 결론에서 적용 범위 조를 빠뜨림 1). 같은 2문항을 기본값으로 다시 돌리면 맞았으므로 기본값은 그대로 둔다.
+ * (근거 없음을 근거 있음으로 판정 1, 결론에서 적용 범위 조를 빠뜨림 1). 몇 번 다시 돌려 본 범위에서도 low는 판정이
+ * 흔들려 기본값은 보내지 않는 쪽으로 둔다.
  */
 export const DEFAULT_ANSWER_REASONING: ReasoningEffort | undefined = undefined;
 

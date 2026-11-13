@@ -2,7 +2,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_ANSWER_REASONING, answerQuestion, answerReasoning, coerceDraft, type AnswerInput } from "@/lib/pipeline/answer";
 import { reasoningFromEnv } from "@/lib/liner/router";
-import { outputChars } from "../scripts/eval/run.mjs";
+import { analyzeReasoning, DEFAULT_ANALYZE_REASONING } from "@/lib/pipeline/analyze";
+import { codeVersion, outputChars, reasoningRecord } from "../scripts/eval/run.mjs";
 import { chatBody, createLinerMock } from "./support/liner-mock";
 
 beforeEach(() => vi.stubEnv("LINER_API_KEY", "test-key-not-real"));
@@ -80,5 +81,50 @@ describe("③ 출력 길이", () => {
     });
     expect(chars).toEqual({ summary: 3, quotes: 7, checklist: 5, caveats: 2, searched_scope: 0 });
     expect(outputChars({ summary: "", searched_scope: { laws: ["법"], queries: ["검색어"], where_to_check: [] } }).searched_scope).toBe(4);
+  });
+});
+
+describe("평가 실행 조건 기록", () => {
+  it("모르는 추론 강도 값은 무시하고 기본값을 쓴다(①은 low, ③은 보내지 않음)", () => {
+    vi.stubEnv("LINER_REASONING_ANALYZE", "fast");
+    vi.stubEnv("LINER_REASONING_ANSWER", "fast");
+    expect(analyzeReasoning()).toBe(DEFAULT_ANALYZE_REASONING);
+    expect(answerReasoning()).toBe(DEFAULT_ANSWER_REASONING);
+    expect(analyzeReasoning("high")).toBe("high");
+  });
+
+  it("summary.json에는 실제로 보낸 값과 환경변수 원문을 함께 남긴다", () => {
+    const env = { LINER_REASONING_ANALYZE: "", LINER_REASONING_ANSWER: "fast" };
+    expect(reasoningRecord({ analyze: "low", answer: undefined }, env)).toEqual({
+      analyze: "low",
+      answer: "(보내지 않음)",
+      env: { analyze: "", answer: "fast" },
+    });
+    expect(reasoningRecord({ analyze: "low", answer: "low" }, { LINER_REASONING_ANSWER: " LOW " })).toEqual({
+      analyze: "low",
+      answer: "low",
+      env: { analyze: null, answer: " LOW " },
+    });
+  });
+
+  it("대역 파이프라인처럼 보낸 값을 모르면 null로 둔다", () => {
+    expect(reasoningRecord(undefined, {})).toEqual({ analyze: null, answer: null, env: { analyze: null, answer: null } });
+  });
+
+  it("실행한 커밋 해시와 작업 중 변경 여부를 남기고, git이 실패하면 뺀다", () => {
+    const fake = (out: Record<string, string>) => ((_cmd: string, args: string[]) => {
+      const v = out[args[0]];
+      if (v === undefined) throw new Error("git 실패");
+      return v;
+    }) as unknown as Parameters<typeof codeVersion>[1];
+    expect(codeVersion("/x", fake({ "rev-parse": "abc1234\n", status: "" }))).toEqual({ commit: "abc1234", dirty: false });
+    expect(codeVersion("/x", fake({ "rev-parse": "abc1234\n", status: " M lib/a.ts\n" }))).toEqual({ commit: "abc1234", dirty: true });
+    expect(codeVersion("/x", fake({ "rev-parse": "abc1234" }))).toEqual({ commit: "abc1234" });
+    expect(codeVersion("/x", fake({}))).toBeUndefined();
+  });
+
+  it("이 저장소에서는 실제 커밋 해시를 읽는다", () => {
+    const v = codeVersion();
+    if (v) expect(v.commit).toMatch(/^[0-9a-f]{7,}$/);
   });
 });
