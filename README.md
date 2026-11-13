@@ -23,6 +23,8 @@ npm run dev             # http://localhost:3000
 
 (선택) `npm run eval` — 평가 문항 28개를 돌려 통과율을 출력합니다(`.env`를 같은 방식으로 읽음). 키 없이 흐름만 보려면 `npm run eval -- --mock`(Liner를 부르지 않고 Search 고정 응답과 규칙 기반 대역으로 돕니다). 대역은 흐름 확인용이라 `--mock`의 통과율은 20%대(28문항 중 6개 안팎)로 낮게 나오는 것이 정상이며 품질 지표가 아닙니다. 결과는 `eval/runs/` 아래에 남습니다.
 
+다른 문항 파일로 돌리려면 `npm run eval -- --questions <jsonl 경로>`를 씁니다(형식은 `eval/questions.jsonl`과 같고 저장소 밖 경로도 됩니다). 시행일 함정과 근거 없음 집계는 문항의 `trap`·`expected_verdict` 필드를 따르고, `summary.json`에는 경로 없이 파일 이름과 문항 수만 남습니다.
+
 키는 서버 쪽에서만 읽고 브라우저로 보내지 않습니다. `.env`는 커밋되지 않습니다.
 
 ## 화면

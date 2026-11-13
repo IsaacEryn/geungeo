@@ -1,7 +1,9 @@
 // 평가 채점(scripts/eval/score.mjs)과 실행기 집계·비밀 검사 시험. Liner를 부르지 않는다.
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { findSecrets, loadQuestions, makeCoster, medianStages, parseArgs, routerPrice, summarize } from "../scripts/eval/run.mjs";
+import { findSecrets, isTrap, loadQuestions, main, makeCoster, medianStages, parseArgs, questionsRecord, routerPrice, summarize } from "../scripts/eval/run.mjs";
 import { includesAny, scoreOne } from "../scripts/eval/score.mjs";
 import { runPipeline as mockPipeline } from "../scripts/eval/mock-pipeline.mjs";
 
@@ -205,5 +207,76 @@ describe("실행기", () => {
     expect(findSecrets("... test-key-value-123456 ...", env)).toContain("LINER_API_KEY");
     expect(findSecrets("Authorization: Bearer abcdefghijklmnopqrstuvwxyz", {})).toHaveLength(1);
     expect(findSecrets("정상 결과", env)).toHaveLength(0);
+  });
+});
+
+describe("--questions 문항 파일", () => {
+  // 가상 문항. 실제 평가 문항과 겹치지 않게 T 번호를 쓴다
+  const fake = [
+    { id: "T01", question: "가상 질문 하나", expected_verdict: "answered", trap: { kind: "not_yet", date: "2030-01-01" } },
+    { id: "T02", question: "가상 질문 둘", expected_verdict: "answered" },
+    { id: "T03", question: "가상 질문 셋", expected_verdict: "no_basis" },
+    { id: "T04", question: "가상 질문 넷", expected_verdict: "answered", trap: { kind: "proposed" } },
+  ];
+  const row = (id: string, pass: boolean) => ({ id, repeat: 1, pass, format_error: false, removed_citations: 0, calls: {}, tokens: { prompt: 0, completion: 0 }, cost_usd: 0, unpriced: false, duration_ms: 1, answer_ms: 1 });
+
+  function withFile<T>(fn: (dir: string, path: string) => T): T {
+    const dir = mkdtempSync(join(tmpdir(), "geungeo-eval-"));
+    const path = join(dir, "가상문항.jsonl");
+    writeFileSync(path, `# 주석 줄\n${fake.map((q) => JSON.stringify(q)).join("\n")}\n`);
+    try {
+      return fn(dir, path);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+
+  it("옵션을 받는다", () => {
+    expect(parseArgs(["--questions", "/abs/x.jsonl"]).questions).toBe("/abs/x.jsonl");
+    expect(parseArgs([]).questions).toBeUndefined();
+  });
+
+  it("저장소 밖 절대 경로의 문항 파일을 읽는다", () => {
+    withFile((_dir, path) => {
+      const qs = loadQuestions(path);
+      expect(qs.map((q: { id: string }) => q.id)).toEqual(["T01", "T02", "T03", "T04"]);
+    });
+  });
+
+  it("함정·근거 없음 집계는 문항 ID가 아니라 trap·expected_verdict 필드를 따른다", () => {
+    const rows = [row("T01", true), row("T02", true), row("T03", false), row("T04", false)];
+    const s = summarize(rows, fake);
+    expect(s.traps).toEqual({ passed: 1, of: 2 });
+    expect(s.no_basis).toEqual({ passed: 0, of: 1 });
+    expect(fake.filter(isTrap).map((q) => q.id)).toEqual(["T01", "T04"]);
+  });
+
+  it("기본 문항의 함정은 trap 필드 기준으로도 전과 같은 5문항이다", () => {
+    expect(questions.filter(isTrap).map((q: { id: string }) => q.id)).toEqual(["E10", "E11", "E22", "E23", "E24"]);
+  });
+
+  it("기록에는 파일 이름만 남긴다", () => {
+    expect(questionsRecord("/어딘가/내부폴더/세트.jsonl", 10, 3)).toEqual({ file: "세트.jsonl", count: 3, loaded: 10 });
+  });
+
+  it("실행 결과 summary에 문항 파일 이름과 문항 수만 남고 폴더 경로는 남지 않는다", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "geungeo-eval-"));
+    const path = join(dir, "가상문항.jsonl");
+    writeFileSync(path, `${fake.map((q) => JSON.stringify(q)).join("\n")}\n`);
+    const out = join(dir, "out");
+    try {
+      await main(["--mock-runner", "--questions", path, "--ids", "T01,T03", "--out", out], () => {});
+      const json = readFileSync(join(out, "summary.json"), "utf8");
+      const summary = JSON.parse(json);
+      expect(summary.questions).toEqual({ file: "가상문항.jsonl", count: 2, loaded: 4 });
+      expect(summary.options.questions).toBe("가상문항.jsonl");
+      expect(summary.candidates[0].traps.of).toBe(1);
+      expect(summary.candidates[0].no_basis.of).toBe(1);
+      const all = json + readFileSync(join(out, "summary.md"), "utf8") + readFileSync(join(out, "results.jsonl"), "utf8");
+      expect(all).not.toContain(dir);
+      expect(readFileSync(join(out, "summary.md"), "utf8")).toContain("문항 파일 가상문항.jsonl(2문항, 파일 전체 4)");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
