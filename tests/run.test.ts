@@ -61,7 +61,7 @@ describe("runPipeline E22형(시행 예정)", () => {
     expect(card.changed_after_collection).toBe(true);
 
     expect(result.checklist[0].basis_ids).toEqual(["heaf:011-02"]);
-    expect(result.verification).toMatchObject({ removed_citations: 0, retried: false, verdict_before: "answered", verdict_after: "answered" });
+    expect(result.verification).toMatchObject({ removed_citations: 0, retried: false, retry_reasons: [], verdict_before: "answered", verdict_after: "answered" });
     expect(result.warnings).toEqual([]);
 
     // 호출: 신호 검색 1(질문 분석과 겹쳐 먼저 띄움) + 분석 1 + 답 1. 공고 검색은 건너뜀. 분석 검색어의 날짜는 지워진다
@@ -107,6 +107,8 @@ describe("runPipeline E25형(근거 없음)", () => {
     expect(result.verdict).toBe("no_basis");
     expect(result.cards).toEqual([]);
     expect(result.verification.retried).toBe(true);
+    // 재시도 뒤 issues는 둘째 답 기준이지만 첫 답의 재질문 이유는 남는다
+    expect(result.verification.retry_reasons).toEqual(["unknown_id", "quote_not_found", "no_citations_left"]);
     expect(result.verification.removed_citations).toBe(4); // 처음 2 + 재시도 2
     expect(result.verification.verdict_before).toBe("answered");
     expect(result.searched_scope?.laws).toContain("사립학교법");

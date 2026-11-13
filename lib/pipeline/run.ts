@@ -9,7 +9,7 @@ import { buildCards } from "./cards";
 import { collectFromCache, collectNotices, collectSignals, collectWeb, mergeWeb, planWebSearch, schoolRulesInCache, type MergedWeb, type SignalCollectOutcome } from "./collect";
 import { PipelineError, badRequest, toPipelineError } from "./errors";
 import { formatKoreanDate, isIsoDate, mentionsDate, todayKst } from "./text";
-import type { AgentMode, ArticleCandidate, AskRequest, AskResult, ChangeSignal, Citation, SearchedScope, StageEvent, StageName, TraceCall } from "./types";
+import type { AgentMode, ArticleCandidate, AskRequest, AskResult, ChangeSignal, Citation, RetryReason, SearchedScope, StageEvent, StageName, TraceCall } from "./types";
 import { verifyDraft } from "./verify";
 
 export interface RunOptions {
@@ -294,8 +294,10 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
   let answered = await stage("answer", () => answerQuestion(answerInput, { model: options.models?.answer, call }));
   calls.push(answered.call);
   let retried = false;
+  const retryReasons: RetryReason[] = [];
   if (!answered.draft) {
     retried = true;
+    retryReasons.push("format_error");
     answered = await stage("answer", () =>
       answerQuestion({ ...answerInput, feedback: "앞 답이 JSON 형식에 맞지 않았습니다. 스키마대로 다시 답하세요." }, { model: options.models?.answer, call }),
     );
@@ -310,6 +312,8 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
   );
   if (verified.needs_retry && !retried) {
     retried = true;
+    // 재시도 뒤에는 issues가 새 답의 검증 결과로 바뀌므로 첫 답의 재질문 이유를 따로 남긴다
+    retryReasons.push(...verified.retry_reasons);
     const second = await stage("answer", () =>
       answerQuestion({ ...answerInput, feedback: verified.feedback }, { model: options.models?.answer, call }),
     );
@@ -371,6 +375,7 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
       issues: verified.issues,
       removed_citations: verified.removed_citations,
       retried,
+      retry_reasons: retryReasons,
       verdict_before: verified.verdict_before,
       verdict_after: verified.verdict_after,
     },

@@ -66,7 +66,7 @@ export async function runPipeline(request, options = {}) {
     change_signals: [],
     searched_scope: null,
     warnings: [],
-    verification: { issues: [], removed_citations: kind === 2 ? 1 : 0, retried: false, verdict_before: verdict, verdict_after: verdict },
+    verification: { issues: [], removed_citations: kind === 2 ? 1 : 0, retried: false, retry_reasons: [], verdict_before: verdict, verdict_after: verdict },
     trace: {
       calls: [
         { stage: "analyze", api: "router", model: options.models?.analyze ?? "liner-mark-1.3", duration_ms: 3000, usage: usage(400, 200) },

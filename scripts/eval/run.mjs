@@ -250,6 +250,8 @@ async function runCandidate({ questions, opts, models, pipeline, costOf, spentBe
         // ④ 검증이 고친 것(종류·인용 ID만, 설명 문구는 뺀다)
         issues: (result?.verification?.issues ?? []).map((i) => (i.citation_id ? `${i.kind}:${i.citation_id}` : i.kind)),
         retried: result?.verification?.retried ?? null,
+        // ③을 다시 부른 이유(첫 답의 검증 결과). 재시도 뒤 issues는 새 답 기준이라 따로 남긴다
+        retry_reasons: result?.verification?.retry_reasons ?? null,
         duration_ms: ms,
         answer_ms: answerMs,
         // 단계별 실제 소요(ms)와 답한 모델(응답 model, 없으면 요청 모델만 남는다)

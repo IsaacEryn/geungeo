@@ -55,6 +55,7 @@ function brief(id: string, r: AskResult) {
     warnings: r.warnings,
     issues: r.verification.issues.map((i) => `${i.kind} ${i.citation_id ?? ""}`),
     retried: r.verification.retried,
+    retry_reasons: r.verification.retry_reasons,
     scope: r.searched_scope,
     calls: r.trace.calls.map(
       (c) =>
