@@ -3,6 +3,7 @@
 //
 //   npm run eval -- [옵션]
 //   --asof 2026-11-05        기준일(기본: 평가 세트 기준일)
+//   --questions <경로>       문항 파일(jsonl, 기본 eval/questions.jsonl). 저장소 밖 경로도 된다. 기록에는 파일 이름만 남는다
 //   --ids E01,E22            일부 문항만
 //   --repeat 3               반복 수
 //   --mode fixed             답변 방식(tools는 미구현 — 받기만 하고 fixed로 돈다)
@@ -23,21 +24,22 @@
 // .env는 있으면 읽는다(process.loadEnvFile, 이미 있는 환경변수는 덮지 않음). 키 값은 출력·저장하지 않는다.
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { scoreOne } from "./score.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const DEFAULT_MODEL = "liner-mark-1.3";
-const TRAP_IDS = ["E10", "E11", "E22", "E23", "E24"];
+const DEFAULT_QUESTIONS = join(ROOT, "eval/questions.jsonl");
 
 // ───────── 옵션 ─────────
 export function parseArgs(argv) {
-  const o = { asof: "2026-11-05", repeat: 1, mode: "fixed", offline: false, mock: false, mockRunner: false, strictSchool: false, judge: false };
+  const o = { asof: "2026-11-05", repeat: 1, mode: "fixed", offline: false, mock: false, mockRunner: false, strictSchool: false, judge: false, questions: /** @type {string | undefined} */ (undefined) };
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
     const next = () => argv[++i];
     if (a === "--asof") o.asof = next();
+    else if (a === "--questions") o.questions = next();
     else if (a === "--ids") o.ids = next().split(",").map((s) => s.trim());
     else if (a === "--repeat") o.repeat = Math.max(1, Number(next()) || 1);
     else if (a === "--mode") o.mode = next();
@@ -57,15 +59,29 @@ export function parseArgs(argv) {
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(o.asof)) throw new Error("--asof는 YYYY-MM-DD");
   if (!["fixed", "tools"].includes(o.mode)) throw new Error("--mode는 fixed|tools");
+  if (o.questions !== undefined && !o.questions) throw new Error("--questions에 파일 경로가 필요함");
   return o;
 }
 
-export function loadQuestions(path = join(ROOT, "eval/questions.jsonl")) {
+export function loadQuestions(path = DEFAULT_QUESTIONS) {
   return readFileSync(path, "utf8")
     .split("\n")
     .filter((l) => l.trim() && !l.trimStart().startsWith("#"))
     .map((l) => JSON.parse(l));
 }
+
+/**
+ * summary.json에 남길 문항 파일 기록. 경로 대신 파일 이름만 남긴다(실행한 사람의 폴더 구조가 결과에 섞이지 않게)
+ * @param {string} path 읽은 파일 경로
+ * @param {number} loaded 파일에 든 문항 수
+ * @param {number} used --ids로 고른 뒤 실제로 돌린 문항 수
+ */
+export function questionsRecord(path, loaded, used) {
+  return { file: basename(path), count: used, loaded };
+}
+
+/** 문항의 trap 필드가 있으면 시행일 함정 문항 */
+export const isTrap = (q) => Boolean(q?.trap);
 
 // ───────── 비용 ─────────
 /**
@@ -321,7 +337,7 @@ export function summarize(rows, questions) {
   }
   const passOf = (ids) => ids.filter((id) => (byId.get(id) ?? []).length && byId.get(id).every((r) => r.pass)).length;
   const noBasisIds = questions.filter((q) => q.expected_verdict === "no_basis").map((q) => q.id).filter((id) => byId.has(id));
-  const trapIds = TRAP_IDS.filter((id) => byId.has(id));
+  const trapIds = questions.filter(isTrap).map((q) => q.id).filter((id) => byId.has(id));
   const sum = (f) => rows.reduce((s, r) => s + f(r), 0);
   return {
     runs,
@@ -347,11 +363,12 @@ export function summarize(rows, questions) {
   };
 }
 
-function summaryMarkdown({ opts, models, results, stoppedAll, startedAt }) {
+function summaryMarkdown({ opts, models, results, stoppedAll, startedAt, questionSet }) {
   const pct = (x) => `${(x * 100).toFixed(1)}%`;
   const lines = [];
   lines.push(`# 평가 결과 ${startedAt}`, "");
   lines.push(`- 기준일 ${opts.asof}, 반복 ${opts.repeat}, 방식 ${opts.mode}${opts.offline || opts.mock ? ", Search 고정 응답" : ""}${opts.mock ? ", **오프라인(Router 대역: 규칙 기반 분석 + 추출식 답, 모델 호출 없음)**" : ""}${opts.mockRunner ? ", **목 파이프라인(실행기 시험)**" : ""}`);
+  lines.push(`- 문항 파일 ${questionSet.file}(${questionSet.count}문항${questionSet.count !== questionSet.loaded ? `, 파일 전체 ${questionSet.loaded}` : ""})`);
   lines.push(`- 모델: ① ${models.analyze}, 보조 채점 ${opts.judge ? models.judge : "안 함"}`);
   if (stoppedAll) lines.push(`- **멈춤**: ${stoppedAll}`);
   lines.push("");
@@ -388,12 +405,16 @@ export async function main(argv = process.argv.slice(2), log = console.log) {
   const pricing = JSON.parse(readFileSync(join(ROOT, "config/pricing.json"), "utf8"));
   const costOf = makeCoster(pricing);
 
-  let questions = loadQuestions();
+  // 상대 경로는 명령을 친 폴더 기준(npm run은 저장소 루트로 옮겨 실행하므로 INIT_CWD를 먼저 본다)
+  const questionsPath = opts.questions ? resolve(process.env.INIT_CWD ?? process.cwd(), opts.questions) : DEFAULT_QUESTIONS;
+  let questions = loadQuestions(questionsPath);
+  const loadedCount = questions.length;
   if (opts.ids) {
     const unknown = opts.ids.filter((id) => !questions.some((q) => q.id === id));
     if (unknown.length) throw new Error(`없는 문항: ${unknown.join(",")}`);
     questions = questions.filter((q) => opts.ids.includes(q.id));
   }
+  const questionSet = questionsRecord(questionsPath, loadedCount, questions.length);
   const env = process.env;
   const base = {
     analyze: opts.modelAnalyze ?? env.LINER_MODEL_ANALYZE ?? DEFAULT_MODEL,
@@ -413,7 +434,7 @@ export async function main(argv = process.argv.slice(2), log = console.log) {
   const pipeline = await loadPipeline(opts);
   const reasoning = reasoningRecord(pipeline.reasoning?.(), env);
   const code = codeVersion();
-  log(`평가 시작: 문항 ${questions.length} × 반복 ${opts.repeat}, ③ 후보 ${candidates.join(", ")}, 기준일 ${opts.asof}${opts.mock ? " (오프라인: Liner 호출 없음)" : opts.mockRunner ? " (목 파이프라인)" : ""}`);
+  log(`평가 시작: ${questionSet.file} 문항 ${questions.length} × 반복 ${opts.repeat}, ③ 후보 ${candidates.join(", ")}, 기준일 ${opts.asof}${opts.mock ? " (오프라인: Liner 호출 없음)" : opts.mockRunner ? " (목 파이프라인)" : ""}`);
 
   const results = [];
   let spent = 0;
@@ -441,9 +462,11 @@ export async function main(argv = process.argv.slice(2), log = console.log) {
 
   const allRows = results.flatMap((r) => r.rows);
   const resultsJsonl = allRows.map((r) => JSON.stringify(r)).join("\n") + "\n";
-  const md = summaryMarkdown({ opts, models: base, results, stoppedAll, startedAt });
+  const md = summaryMarkdown({ opts, models: base, results, stoppedAll, startedAt, questionSet });
+  // 옵션 기록에서 문항·결과 경로는 마지막 이름만 남긴다(실행한 사람의 폴더 구조를 남기지 않음)
+  const optionsRecord = { ...opts, ...(opts.questions ? { questions: questionSet.file } : {}), ...(opts.out ? { out: basename(resolve(opts.out)) } : {}) };
   const summaryJson = JSON.stringify(
-    { started_at: startedAt, ...(code ? { code } : {}), options: { ...opts }, models: base, reasoning, spent_usd: spent, stopped: stoppedAll, candidates: results.map(({ model, s, stopped }) => ({ model, stopped, ...s })) },
+    { started_at: startedAt, ...(code ? { code } : {}), options: optionsRecord, questions: questionSet, models: base, reasoning, spent_usd: spent, stopped: stoppedAll, candidates: results.map(({ model, s, stopped }) => ({ model, stopped, ...s })) },
     null,
     2,
   );
