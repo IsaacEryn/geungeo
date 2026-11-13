@@ -9,7 +9,7 @@ export const MODEL_PRICES: Record<string, { input: number; output: number }> = {
   "liner-mark": { input: 1, output: 5 },
   "liner-mark-latest": { input: 1, output: 5 },
   // 라우터(liner-claude-router)가 고른 모델. 라우터는 답한 모델 가격으로 과금된다.
-  // 출처: liner.com/llms-full.txt Pricing 절·ko llm-gateway(조사_라이너API.md 4절, 검증_기록 52줄에서 대조). 11/13 확인 호출 실측과 일치
+  // 출처: Liner 공개 문서 https://liner.com/llms-full.txt Pricing 절, https://liner.com/ko/developers/docs/llm-gateway (2026-11-04 확인)
   "claude-haiku-5.5": { input: 0.1, output: 0.5 },
   "claude-sonnet-5.5": { input: 2, output: 10 },
   "claude-opus-5.5": { input: 4, output: 20 },

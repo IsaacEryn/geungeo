@@ -217,6 +217,8 @@ export interface TraceCall {
   model?: string; // 요청한 모델 ID(router)
   served_model?: string; // 응답 본문의 model — 실제로 답한 모델(라우터면 고른 모델). 응답에 없으면 비운다
   duplicate_requests?: number; // 늦어서 같은 요청을 겹쳐 보낸 수(먼저 끝난 쪽만 씀)
+  hedge_winner?: 1 | 2; // 겹쳐 보냈을 때 쓴 요청(1 = 처음 보낸 요청, 2 = 겹쳐 보낸 요청)
+  duplicate_cost_usd?: number; // 겹친(취소된) 요청 몫 추정 금액. 사용량을 알 수 없어 먼저 끝난 요청과 같은 크기로 센다. total_cost_usd에 들어간다
   query?: string; // 검색어(search·cache)
   http_status?: number;
   duration_ms: number;
@@ -234,7 +236,7 @@ export interface TraceCall {
 export interface Trace {
   calls: TraceCall[];
   total_duration_ms: number;
-  total_cost_usd: number;
+  total_cost_usd: number; // 호출 금액 합. 겹친 요청 추정치(duplicate_cost_usd)를 포함한다
   models: Partial<Record<"analyze" | "answer", string>>; // 단계별 모델 ID
   stage_ms?: Partial<Record<StageName | "prepare", number>>; // 단계별 실제 소요(ms). answer·verify는 재질문까지 합친 값, prepare는 캐시 읽기·먼저 띄운 일
 }

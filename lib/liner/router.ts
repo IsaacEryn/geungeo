@@ -2,7 +2,7 @@
 // JSON 출력은 json_schema(strict)가 기본이다. 400이 나면 json_object + user 메시지 끝 "Respond in JSON."으로 한 번 대체한다
 // (11/13 추가 시험: 띄어 쓴 영어 단어 JSON이 user 메시지에 있어야 json_object가 400을 피함).
 import { LinerError, linerRequest, type LinerCallOptions } from "./client";
-import { usageCost, type ChatUsage, type UsageCost } from "./cost";
+import { roundUsd, usageCost, type ChatUsage, type UsageCost } from "./cost";
 
 export const DEFAULT_MODEL = "liner-mark-1.3";
 
@@ -61,6 +61,8 @@ export interface ChatResult {
   json_fallback: boolean;
   /** 늦어서 같은 요청을 겹쳐 보냈으면 그 수(chatHedged만). 끝까지 못 받은 요청도 과금됐을 수 있다 */
   duplicate_requests?: number;
+  /** 겹쳐 보냈을 때 먼저 성공해 쓴 요청 번호(1 = 처음 보낸 요청, 2 = 겹쳐 보낸 요청). 겹쳐 보내지 않았으면 없음 */
+  hedge_winner?: 1 | 2;
 }
 
 export type ReasoningEffort = "none" | "low" | "medium" | "high" | "max";
@@ -95,7 +97,7 @@ function toResult(
     finish_reason: choice?.finish_reason ?? null,
     model,
     served_model: served,
-    // 라우터는 답한 모델 단가로 과금된다(조사 문서 4절·검증 기록) → 답한 모델 단가를 먼저 찾는다
+    // 라우터는 답한 모델 단가로 과금된다(https://liner.com/llms-full.txt Router API·Pricing 절) → 답한 모델 단가를 먼저 찾는다
     usage: usageCost(served && served !== model ? [served, model] : [model], res.body.usage),
     status: res.status,
     duration_ms: res.duration_ms + extraMs,
@@ -177,7 +179,11 @@ export async function chatHedged(request: ChatRequest, options: LinerCallOptions
           finish(() => {
             controllers.forEach((c, i) => i !== index && c.abort());
             const duplicates = controllers.length - 1;
-            resolve({ ...res, duration_ms: Date.now() - started, ...(duplicates ? { duplicate_requests: duplicates } : {}) });
+            resolve({
+              ...res,
+              duration_ms: Date.now() - started,
+              ...(duplicates ? { duplicate_requests: duplicates, hedge_winner: (index + 1) as 1 | 2 } : {}),
+            });
           }),
         (error) => {
           pending -= 1;
@@ -194,6 +200,27 @@ export async function chatHedged(request: ChatRequest, options: LinerCallOptions
       track(launch(), 1);
     }, hedge.afterMs);
   });
+}
+
+export interface HedgeTraceFields {
+  duplicate_requests?: number;
+  hedge_winner?: 1 | 2;
+  duplicate_cost_usd?: number;
+}
+
+/**
+ * 겹쳐 보낸 요청을 처리 과정(trace) 호출 기록에 남길 필드. 취소된 요청도 과금된다고 보고 금액에 센다.
+ * 취소된 요청의 사용량은 응답이 없어 알 수 없으므로, 먼저 끝난 요청과 같은 크기로 추정한다(평가 실행기와 같은 방식).
+ * 겹쳐 보내지 않았으면 빈 객체.
+ */
+export function hedgeTraceFields(res: Pick<ChatResult, "duplicate_requests" | "hedge_winner" | "usage">): HedgeTraceFields {
+  const duplicates = res.duplicate_requests ?? 0;
+  if (!duplicates) return {};
+  return {
+    duplicate_requests: duplicates,
+    ...(res.hedge_winner ? { hedge_winner: res.hedge_winner } : {}),
+    duplicate_cost_usd: roundUsd(res.usage.cost_usd * duplicates),
+  };
 }
 
 /** 모델 응답 문자열에서 JSON 객체를 꺼낸다(코드 펜스·앞뒤 말 허용). 실패하면 null */

@@ -34,6 +34,11 @@ export interface RunOptions {
 const MAX_QUESTION_LENGTH = 1000;
 const DEFAULT_WHERE_TO_CHECK = ["학교 학칙·규정", "학교법인 정관(사립)", "교육부 공고·안내"];
 
+/** 화면 '금액'(trace.total_cost_usd): 호출마다 쓴 응답 금액 + 겹친 요청 추정치 */
+export function traceTotalCost(calls: Pick<TraceCall, "usage" | "duplicate_cost_usd">[]): number {
+  return roundUsd(calls.reduce((sum, c) => sum + (c.usage?.cost_usd ?? 0) + (c.duplicate_cost_usd ?? 0), 0));
+}
+
 function nowIso(): string {
   return new Date().toISOString();
 }
@@ -349,7 +354,7 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
     break;
   }
 
-  const totalCost = roundUsd(calls.reduce((sum, c) => sum + (c.usage?.cost_usd ?? 0), 0));
+  const totalCost = traceTotalCost(calls);
   return {
     request: { question, asOf, school: requestedSchool, mode },
     data_collected_at: cache.collectedAt,

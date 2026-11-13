@@ -1,6 +1,6 @@
 // ① 질문 분석(설계 2-1). LINER_MODEL_ANALYZE, json_schema(strict). 실패하면 규칙 기반 대체.
 import { LinerError, type LinerCallOptions } from "@/lib/liner/client";
-import { chatHedged, modelFor, parseJsonObject, type ReasoningEffort } from "@/lib/liner/router";
+import { chatHedged, hedgeTraceFields, modelFor, parseJsonObject, type ReasoningEffort } from "@/lib/liner/router";
 import type { SchoolId, Synonyms } from "@/lib/cache/schema";
 import type { AskRequest, QuestionAnalysis, Scene, TraceCall } from "./types";
 
@@ -169,7 +169,7 @@ export async function analyzeQuestion(request: AskRequest, asOf: string, ctx: An
       api: "router",
       model,
       ...(res.served_model ? { served_model: res.served_model } : {}),
-      ...(res.duplicate_requests ? { duplicate_requests: res.duplicate_requests } : {}),
+      ...hedgeTraceFields(res),
       http_status: res.status,
       duration_ms: res.duration_ms,
       usage: {
@@ -178,7 +178,7 @@ export async function analyzeQuestion(request: AskRequest, asOf: string, ctx: An
         reasoning_tokens: res.usage.reasoning_tokens,
         cost_usd: res.usage.cost_usd,
       },
-      note: [res.json_fallback ? "json_object 대체" : "", res.duplicate_requests ? "늦어서 한 번 더 보냄" : "", res.usage.priced ? "" : "단가 미확인", parsed ? "" : "형식 오류 — 규칙 기반 대체"]
+      note: [res.json_fallback ? "json_object 대체" : "", res.duplicate_requests ? "늦어서 한 번 더 보냄(금액에 겹친 요청 추정치 포함)" : "", res.usage.priced ? "" : "단가 미확인", parsed ? "" : "형식 오류 — 규칙 기반 대체"]
         .filter(Boolean)
         .join(", ") || undefined,
     };

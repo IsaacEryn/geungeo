@@ -68,7 +68,7 @@ export function loadQuestions(path = join(ROOT, "eval/questions.jsonl")) {
 
 // ───────── 비용 ─────────
 /**
- * 라우터 호출 단가: 요청 모델(router) → 응답의 실제 모델(served) → 모르면 보수적 대용값(unpriced_router_ceiling).
+ * 라우터 호출 단가: 요청 모델(router) → 응답의 실제 모델(served) → 모르면 확인된 최고 단가를 임시로 쓴 대용값(unpriced_router_ceiling, 상한 보장 없음).
  * 대용값이나 trace 금액을 쓰면 estimated:true(결과에 '단가 미확인 포함'으로 적는다)
  */
 export function routerPrice(pricing, call) {
@@ -214,6 +214,8 @@ async function runCandidate({ questions, opts, models, pipeline, costOf, spentBe
         stage_ms: result?.trace?.stage_ms ?? null,
         served_models: [...new Set((result?.trace?.calls ?? []).filter((c) => c.api === "router").map((c) => `${c.stage}:${c.served_model ?? c.model}`))],
         duplicate_requests: (result?.trace?.calls ?? []).reduce((n, c) => n + (c.duplicate_requests ?? 0), 0),
+        // 겹쳐 보낸 호출에서 쓴 요청 번호(단계:1 = 처음 요청, 단계:2 = 겹친 요청)
+        hedge_winners: (result?.trace?.calls ?? []).filter((c) => c.hedge_winner).map((c) => `${c.stage}:${c.hedge_winner}`),
         calls: cost.calls,
         tokens: cost.tokens,
         cost_usd: cost.usd,
