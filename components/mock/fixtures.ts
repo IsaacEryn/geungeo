@@ -2,6 +2,7 @@
 // - 질문은 평가 세트(2026. 11. 5. 작성) 문항 그대로다.
 // - 인용문(quote)은 평가 세트 근거로 받은 법제처 원문 캡처(2026. 11. 5.)에서 그대로 옮긴 quotes.json과
 //   data/examples/heaf.example.json만 쓴다. 조문 문구를 새로 쓰지 않는다.
+// - quotes.json의 tuition_2_9는 data/laws/tuition_rule.json(2022. 2. 7. 시행본) 제2조제9항 그대로다.
 // - 학칙 인용(quotes.json의 snu_113_2)은 data/rules/snu_rule.json에 담은 항 그대로다(쓰는 항만, 대학명 먼저 출처 표기).
 // - 결론(summary)·체크리스트는 평가 세트 '정답 요지'를 줄인 것이다.
 // - 처리 과정의 토큰·소요 시간·금액은 예시 값이다(화면에도 목 데이터라고 띄운다).
@@ -379,27 +380,27 @@ const E13: MockScenario = {
   },
 };
 
-const E25: MockScenario = {
-  id: "E25",
+const E28: MockScenario = {
+  id: "E28",
   stages: [
-    ["analyze", 2000],
+    ["analyze", 1900],
     ["collect_cache", 90],
-    ["collect_web", 1700],
+    ["collect_web", 1600],
     ["collect_signals", 1300],
-    ["answer", 5800],
+    ["answer", 5600],
     ["verify", 40],
   ],
   calls: [
-    { stage: "analyze", api: "router", model: MODEL, http_status: 200, duration_ms: 2000, usage: routerUsage(1840, 430, 170) },
-    { stage: "collect_cache", api: "cache", query: "사립대 교원 연구년", duration_ms: 30 },
-    { stage: "collect_cache", api: "cache", query: "교원 연수 근무장소 외", duration_ms: 30 },
-    { stage: "collect_cache", api: "cache", query: "특별연수 연구년", duration_ms: 30 },
+    { stage: "analyze", api: "router", model: MODEL, http_status: 200, duration_ms: 1900, usage: routerUsage(1820, 420, 160) },
+    { stage: "collect_cache", api: "cache", query: "등록금심의위원회 위원 수당", duration_ms: 30 },
+    { stage: "collect_cache", api: "cache", query: "등록금심의위원회 구성 운영 학칙", duration_ms: 30 },
+    { stage: "collect_cache", api: "cache", query: "위원회 회의 참석 수당", duration_ms: 30 },
     {
       stage: "collect_web",
       api: "search",
-      query: "사립대학 교원 연구년 법적 근거 교육부",
+      query: "등록금심의위원회 외부 위원 수당 기준 교육부",
       http_status: 200,
-      duration_ms: 1700,
+      duration_ms: 1600,
       usage: SEARCH_USAGE,
       results: [
         { hostname: "www.moe.go.kr", grade: "W1", excluded: "list_page" },
@@ -410,47 +411,42 @@ const E25: MockScenario = {
     {
       stage: "collect_signals",
       api: "search",
-      query: "사립학교법 교원 연수 개정 입법예고",
+      query: "대학 등록금에 관한 규칙 개정 입법예고",
       http_status: 200,
       duration_ms: 1300,
       usage: SEARCH_USAGE,
       results: [{ hostname: "opinion.lawmaking.go.kr", grade: "W1" }],
     },
-    { stage: "answer", api: "router", model: MODEL, http_status: 200, duration_ms: 5800, usage: routerUsage(8800, 1250, 520) },
+    { stage: "answer", api: "router", model: MODEL, http_status: 200, duration_ms: 5600, usage: routerUsage(8400, 1200, 500) },
   ],
   build: () => ({
-    scene: "initiating",
+    scene: "processing",
     verdict: "no_basis",
     summary:
-      "법령에 사립대 교원 연구년을 직접 정한 조항은 찾지 못했습니다. 교육공무원법의 특별연수·근무장소 외 연수는 국공립 교육공무원 대상이고, 사립학교법 제55조의3(근무장소 외 연수)이 가장 가깝지만 연구년 제도 자체를 정한 조문은 아닙니다. 학교법인 정관과 학교 자체 규정으로 만들 사안입니다.",
+      "등심위 위원 회의 참석 수당의 법정 기준은 찾지 못했습니다. 고등교육법 제11조, 같은 법 시행령, 대학 등록금에 관한 규칙 어디에도 위원 수당 조항이 없습니다. 규칙 제2조제9항이 위원회 구성·운영에 필요한 사항을 학칙으로 정하게 하므로, 학교 규정과 내부 지급 기준을 확인하세요.",
     cards: [
       lawCard({
-        id: "heaf:014-02",
+        id: "tuition:002-00",
         grade: "L1",
         role: "reference",
-        title: "고등교육법",
-        kind: "act",
-        location: "제14조의2제1항제2호",
-        quote: quotes.heaf_14_2_1_2,
-        effective_from: "2026-09-11",
-        source_url: URL_HEAF,
-        notes: ["'연구년'은 강사를 1년 미만으로 임용할 수 있는 사유로만 나옵니다. 연구년 제도의 근거가 아닙니다."],
+        title: "대학 등록금에 관한 규칙",
+        kind: "ministerial_ordinance",
+        location: "제2조제9항",
+        quote: quotes.tuition_2_9,
+        effective_from: "2022-02-07",
+        source_url: URL_TUITION,
+        notes: ["수당 금액을 정한 조항이 아닙니다. 구성·운영 사항을 학칙에 맡긴다는 조항입니다."],
       }),
     ],
     checklist: [],
-    caveats: ["교육공무원법 제40조(특별연수)를 사립대 근거로 쓰지 마세요."],
+    caveats: ["시행령의 '수당'은 수능 시험종사자 관련 조항입니다. 등심위 위원 수당 기준으로 쓰지 마세요."],
     change_signals: [],
     searched_scope: {
-      laws: ["사립학교법(제55조, 제55조의2, 제55조의3)", "교육공무원법(제39조~제41조)", "고등교육법", "고등교육법 시행령"],
-      queries: ["사립대 교원 연구년", "교원 연수 근무장소 외", "특별연수 연구년", "사립대학 교원 연구년 법적 근거 교육부"],
-      where_to_check: ["학교법인 정관", "학교 자체 규정(교원 연구년·연구교수 규정)", "교원 인사 규정"],
+      laws: ["고등교육법(제11조)", "고등교육법 시행령(제4조의6, 제4조의7)", "대학 등록금에 관한 규칙(제2조)"],
+      queries: ["등록금심의위원회 위원 수당", "등록금심의위원회 구성 운영 학칙", "위원회 회의 참석 수당", "등록금심의위원회 외부 위원 수당 기준 교육부"],
+      where_to_check: ["학칙(등록금심의위원회 규정)", "학교 내부 수당 지급 기준"],
     },
     warnings: [],
-    verification: {
-      verdict_before: "partial",
-      verdict_after: "no_basis",
-      issues: [{ kind: "no_citations_left", detail: "근거(basis)로 남은 인용이 없어 근거 없음으로 바꿨습니다." }],
-    },
   }),
 };
 
@@ -534,7 +530,7 @@ const E22: MockScenario = {
   },
 };
 
-const SCENARIOS: MockScenario[] = [E01, E03, E14, E13, E25, E22];
+const SCENARIOS: MockScenario[] = [E01, E03, E14, E13, E28, E22];
 
 function findScenario(question: string): MockScenario | undefined {
   const example = messages.examples.find((e) => e.question === question.trim());
