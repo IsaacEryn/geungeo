@@ -1,5 +1,5 @@
 // ④ 코드 검증(설계 2-4). 모델이 낸 인용을 캐시·검색 결과와 대조해 지어낸 근거를 버린다.
-import type { ArticleCandidate, ChangeSignal, Citation, DraftAnswer, Verdict, VerificationIssue, WebResult } from "./types";
+import type { ArticleCandidate, ChangeSignal, Citation, DraftAnswer, Verdict, VerificationIssue, VerificationIssueKind, WebResult } from "./types";
 import { dice, extractClaimNumbers, findNormalized, formatKoreanDate, mentionsDate, normalizeForMatch } from "./text";
 
 export interface VerifyInput {
@@ -25,6 +25,8 @@ export interface VerifyOutcome {
   needs_retry: boolean;
   /** 재시도 때 모델에 줄 설명 */
   feedback: string;
+  /** ③을 다시 부를 만하다고 본 이유(issue 종류). needs_retry가 거짓이면 빈 배열 */
+  retry_reasons: VerificationIssueKind[];
 }
 
 /** 숫자·기간·한도를 묻는 질문 */
@@ -32,18 +34,30 @@ const QUANTITY_QUESTION = /몇|며칠|얼마|최대|최소|상한|하한|한도|
 /** 학칙에 맡기는 문구 */
 const SCHOOL_RULE_PHRASE = /학칙(?:으로|이|에서|에)\s*(?:정하|정한|정해|따라|위임)/;
 /**
- * 조문을 직접 근거라 하지 않고 "근거로 제시할 수 있다", "근거로 기안할 수 있다"처럼 에둘러 쓴 표현.
- * "근거로" 뒤 네 어절 안에서 "… 수 있"으로 끝나면 잡는다("제5조에 따라 …해야 한다"처럼 단정한 답은 걸리지 않는다)
+ * 근거인지 아닌지 판단을 미룬 표현("근거로 제시할 수 있다", "근거로 삼을 수 있다", "근거로 볼 여지가 있다", "근거가 될 수 있다").
+ * "제4조를 근거로 감면을 신청할 수 있다"처럼 근거로 [업무 행위]를 할 수 있다는 말은 정상 답이므로 잡지 않는다
  */
-const HEDGED_BASIS =
-  /근거로\s*(?:제시|삼|활용|원용)[가-힣]{0,2}\s*수\s*있|근거가\s*될\s*수\s*있|근거로\s*(?:[가-힣]{1,8}\s+){0,3}[가-힣]{1,8}\s*수\s*있/;
-/** 인용한 조문이 질문 주제를 "직접 정한 조항은 아니다", "직접 근거는 아니다"라고 스스로 밝힌 표현 */
+const DEFERRED_BASIS =
+  /근거(?:로\s*(?:(?:제시|원용|인용|해석|이해)(?:할|될|하는|되는)?|삼을|들|볼)|가\s*될)\s*(?:수[도는]?\s*있|여지)/;
+/** 인용한 조문이 질문 주제를 "직접 정한 조항은 아니다", "직접 근거는 아니다"라고 밝힌 표현 */
 const DISCLAIMED_BASIS =
   /(?:자체|직접)[가-힣·\s]{0,10}?(?:명시|정하|정한|정함|규정|규율)[가-힣]{0,3}\s*(?:규정|조항|조문|근거|것)[이가은는]?\s*아(?:니|닙)|직접(?:적인|적)?\s*근거[가는]?\s*아(?:니|닙)/;
-/** 조 번호 없이 조문을 가리키는 말("적용 범위의 단서", "신설 조항에 따라") */
-const UNNUMBERED_REFERENCE = /단서|조항(?:에\s*따라|에\s*따르면|에\s*의하면|에\s*의해|상)/g;
+/** "근거로" 뒤에서 그 조문을 근거로 쓰지 말라고 하는 말("근거로 삼을 수 없다", "근거로 쓰면 안 된다") */
+const NEGATED_BASIS = /수\s*없|안\s*(?:됩|된|되|돼)|않|못|아니/;
+/** 조 번호 */
+const ARTICLE_NUMBER = /제\s*(\d+)\s*조(?:\s*의\s*(\d+))?/g;
+/** 앞에서 말한 조문을 가리키는 말("이 조항", "해당 규정", "같은 조") */
+const DEMONSTRATIVE_ARTICLE = /^(?:다만|그러나|하지만|단|또한|그런데)?[,\s]*(?:이|그|해당|위|같은|앞의)\s*(?:조항|조문|규정|조)(?=[은는이가도의\s,]|에)/;
+/**
+ * 조 번호 없이 조문을 가리키는 말("적용 범위의 단서에 따라", "신설 조항에 따라").
+ * "단서"는 '실마리' 뜻("판단할 단서가 없다")을 빼려고 단서 조항을 가리키는 꼴만 본다
+ */
+const UNNUMBERED_REFERENCE =
+  /단서(?=\s*(?:조항|규정|에\s*따라|에\s*따르면|에\s*의하면|에\s*의해|에서|상))|조항(?=\s*(?:에\s*따라|에\s*따르면|에\s*의하면|에\s*의해|상))/g;
 /** 그 말 바로 앞(같은 문장, 25자 안)에 조·항·호 번호가 있으면 번호를 쓴 것으로 본다 */
 const NUMBER_NEARBY = /제\s*\d+\s*(?:조(?:의\s*\d+)?|항|호)|같은\s*조/;
+/** "이 조항에 따라", "그 단서에 따라"처럼 앞 조문을 가리키는 말 */
+const DEMONSTRATIVE_BEFORE = /(?:^|\s)(?:이|그|해당|위|같은|앞의)\s*$/;
 const NEARBY_CHARS = 25;
 /** 개정 판 시행일을 알릴 만큼 최근인지(기준일 기준) */
 const RECENT_AMENDMENT_YEARS = 3;
@@ -63,19 +77,68 @@ function segments(text: string): string[] {
     .filter((s) => s.length >= 8);
 }
 
+/** 결론을 문장으로 나눈다 */
+function sentences(text: string): string[] {
+  return text
+    .split(/(?<=[.!?。])\s+|\n+/)
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
+/** 조 번호를 "12-2"처럼 맞춰 볼 수 있는 꼴로 */
+function articleKeys(text: string): string[] {
+  return [...text.matchAll(ARTICLE_NUMBER)].map((m) => (m[2] ? `${m[1]}-${m[2]}` : m[1]));
+}
+
 /**
- * 결론이 조문을 에둘러 근거로 삼았는지. "근거로 …할 수 있다"이거나,
- * "근거로"를 쓰면서 그 조문이 주제를 직접 정한 것은 아니라고 스스로 밝히면 참
+ * "근거로"로 든 조문을 같은 결론에서 "직접 정한 조항은 아니다"라고 스스로 부정했는지.
+ * 부정은 같은 문장의 "근거로" 뒤, 또는 바로 다음 문장이 "이 조항은"·"해당 규정은"처럼 그 조문을 가리키거나 같은 조 번호를 들 때만 본다.
+ * 다른 참고 조문을 "직접 근거는 아니다"라고 밝힌 것은 정상 답이다
+ */
+function disclaimsOwnBasis(summary: string): boolean {
+  const list = sentences(summary);
+  for (let i = 0; i < list.length; i += 1) {
+    const sentence = list[i];
+    const at = sentence.indexOf("근거로");
+    if (at < 0) continue;
+    const after = sentence.slice(at);
+    const disclaim = DISCLAIMED_BASIS.exec(after);
+    // "근거로 삼을 수 없다", "근거로 쓰면 안 된다"는 근거로 든 것이 아니다(부정 표현이 부정 문구보다 앞에 올 때)
+    const negated = NEGATED_BASIS.exec(after);
+    if (negated && (!disclaim || negated.index < disclaim.index)) continue;
+    const own = articleKeys(sentence.slice(0, at)).at(-1);
+    if (disclaim) {
+      const between = articleKeys(after.slice(0, disclaim.index));
+      if (between.every((k) => k === own)) return true;
+    }
+    const next = list[i + 1];
+    if (!next) continue;
+    const nextDisclaim = DISCLAIMED_BASIS.exec(next);
+    if (!nextDisclaim) continue;
+    const head = next.slice(0, nextDisclaim.index);
+    const named = articleKeys(head);
+    if (named.length === 0 && DEMONSTRATIVE_ARTICLE.test(head)) return true;
+    if (own && named.length > 0 && named.every((k) => k === own)) return true;
+  }
+  return false;
+}
+
+/**
+ * 결론이 조문을 에둘러 근거로 삼았는지. 근거 여부 판단을 미룬 말("근거로 제시할 수 있다")을 썼거나,
+ * "근거로" 든 바로 그 조문을 직접 정한 조항이 아니라고 스스로 밝히면 참
  */
 export function isHedgedBasis(summary: string): boolean {
-  return HEDGED_BASIS.test(summary) || (DISCLAIMED_BASIS.test(summary) && summary.includes("근거로"));
+  return DEFERRED_BASIS.test(summary) || disclaimsOwnBasis(summary);
 }
 
 /** 결론에 조 번호 없이 조문을 가리키는 말이 있는지 */
 export function hasUnnumberedReference(summary: string): boolean {
   for (const m of summary.matchAll(UNNUMBERED_REFERENCE)) {
     const before = summary.slice(Math.max(0, m.index - NEARBY_CHARS), m.index).split(/[.。]\s/).at(-1) ?? "";
-    if (!NUMBER_NEARBY.test(before)) return true;
+    if (NUMBER_NEARBY.test(before)) continue;
+    // "이 조항에 따라"처럼 앞에서 번호를 든 조문을 다시 가리키면 번호를 쓴 것으로 본다
+    if (DEMONSTRATIVE_BEFORE.test(before) && NUMBER_NEARBY.test(summary.slice(0, m.index))) continue;
+    return true;
   }
   return false;
 }
@@ -325,9 +388,9 @@ export function verifyDraft(input: VerifyInput): VerifyOutcome {
     basis_ids: item.basis_ids.filter((id) => kept.some((c) => c.id === id)),
   }));
 
-  // 결론이 인접 조문을 "근거로 제시할 수 있다"처럼 에둘러 근거로 삼으면 한 번 다시 묻는다(직접 근거인지 판단을 미룬 표현)
+  // 결론이 "근거로 제시할 수 있다"처럼 근거 여부 판단을 미루거나, 근거로 든 조문을 직접 정한 조항이 아니라고 스스로 밝히면 한 번 다시 묻는다
   const hedged = verdict !== "no_basis" && isHedgedBasis(summary);
-  if (hedged) issues.push({ kind: "hedged_basis", detail: "결론이 조문을 '근거로 …할 수 있다'처럼 에둘러 근거로 삼았습니다." });
+  if (hedged) issues.push({ kind: "hedged_basis", detail: "결론이 조문을 '근거로 제시할 수 있다'처럼 에둘러 근거로 삼았거나, 근거로 든 조문을 직접 정한 조항이 아니라고 밝혔습니다." });
   // 결론이 "단서에 따라"처럼 번호 없이 조문을 가리키고, 근거로 든 조의 번호가 결론에 없으면 번호를 붙여 다시 쓰게 한다
   const basisArticles = [
     ...new Map(
@@ -342,13 +405,23 @@ export function verifyDraft(input: VerifyInput): VerifyOutcome {
   for (const c of unnamed) {
     issues.push({ kind: "unnamed_article", citation_id: c.id, detail: `결론이 조 번호 없이 조문을 가리켰고 근거로 든 ${c.law_name} ${c.number}의 번호가 결론에 없습니다.` });
   }
-  const needsRetry = (forcedNoBasis && removed > 0) || removed >= 2 || hedged || schoolRuleUnused.length > 0 || unnamed.length > 0;
+  const removalRetry = (forcedNoBasis && removed > 0) || removed >= 2;
+  const needsRetry = removalRetry || hedged || schoolRuleUnused.length > 0 || unnamed.length > 0;
+  const retryReasons: VerificationIssueKind[] = [];
+  if (removalRetry) {
+    for (const i of issues) {
+      if ((i.kind === "unknown_id" || i.kind === "quote_not_found" || i.kind === "no_citations_left") && !retryReasons.includes(i.kind)) retryReasons.push(i.kind);
+    }
+  }
+  if (hedged) retryReasons.push("hedged_basis");
+  if (unnamed.length) retryReasons.push("unnamed_article");
+  if (schoolRuleUnused.length) retryReasons.push("school_rule_not_cited");
   const feedback = [
     ...issues
       .filter((i) => i.kind === "unknown_id" || i.kind === "quote_not_found" || i.kind === "not_yet_as_current")
       .map((i) => `- ${i.citation_id ?? ""}: ${i.detail}`),
     ...(hedged
-      ? ["- 결론이 조문을 '근거로 제시할(기안할) 수 있다'처럼 쓰거나, 질문 주제를 직접 정한 조항이 아니라고 하면서 근거로 삼았습니다. 질문 주제를 직접 정한 조문이 아니면 reference로 두고 '직접 근거는 아니다'라고 쓴 뒤 판정(verdict)을 다시 정하세요."]
+      ? ["- 결론이 조문을 '근거로 제시할 수 있다'처럼 근거인지 판단을 미뤘거나, 근거로 든 조문을 질문 주제를 직접 정한 조항이 아니라고 했습니다. 질문 주제를 직접 정한 조문이 아니면 reference로 두고 '직접 근거는 아니다'라고 쓴 뒤 판정(verdict)을 다시 정하세요."]
       : []),
     ...(unnamed.length
       ? [
@@ -377,6 +450,7 @@ export function verifyDraft(input: VerifyInput): VerifyOutcome {
     verdict_after: verdict,
     warnings,
     needs_retry: needsRetry,
+    retry_reasons: retryReasons,
     feedback: feedback
       ? `${feedback}\n후보 목록의 ID와 원문 그대로의 인용만 쓰세요. 시행 예정 조문은 시행일을 결론에 쓰세요.`
       : "",

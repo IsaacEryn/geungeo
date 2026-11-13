@@ -449,6 +449,9 @@ describe("③ 재질문(학칙 조를 두고 위임 조만 인용)", () => {
     expect(result.verification.retried).toBe(true);
     expect(result.verdict).toBe("answered");
     expect(result.cards.map((c) => c.id)).toContain("snu_rule:066-00");
+    // 둘째 답은 학칙 조를 인용해 issues에서 빠지지만, 첫 답을 다시 물은 이유는 남는다
+    expect(result.verification.issues.map((i) => i.kind)).not.toContain("school_rule_not_cited");
+    expect(result.verification.retry_reasons).toEqual(["school_rule_not_cited"]);
   });
 
   it("되물어도 위임 조만 인용하면 추가 호출 없이 끝내고, 근거 없음으로 바꾸지 않는다", async () => {

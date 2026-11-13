@@ -175,6 +175,9 @@ export type VerificationIssueKind =
   | "hedged_basis" // 결론이 "근거로 제시할 수 있다"처럼 에둘러 근거로 삼음 → ③ 한 번 더
   | "unnamed_article"; // 결론이 "단서에 따라"처럼 번호 없이 조문을 가리키고 근거 조 번호가 결론에 없음 → ③ 한 번 더
 
+/** ③을 다시 부른 이유 */
+export type RetryReason = VerificationIssueKind | "format_error";
+
 export interface VerificationIssue {
   kind: VerificationIssueKind;
   citation_id?: string;
@@ -185,6 +188,8 @@ export interface VerificationReport {
   issues: VerificationIssue[];
   removed_citations: number; // 지어낸 인용 수(평가 채점 4번)
   retried: boolean; // ③을 1회 다시 불렀는지
+  /** ③을 다시 부른 이유. 첫 답의 검증에서 나온 issue 종류(형식 오류로 다시 불렀으면 "format_error"). 재시도 뒤 issues가 바뀌어도 남는다 */
+  retry_reasons: RetryReason[];
   verdict_before: Verdict;
   verdict_after: Verdict;
 }

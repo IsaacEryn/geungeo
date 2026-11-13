@@ -586,6 +586,7 @@ export async function streamMockEvents(
       issues: [],
       removed_citations: 0,
       retried: false,
+      retry_reasons: [],
       verdict_before: built.verdict,
       verdict_after: built.verdict,
       ...built.verification,
