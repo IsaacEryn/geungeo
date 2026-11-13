@@ -1,6 +1,6 @@
 // ① 질문 분석(설계 2-1). LINER_MODEL_ANALYZE, json_schema(strict). 실패하면 규칙 기반 대체.
 import { LinerError, type LinerCallOptions } from "@/lib/liner/client";
-import { chatHedged, hedgeTraceFields, modelFor, parseJsonObject, type ReasoningEffort } from "@/lib/liner/router";
+import { chatHedged, hedgeTraceFields, modelFor, parseJsonObject, reasoningFromEnv, type ReasoningEffort } from "@/lib/liner/router";
 import type { SchoolId, Synonyms } from "@/lib/cache/schema";
 import type { AskRequest, QuestionAnalysis, Scene, TraceCall } from "./types";
 
@@ -51,12 +51,7 @@ export const DEFAULT_ANALYZE_REASONING: ReasoningEffort = "low";
 /** ①은 짧은 JSON이라 보통 몇 초면 끝난다. 10초 안에 안 오면 같은 요청을 하나 더 보내고, 요청마다 25초가 넘으면 규칙 기반으로 대신한다 */
 export const ANALYZE_HEDGE = { afterMs: 10_000, timeoutMs: 25_000 };
 
-const EFFORTS: readonly ReasoningEffort[] = ["none", "low", "medium", "high", "max"];
-
-export function reasoningFromEnv(name: string): ReasoningEffort | undefined {
-  const v = process.env[name]?.trim().toLowerCase();
-  return v && (EFFORTS as readonly string[]).includes(v) ? (v as ReasoningEffort) : undefined;
-}
+export { reasoningFromEnv };
 
 export interface AnalyzeOutcome {
   analysis: QuestionAnalysis;

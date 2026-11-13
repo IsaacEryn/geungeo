@@ -1,6 +1,6 @@
 // ③ 대조·답변(설계 2-3). LINER_MODEL_ANSWER, json_schema(strict), 고정 흐름(fixed).
 import type { LinerCallOptions } from "@/lib/liner/client";
-import { chatHedged, hedgeTraceFields, modelFor, parseJsonObject } from "@/lib/liner/router";
+import { chatHedged, hedgeTraceFields, modelFor, parseJsonObject, reasoningFromEnv, type ReasoningEffort } from "@/lib/liner/router";
 import { statusLabel } from "@/lib/cache/status";
 import type { ArticleCandidate, ChangeSignal, Citation, ChecklistItem, DraftAnswer, QuestionAnalysis, TraceCall, Verdict, WebResult } from "./types";
 
@@ -190,11 +190,25 @@ export interface AnswerOutcome {
  */
 export const ANSWER_HEDGE = { afterMs: 25_000, timeoutMs: 55_000 };
 
+/**
+ * ③의 추론 강도 기본값. undefined면 reasoning_effort를 보내지 않는다(Liner 기본 medium).
+ * LINER_REASONING_ANSWER(none|low|medium|high|max)로 바꾼다.
+ * 11/13 평가 28문항을 low로 돌리면 ③ 시간 중앙값이 약 15.6초에서 9.1초로 줄었지만 2문항이 틀렸다
+ * (근거 없음을 근거 있음으로 판정 1, 결론에서 적용 범위 조를 빠뜨림 1). 같은 2문항을 기본값으로 다시 돌리면 맞았으므로 기본값은 그대로 둔다.
+ */
+export const DEFAULT_ANSWER_REASONING: ReasoningEffort | undefined = undefined;
+
+/** 이번 ③ 호출에 쓸 추론 강도: 인자 → LINER_REASONING_ANSWER → 기본값 */
+export function answerReasoning(override?: ReasoningEffort): ReasoningEffort | undefined {
+  return override ?? reasoningFromEnv("LINER_REASONING_ANSWER") ?? DEFAULT_ANSWER_REASONING;
+}
+
 export async function answerQuestion(
   input: AnswerInput,
-  options: { model?: string; call?: LinerCallOptions } = {},
+  options: { model?: string; call?: LinerCallOptions; reasoningEffort?: ReasoningEffort } = {},
 ): Promise<AnswerOutcome> {
   const model = modelFor("answer", options.model);
+  const reasoningEffort = answerReasoning(options.reasoningEffort);
   const res = await chatHedged(
     {
       model,
@@ -203,6 +217,7 @@ export async function answerQuestion(
         { role: "user", content: buildAnswerUserMessage(input) },
       ],
       jsonSchema: { name: "grounded_answer", schema: ANSWER_SCHEMA as unknown as Record<string, unknown> },
+      ...(reasoningEffort ? { reasoningEffort } : {}),
     },
     options.call ?? {},
     ANSWER_HEDGE,

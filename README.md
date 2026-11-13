@@ -39,6 +39,7 @@ npm run dev             # http://localhost:3000
 - Liner Search(`search/web`, `include_knowledge: false`): 교육부 공고·보도, 입법예고 등 법령 데이터베이스 밖의 근거와 최근 변경 신호
 - Liner Router(기본 모델 `liner-mark-1.3`): 질문 분석(장면 분류·검색어, `LINER_MODEL_ANALYZE`), 조문·웹 근거 대조와 답 작성·근거 없음 판정(`LINER_MODEL_ANSWER`), 평가 보조 채점(`LINER_MODEL_JUDGE`)
 - 질문 분석의 추론 강도는 `LINER_REASONING_ANALYZE`(none|low|medium|high|max, 비우면 low)로 바꿉니다. 질문 분석에만 적용되며, Liner 기본값으로 되돌리려면 `LINER_REASONING_ANALYZE=medium`으로 둡니다
+- 답변 단계(조문 대조·판정)의 추론 강도는 `LINER_REASONING_ANSWER`(none|low|medium|high|max)로 따로 바꿉니다. 비우면 값을 보내지 않아 Liner 기본값(medium)으로 답합니다. `low`로 두면 답이 빨라지지만 평가에서 판정이 흔들려 기본값으로 쓰지 않습니다
 - (선택) 단계별 값을 다른 라우터(`liner-gpt-router`·`liner-claude-router`)로 바꾸면 같은 흐름으로 실행됩니다. 모델별 평가 결과는 비교 실험 뒤 채웁니다
 
 ## 데이터
