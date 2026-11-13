@@ -43,6 +43,8 @@ export interface NoticeEntry {
   figures?: NoticeFigure[];
   /** 확인하지 못한 이유·확인할 곳 등 메모 */
   note?: string;
+  /** 입법예고가 고치는 현행 조 ID(조 단위, 예 "tuition_rule:002-00"). 있으면 이 조가 후보에 있거나 인용될 때만 변경 신호로 쓴다 */
+  articles?: string[];
   /** 저작권 메모, 예 "저작권법 제7조제2호(국가의 고시·공고·훈령 그 밖에 이와 유사한 것)" */
   redistribution?: string;
   excerpt: string | null; // 짧은 문장 발췌. kogl_type1_confirmed가 true일 때만
@@ -123,6 +125,9 @@ export function validateNotices(n: NoticeCache): string[] {
     if (x.excerpt && !x.kogl_type1_confirmed) errs.push(`notices ${x.id}: 공공누리 제1유형 확인 없이 발췌를 둘 수 없음`);
     const figures = x.figures ?? [];
     if (x.status === "needs_source_check" && figures.length) errs.push(`notices ${x.id}: 원문 확인 필요 항목에 수치를 둘 수 없음`);
+    if (x.articles !== undefined && (!Array.isArray(x.articles) || !x.articles.every((a) => typeof a === "string" && /^[a-z0-9_]+:\d{3}-\d{2}$/.test(a)))) {
+      errs.push(`notices ${x.id}: articles는 조 ID 목록(예 "tuition_rule:002-00")`);
+    }
     for (const f of figures) {
       if (!f.label || !f.value || !f.location) errs.push(`notices ${x.id}: 수치에 label·value·location 필요`);
       if (!MOE_HTML.test(f.checked_url) || /\.(hwpx?|pdf)(\?|$)/i.test(f.checked_url)) errs.push(`notices ${x.id}: 수치는 moe.go.kr 원문 HTML에서 확인한 것만(${f.checked_url})`);

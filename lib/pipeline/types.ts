@@ -119,6 +119,8 @@ export interface ChangeSignal {
   related_law: string; // 신호를 찾은 법령 이름
   opinion_deadline?: IsoDate; // 입법예고 의견 제출 마감(알 때만)
   after_collection: boolean; // 캐시 수집일 이후 날짜면 true → "수집 뒤 변경 가능성" 배지
+  /** 입법예고가 고치는 현행 조 ID(공고 캐시에 적혀 있을 때만). 있으면 이 조를 인용한 답에만 붙인다 */
+  articles?: string[];
 }
 
 // ───────── ③ 대조·답변 ─────────

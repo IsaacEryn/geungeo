@@ -138,6 +138,34 @@ describe("공고 캐시", () => {
     expect(out.results.find((r) => r.id === sig.web_id)?.notice?.status).toBe("checked");
   });
 
+  it("개정 대상 조가 적힌 입법예고는 그 조가 후보에 없으면 같은 법령이어도 붙이지 않는다", () => {
+    const q = "타 대학에서 이수한 학점을 본교 학점으로 인정할 때 상한이 있나요?";
+    const out = collect(q);
+    const lawNames = [...new Set(out.candidates.filter((c) => c.grade === "L1").sort((a, b) => b.score - a.score).map((c) => c.law_name))];
+    expect(lawNames.slice(0, 2)).toContain("고등교육법 시행령");
+    const proposal = cache.notices!.notices.find((n) => n.title.includes("입법예고"))!;
+    expect(out.candidates.some((c) => proposal.articles!.includes(c.id.split("@")[0]))).toBe(false);
+    expect(notices(q).signals).toEqual([]);
+  });
+
+  it("개정 대상 조를 아는 입법예고 신호는 그 조를 인용한 답에만 붙는다", () => {
+    const signal = {
+      web_id: "notice:1",
+      title: "「고등교육법 시행령」 및 「대학 등록금에 관한 규칙」 입법예고",
+      url: "https://www.moe.go.kr/x?boardSeq=1",
+      hostname: "moe.go.kr",
+      date: "2026-10-27",
+      kind: "legislative_notice" as const,
+      related_law: "고등교육법 시행령",
+      after_collection: false,
+      articles: ["heaf_decree:004-06", "tuition_rule:002-00"],
+    };
+    const cands = [...collect("등록금심의위원회 위원 구성").candidates, ...collect("학점 인정 범위").candidates];
+    const decreeOther = cands.find((c) => c.law_id === "heaf_decree" && !signal.articles.includes(c.id))!;
+    expect(relevantSignals([signal], [{ id: decreeOther.id, quote: "x", role: "basis" }], cands)).toEqual([]);
+    expect(relevantSignals([signal], [{ id: "tuition_rule:002-00", quote: "x", role: "basis" }], cands)).toHaveLength(1);
+  });
+
   it("관계없는 질문에는 붙이지 않는다", () => {
     expect(notices("사립대인데 교원 연구년 제도를 새로 만들려고 해요. 법령상 근거 조항이 뭐예요?").results).toEqual([]);
   });
