@@ -163,7 +163,10 @@ export function verifyDraft(input: VerifyInput): VerifyOutcome {
 
   // 6. 법령이 학칙에 맡기기만 하고 질문이 묻는 숫자·기간이 없으면 근거 없음.
   //    학칙 조(L2)나 공식 웹 원문을 근거로 인용하지 않았고, 근거로 든 법령 조의 인용이 모두 숫자 없는 학칙 위임 문구이며,
-  //    결론의 숫자가 인용 원문 어디에도 없을 때. 위임 조는 위임(delegation)으로 남겨 위임 사실을 보여 준다
+  //    결론의 숫자가 인용 원문 어디에도 없을 때. 위임 조는 위임(delegation)으로 남겨 위임 사실을 보여 준다.
+  //    단, 학칙 조(L2)가 후보에 있으면(학교를 지정한 요청에만 그 학교 학칙이 들어온다) 근거 없음으로 바꾸지 않는다.
+  //    학칙이 답을 정하고 있을 수 있으므로 issues에 남기고 ③에 학칙 조를 근거로 다시 쓰라고 한 번 되묻는다(프롬프트 규칙 8과 같은 조건)
+  let schoolRuleUnused: ArticleCandidate[] = [];
   if (verdict !== "no_basis" && input.question && QUANTITY_QUESTION.test(input.question)) {
     const nonRef = kept.filter((c) => c.role !== "reference");
     const allDelegation =
@@ -176,9 +179,17 @@ export function verifyDraft(input: VerifyInput): VerifyOutcome {
     const citedText = nonRef.map((c) => candidates.get(c.id)?.text ?? "").join(" ").replace(/\s+/g, "");
     const numbersBacked = extractClaimNumbers(summary).some((n) => citedText.includes(n));
     if (allDelegation && !numbersBacked) {
-      issues.push({ kind: "delegation_only", detail: "법령은 학칙에 맡기기만 하고 질문이 묻는 숫자·기간을 정하지 않아 '근거 없음'으로 바꿨습니다." });
-      verdict = "no_basis";
-      for (const c of kept) if (c.role === "basis") c.role = "delegation";
+      schoolRuleUnused = input.candidates.filter((c) => c.grade === "L2");
+      if (schoolRuleUnused.length) {
+        issues.push({
+          kind: "school_rule_not_cited",
+          detail: "법령 위임 조만 인용했지만 후보에 그 학교 학칙 조가 있어 '근거 없음'으로 바꾸지 않았습니다.",
+        });
+      } else {
+        issues.push({ kind: "delegation_only", detail: "법령은 학칙에 맡기기만 하고 질문이 묻는 숫자·기간을 정하지 않아 '근거 없음'으로 바꿨습니다." });
+        verdict = "no_basis";
+        for (const c of kept) if (c.role === "basis") c.role = "delegation";
+      }
     }
   }
 
@@ -271,13 +282,18 @@ export function verifyDraft(input: VerifyInput): VerifyOutcome {
   // 결론이 인접 조문을 "근거로 제시할 수 있다"처럼 에둘러 근거로 삼으면 한 번 다시 묻는다(직접 근거인지 판단을 미룬 표현)
   const hedged = verdict !== "no_basis" && HEDGED_BASIS.test(summary);
   if (hedged) issues.push({ kind: "hedged_basis", detail: "결론이 조문을 '근거로 제시할 수 있다'처럼 에둘러 근거로 삼았습니다." });
-  const needsRetry = (forcedNoBasis && removed > 0) || removed >= 2 || hedged;
+  const needsRetry = (forcedNoBasis && removed > 0) || removed >= 2 || hedged || schoolRuleUnused.length > 0;
   const feedback = [
     ...issues
       .filter((i) => i.kind === "unknown_id" || i.kind === "quote_not_found" || i.kind === "not_yet_as_current")
       .map((i) => `- ${i.citation_id ?? ""}: ${i.detail}`),
     ...(hedged
       ? ["- 결론이 조문을 '근거로 제시할 수 있다'처럼 썼습니다. 질문 주제를 직접 정한 조문이 아니면 reference로 두고 '직접 근거는 아니다'라고 쓴 뒤 판정(verdict)을 다시 정하세요."]
+      : []),
+    ...(schoolRuleUnused.length
+      ? [
+          `- 법령 위임 조만 인용했습니다. 후보에 그 학교 학칙 조(${schoolRuleUnused.map((c) => c.id).join(", ")})가 있으니 질문에 답하는 학칙 조를 basis로 인용하고, 위임 조는 delegation으로 두세요. 학칙 조에도 답이 없을 때만 no_basis로 내세요.`,
+        ]
       : []),
   ].join("\n");
 

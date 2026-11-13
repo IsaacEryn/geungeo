@@ -1,5 +1,5 @@
 // 위임 사슬 거슬러 올라가기·호 단위 색인·공고 캐시 연결·판정 정규화(④). 실제 data/를 읽고 네트워크·Liner 호출은 없다.
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { loadCache, type LawCache } from "@/lib/cache/load";
 import { ArticleIndex, listedItems } from "@/lib/cache/index";
 import { delegationSentence, followUpward } from "@/lib/cache/links";
@@ -7,8 +7,9 @@ import { ruleBasedAnalysis } from "@/lib/pipeline/analyze";
 import { collectFromCache, collectNotices, lawIndexFor, schoolRulesInCache, signalLawName, targetYear } from "@/lib/pipeline/collect";
 import { verifyDraft } from "@/lib/pipeline/verify";
 import { buildCards } from "@/lib/pipeline/cards";
-import { relevantSignals, sameDocument } from "@/lib/pipeline/run";
+import { relevantSignals, runPipeline, sameDocument } from "@/lib/pipeline/run";
 import type { ArticleCandidate, DraftAnswer } from "@/lib/pipeline/types";
+import { chatBody, createLinerMock, schemaName, type RecordedCall } from "./support/liner-mock";
 
 let cache: LawCache;
 beforeAll(async () => {
@@ -137,6 +138,34 @@ describe("공고 캐시", () => {
     expect(out.results.find((r) => r.id === sig.web_id)?.notice?.status).toBe("checked");
   });
 
+  it("개정 대상 조가 적힌 입법예고는 그 조가 후보에 없으면 같은 법령이어도 붙이지 않는다", () => {
+    const q = "타 대학에서 이수한 학점을 본교 학점으로 인정할 때 상한이 있나요?";
+    const out = collect(q);
+    const lawNames = [...new Set(out.candidates.filter((c) => c.grade === "L1").sort((a, b) => b.score - a.score).map((c) => c.law_name))];
+    expect(lawNames.slice(0, 2)).toContain("고등교육법 시행령");
+    const proposal = cache.notices!.notices.find((n) => n.title.includes("입법예고"))!;
+    expect(out.candidates.some((c) => proposal.articles!.includes(c.id.split("@")[0]))).toBe(false);
+    expect(notices(q).signals).toEqual([]);
+  });
+
+  it("개정 대상 조를 아는 입법예고 신호는 그 조를 인용한 답에만 붙는다", () => {
+    const signal = {
+      web_id: "notice:1",
+      title: "「고등교육법 시행령」 및 「대학 등록금에 관한 규칙」 입법예고",
+      url: "https://www.moe.go.kr/x?boardSeq=1",
+      hostname: "moe.go.kr",
+      date: "2026-10-27",
+      kind: "legislative_notice" as const,
+      related_law: "고등교육법 시행령",
+      after_collection: false,
+      articles: ["heaf_decree:004-06", "tuition_rule:002-00"],
+    };
+    const cands = [...collect("등록금심의위원회 위원 구성").candidates, ...collect("학점 인정 범위").candidates];
+    const decreeOther = cands.find((c) => c.law_id === "heaf_decree" && !signal.articles.includes(c.id))!;
+    expect(relevantSignals([signal], [{ id: decreeOther.id, quote: "x", role: "basis" }], cands)).toEqual([]);
+    expect(relevantSignals([signal], [{ id: "tuition_rule:002-00", quote: "x", role: "basis" }], cands)).toHaveLength(1);
+  });
+
   it("관계없는 질문에는 붙이지 않는다", () => {
     expect(notices("사립대인데 교원 연구년 제도를 새로 만들려고 해요. 법령상 근거 조항이 뭐예요?").results).toEqual([]);
   });
@@ -215,6 +244,51 @@ describe("④ 판정 정규화", () => {
     expect(upper?.role).toBe("delegation");
     expect(out.issues.map((i) => i.kind)).toContain("upper_added");
     expect(out.removed_citations).toBe(0);
+  });
+
+  // 아래 두 경계 시험은 평가 세트 밖 문장으로 쓴다
+  const SNU_LEAVE_Q = "서울대에서 학부생이 쉴 수 있는 휴학 기간은 통틀어 최대 얼마예요?";
+  const DELEGATION_QUOTE = "학칙으로 정하는 바에 따라 휴학하게 할 수 있다";
+
+  it("학교를 지정했고 그 학교 학칙 조가 후보에 있으면, 위임 조만 인용해도 근거 없음으로 바꾸지 않고 한 번 되묻는다", () => {
+    const cands = collect(SNU_LEAVE_Q, "snu").candidates;
+    expect(cands.some((c) => c.id === "snu_rule:066-00")).toBe(true);
+    expect(cands.some((c) => c.id === "heaf:023-04")).toBe(true);
+    const out = verifyDraft({
+      draft: draft({ verdict: "partial", summary: "법은 휴학 기간을 학칙에 맡깁니다.", citations: [{ id: "heaf:023-04", quote: DELEGATION_QUOTE, role: "basis" }] }),
+      candidates: cands,
+      web: [],
+      signals: [],
+      asOf: ASOF,
+      question: SNU_LEAVE_Q,
+    });
+    expect(out.verdict_after).toBe("partial");
+    const kinds = out.issues.map((i) => i.kind);
+    expect(kinds).toContain("school_rule_not_cited");
+    expect(kinds).not.toContain("delegation_only");
+    expect(out.needs_retry).toBe(true);
+    expect(out.feedback).toContain("snu_rule:066-00");
+    // 위임 조의 역할은 모델이 준 그대로 둔다
+    expect(out.draft.citations).toEqual([expect.objectContaining({ id: "heaf:023-04", role: "basis" })]);
+  });
+
+  it("숫자를 묻지 않는 질문은 위임 조만 인용해도 규칙 6이 걸리지 않는다", () => {
+    const q = "학생 휴학을 허가하는 기준은 누가 정하나요?";
+    const cands = collect(q).candidates;
+    expect(cands.some((c) => c.id === "heaf:023-04")).toBe(true);
+    const out = verifyDraft({
+      draft: draft({ verdict: "partial", summary: "휴학 허가 기준은 법률이 학칙에 맡깁니다.", citations: [{ id: "heaf:023-04", quote: DELEGATION_QUOTE, role: "basis" }] }),
+      candidates: cands,
+      web: [],
+      signals: [],
+      asOf: ASOF,
+      question: q,
+    });
+    expect(out.verdict_after).toBe("partial");
+    const kinds = out.issues.map((i) => i.kind);
+    expect(kinds).not.toContain("delegation_only");
+    expect(kinds).not.toContain("school_rule_not_cited");
+    expect(out.needs_retry).toBe(false);
   });
 
   it("이미 인용한 상위 조 위로도 올라간다(학칙 → 시행령 제4조(인용함) → 법 제6조)", () => {
@@ -316,5 +390,72 @@ describe("⑤ 카드", () => {
     const quote = "출석일수는 매 학기 수업일수의 3분의 2 이상으로 하며";
     const cards = buildCards({ citations: [{ id: "snu_rule:085-00", quote, role: "basis" }], candidates: out.candidates, web: [], signals: [], cache });
     expect(cards[0].notes.some((n) => n.includes("제3항만 수록"))).toBe(true);
+  });
+});
+
+describe("③ 재질문(학칙 조를 두고 위임 조만 인용)", () => {
+  const Q = "서울대에서 학부생이 쉴 수 있는 휴학 기간은 통틀어 최대 얼마예요?";
+  const delegationOnly = {
+    verdict: "partial",
+    summary: "법은 휴학 기간을 학칙에 맡깁니다.",
+    citations: [{ id: "heaf:023-04", quote: "학칙으로 정하는 바에 따라 휴학하게 할 수 있다", role: "basis" }],
+    checklist: [],
+    caveats: [],
+    searched_scope: { laws: [], queries: [], where_to_check: [] },
+  };
+  const withRule = {
+    ...delegationOnly,
+    verdict: "answered",
+    summary: "서울대 학사과정 휴학은 6개 학기 또는 3년까지입니다.",
+    citations: [{ id: "snu_rule:066-00", quote: "학사과정 : 6개 학기 또는 3년", role: "basis" }],
+  };
+  function handler(answers: unknown[]) {
+    let n = 0;
+    return (call: RecordedCall) => {
+      if (call.path === "/tools/search/web") return { body: { results: [] } };
+      const name = schemaName(call.body);
+      if (name === "question_analysis") {
+        return {
+          body: chatBody({
+            scene: "processing",
+            task: "휴학 기간 확인",
+            concepts: ["휴학", "휴학 기간"],
+            queries_cache: ["휴학 기간", "휴학 연한"],
+            queries_web: [],
+            needs_external: false,
+            needs_external_reason: "",
+            school: "snu",
+          }),
+        };
+      }
+      if (name === "grounded_answer") return { body: chatBody(answers[Math.min(n++, answers.length - 1)]) };
+      throw new Error(`예상 밖 호출 ${call.path}`);
+    };
+  }
+  beforeEach(() => {
+    vi.stubEnv("LINER_API_KEY", "test-key-not-real");
+    vi.stubEnv("LINER_MODEL_ANALYZE", "");
+    vi.stubEnv("LINER_MODEL_ANSWER", "");
+    vi.stubEnv("AGENT_MODE", "");
+  });
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("한 번 되물어 학칙 조를 근거로 쓴 답을 받는다", async () => {
+    const mock = createLinerMock(handler([delegationOnly, withRule]));
+    const result = await runPipeline({ question: Q, asOf: ASOF, school: "snu" }, { cache, fetchImpl: mock.fetchImpl });
+    const answerCalls = mock.calls.filter((c) => schemaName(c.body) === "grounded_answer");
+    expect(answerCalls).toHaveLength(2);
+    expect((answerCalls[1].body.messages as { content: string }[])[1].content).toContain("snu_rule:066-00");
+    expect(result.verification.retried).toBe(true);
+    expect(result.verdict).toBe("answered");
+    expect(result.cards.map((c) => c.id)).toContain("snu_rule:066-00");
+  });
+
+  it("되물어도 위임 조만 인용하면 추가 호출 없이 끝내고, 근거 없음으로 바꾸지 않는다", async () => {
+    const mock = createLinerMock(handler([delegationOnly, delegationOnly, delegationOnly]));
+    const result = await runPipeline({ question: Q, asOf: ASOF, school: "snu" }, { cache, fetchImpl: mock.fetchImpl });
+    expect(mock.calls.filter((c) => schemaName(c.body) === "grounded_answer")).toHaveLength(2);
+    expect(result.verdict).toBe("partial");
+    expect(result.verification.issues.map((i) => i.kind)).toContain("school_rule_not_cited");
   });
 });

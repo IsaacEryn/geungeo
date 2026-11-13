@@ -86,6 +86,10 @@ describe("scoreOne", () => {
     expect(partial("학칙에서 정하지 않은 사항은 총장이 정합니다.")).toBe(false);
     expect(partial("공고 방법은 학교가 정하지 않아도 됩니다.")).toBe(false);
     expect(partial("고등교육법 제23조의4에 따라 휴학할 수 있습니다.")).toBe(false);
+    // 법령 이름 뒤에 학칙이 주어로 오는 문장, 뒤 명사를 꾸미는 '정하지 않은'은 잡지 않는다
+    expect(partial("고등교육법에 따라 학칙에서 정하지 않은 사항은 총장이 정합니다.")).toBe(false);
+    expect(partial("고등교육법에 따라 학교는 수업 일수를 따로 정하지 않습니다.")).toBe(false);
+    expect(partial("시행령에서 정하지 않은 세부 사항은 학칙으로 정할 수 있으며, 학칙에 따르면 4개 학기입니다.")).toBe(false);
   });
 
   it("시행 전 함정은 시행일과 '시행 예정' 취지를 함께 말해야 통과", () => {

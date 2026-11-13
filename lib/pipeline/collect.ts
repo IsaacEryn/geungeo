@@ -523,14 +523,16 @@ export function collectNotices(input: NoticeCollectInput): NoticeCollectOutcome 
   const picked: { n: NoticeEntry; law?: string }[] = [];
   for (const n of all) {
     if (LEGISLATIVE.test(n.title)) {
-      // 입법예고: 후보 조의 법령을 다루면(제목에 법령 이름) 관련성과 상관없이 신호로 올린다
+      // 입법예고: 후보 조의 법령을 다루면(제목에 법령 이름) 관련성과 상관없이 신호로 올린다.
+      // 공고 캐시에 개정 대상 조(articles)가 적혀 있으면 그 조가 후보에 있을 때만(같은 법령의 다른 조를 묻는 질문에는 잡음)
       // 낫표로 법령 이름을 적었으면 그 이름과 똑같아야 한다(「고등교육법 시행령」을 고등교육법으로 잡지 않게)
       const quoted = [...n.title.matchAll(/[「｢『]([^」｣』]+)[」｣』]/g)].map((m) => flat(m[1]));
       const title = flat(n.title);
       const law = quoted.length
         ? input.signalLaws.find((name) => quoted.includes(flat(name)))
         : input.signalLaws.filter((name) => title.includes(flat(name))).sort((a, b) => b.length - a.length)[0];
-      if (law && (n.status ?? "checked") === "checked") picked.push({ n, law });
+      const touches = !n.articles?.length || input.candidates.some((c) => n.articles!.includes(c.id.split("@")[0]));
+      if (law && touches && (n.status ?? "checked") === "checked") picked.push({ n, law });
       continue;
     }
     if (!checked.has(n.id) && !unchecked.includes(n)) continue;
@@ -572,6 +574,7 @@ export function collectNotices(input: NoticeCollectInput): NoticeCollectOutcome 
         related_law: law,
         opinion_deadline: noticeDeadline(n),
         after_collection: Boolean(n.posted && n.posted > cache.collectedAt.slice(0, 10)),
+        ...(n.articles?.length ? { articles: n.articles } : {}),
       });
     }
   });

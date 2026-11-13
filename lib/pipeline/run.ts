@@ -110,8 +110,11 @@ export function relevantSignals(signals: ChangeSignal[], citations: Citation[], 
     if (cand) citedLaws.add(baseLawName(cand.law_name).replace(/\s+/g, ""));
     else citedWeb.add(c.id);
   }
+  const citedArticles = new Set(citations.map((c) => c.id.split("@")[0]));
   const related = signals.filter((s) => {
     if (citedWeb.has(s.web_id)) return true;
+    // 개정 대상 조를 아는 입법예고는 그 조를 인용했을 때만(같은 법령의 다른 조를 인용한 답에는 붙이지 않는다)
+    if (s.articles?.length) return s.articles.some((id) => citedArticles.has(id));
     if (citedLaws.has(s.related_law.replace(/\s+/g, ""))) return true;
     // 제목이 낫표로 법령 이름을 적었으면 그 이름과 똑같아야 한다(「고등교육법 시행령」 입법예고를 고등교육법 인용에 붙이지 않게)
     const quoted = [...s.title.matchAll(/[「｢『]([^」｣』]+)[」｣』]/g)].map((m) => m[1].replace(/\s+/g, ""));
