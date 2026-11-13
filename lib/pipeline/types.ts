@@ -214,7 +214,9 @@ export interface EvidenceCard {
 export interface TraceCall {
   stage: StageName;
   api: "router" | "search" | "cache";
-  model?: string; // 모델 ID(router)
+  model?: string; // 요청한 모델 ID(router)
+  served_model?: string; // 응답 본문의 model — 실제로 답한 모델(라우터면 고른 모델). 응답에 없으면 비운다
+  duplicate_requests?: number; // 늦어서 같은 요청을 겹쳐 보낸 수(먼저 끝난 쪽만 씀)
   query?: string; // 검색어(search·cache)
   http_status?: number;
   duration_ms: number;
@@ -234,6 +236,7 @@ export interface Trace {
   total_duration_ms: number;
   total_cost_usd: number;
   models: Partial<Record<"analyze" | "answer", string>>; // 단계별 모델 ID
+  stage_ms?: Partial<Record<StageName | "prepare", number>>; // 단계별 실제 소요(ms). answer·verify는 재질문까지 합친 값, prepare는 캐시 읽기·먼저 띄운 일
 }
 
 /** 화면이 받는 최종 결과 */

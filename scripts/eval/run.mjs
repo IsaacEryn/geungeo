@@ -67,6 +67,20 @@ export function loadQuestions(path = join(ROOT, "eval/questions.jsonl")) {
 }
 
 // ───────── 비용 ─────────
+/**
+ * 라우터 호출 단가: 요청 모델(router) → 응답의 실제 모델(served) → 모르면 보수적 대용값(unpriced_router_ceiling).
+ * 대용값이나 trace 금액을 쓰면 estimated:true(결과에 '단가 미확인 포함'으로 적는다)
+ */
+export function routerPrice(pricing, call) {
+  const byRequest = pricing.router?.[call.model];
+  if (byRequest) return { price: byRequest, estimated: false };
+  const byServed = call.served_model ? pricing.served?.[call.served_model] : undefined;
+  if (byServed) return { price: byServed, estimated: false };
+  const ceiling = pricing.unpriced_router_ceiling;
+  if (ceiling?.input_per_million !== undefined) return { price: ceiling, estimated: true };
+  return { price: null, estimated: true };
+}
+
 export function makeCoster(pricing) {
   return function costOf(result) {
     let usd = 0;
@@ -83,12 +97,12 @@ export function makeCoster(pricing) {
         prompt += c.usage.prompt_tokens;
         completion += c.usage.completion_tokens;
         reasoning += c.usage.reasoning_tokens ?? 0;
-        const p = pricing.router[c.model];
-        if (p) usd += (c.usage.prompt_tokens * p.input_per_million + c.usage.completion_tokens * p.output_per_million) / 1e6;
-        else {
-          unpriced = true;
-          usd += c.usage.cost_usd ?? 0;
-        }
+        const { price, estimated } = routerPrice(pricing, c);
+        if (estimated) unpriced = true;
+        // 늦어서 겹쳐 보낸 요청은 취소해도 과금됐을 수 있다 → 같은 크기로 한 번 더 센다(보수적)
+        const times = 1 + (c.duplicate_requests ?? 0);
+        if (price) usd += (times * (c.usage.prompt_tokens * price.input_per_million + c.usage.completion_tokens * price.output_per_million)) / 1e6;
+        else usd += times * (c.usage.cost_usd ?? 0);
       }
     }
     return { usd, unpriced, tokens: { prompt, completion, reasoning }, calls };
@@ -196,6 +210,10 @@ async function runCandidate({ questions, opts, models, pipeline, costOf, spentBe
         retried: result?.verification?.retried ?? null,
         duration_ms: ms,
         answer_ms: answerMs,
+        // 단계별 실제 소요(ms)와 답한 모델(응답 model, 없으면 요청 모델만 남는다)
+        stage_ms: result?.trace?.stage_ms ?? null,
+        served_models: [...new Set((result?.trace?.calls ?? []).filter((c) => c.api === "router").map((c) => `${c.stage}:${c.served_model ?? c.model}`))],
+        duplicate_requests: (result?.trace?.calls ?? []).reduce((n, c) => n + (c.duplicate_requests ?? 0), 0),
         calls: cost.calls,
         tokens: cost.tokens,
         cost_usd: cost.usd,
@@ -223,6 +241,12 @@ const median = (xs) => {
   const m = Math.floor(s.length / 2);
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 };
+
+/** 단계별 소요 중앙값(stage_ms가 있는 행만) */
+export function medianStages(rows) {
+  const names = [...new Set(rows.flatMap((r) => Object.keys(r.stage_ms ?? {})))];
+  return Object.fromEntries(names.map((n) => [n, median(rows.map((r) => r.stage_ms?.[n]).filter((x) => typeof x === "number"))]));
+}
 
 export function summarize(rows, questions) {
   const runs = rows.length;
@@ -252,6 +276,10 @@ export function summarize(rows, questions) {
     total_cost_usd: sum((r) => r.cost_usd),
     cost_per_question_usd: runs ? sum((r) => r.cost_usd) / runs : 0,
     avg_duration_ms: runs ? sum((r) => r.duration_ms) / runs : 0,
+    median_duration_ms: median(rows.map((r) => r.duration_ms)),
+    max_duration_ms: rows.reduce((m, r) => Math.max(m, r.duration_ms), 0),
+    median_stage_ms: medianStages(rows),
+    duplicate_requests: sum((r) => r.duplicate_requests ?? 0),
     median_answer_ms: median(rows.map((r) => r.answer_ms).filter((x) => x > 0)),
     unpriced: rows.some((r) => r.unpriced),
     by_id: [...byId.entries()].map(([id, rs]) => ({ id, passed: rs.filter((r) => r.pass).length, of: rs.length })),
@@ -272,6 +300,11 @@ function summaryMarkdown({ opts, models, results, stoppedAll, startedAt }) {
     lines.push(
       `| ${model}${stopped ? " (중단)" : ""} | ${pct(s.pass_rate)} (${s.passed}/${s.runs}) | ${s.no_basis.passed}/${s.no_basis.of} | ${s.traps.passed}/${s.traps.of} | ${pct(s.format_error_rate)} | ${pct(s.fabricated_rate)} | ${(s.median_answer_ms / 1000).toFixed(1)}s | $${s.cost_per_question_usd.toFixed(5)}${s.unpriced ? " (단가 미확인 포함)" : ""} | ${s.avg_router_calls.toFixed(1)}/${s.avg_search_calls.toFixed(1)} |`,
     );
+  }
+  lines.push("", "| ③ 모델 | 문항당 시간 평균 / 중앙값 / 최대 | 단계별 중앙값 | 겹쳐 보낸 요청 |", "|---|---|---|---|");
+  for (const { model, s } of results) {
+    const stages = Object.entries(s.median_stage_ms).map(([k, v]) => `${k} ${(v / 1000).toFixed(1)}s`).join(", ");
+    lines.push(`| ${model} | ${(s.avg_duration_ms / 1000).toFixed(1)}s / ${(s.median_duration_ms / 1000).toFixed(1)}s / ${(s.max_duration_ms / 1000).toFixed(1)}s | ${stages || "-"} | ${s.duplicate_requests} |`);
   }
   for (const { model, rows } of results) {
     lines.push("", `## ${model} 문항별`, "", "| 문항 | 통과 | 판정 | 근거 조 | 세부 위치 | 함정 | 지어낸 인용 | 빠진 표현 |", "|---|---|---|---|---|---|---|---|");

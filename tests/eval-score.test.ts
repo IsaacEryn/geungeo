@@ -1,7 +1,7 @@
 // 평가 채점(scripts/eval/score.mjs)과 실행기 집계·비밀 검사 시험. Liner를 부르지 않는다.
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { findSecrets, loadQuestions, makeCoster, parseArgs, summarize } from "../scripts/eval/run.mjs";
+import { findSecrets, loadQuestions, makeCoster, medianStages, parseArgs, routerPrice, summarize } from "../scripts/eval/run.mjs";
 import { includesAny, scoreOne } from "../scripts/eval/score.mjs";
 import { runPipeline as mockPipeline } from "../scripts/eval/mock-pipeline.mjs";
 
@@ -133,8 +133,40 @@ describe("실행기", () => {
       },
     });
     expect(c.calls).toMatchObject({ router: 2, search: 2 });
-    expect(c.usd).toBeCloseTo(pricing.router["liner-mark-1.3"].input_per_million + pricing.search_per_call + 0.5);
+    // 단가를 모르는 라우터 호출은 trace 금액(0일 수 있음) 대신 보수적 대용값으로 센다 → credit-limit가 듣는다
+    const ceiling = pricing.unpriced_router_ceiling;
+    expect(c.usd).toBeCloseTo(
+      pricing.router["liner-mark-1.3"].input_per_million + pricing.search_per_call + (10 * ceiling.input_per_million + 10 * ceiling.output_per_million) / 1e6,
+      9,
+    );
     expect(c.unpriced).toBe(true);
+  });
+
+  it("라우터는 응답의 실제 모델 단가로 세고, 겹쳐 보낸 요청은 한 번 더 센다", () => {
+    const costOf = makeCoster(pricing);
+    const sonnet = pricing.served["claude-sonnet-5.5"];
+    const c = costOf({
+      trace: {
+        calls: [
+          { api: "router", model: "liner-claude-router", served_model: "claude-sonnet-5.5", usage: { prompt_tokens: 1000, completion_tokens: 100, cost_usd: 0 } },
+          { api: "router", model: "liner-mark-1.3", served_model: "liner-mark-1.3", duplicate_requests: 1, usage: { prompt_tokens: 1000, completion_tokens: 100 } },
+        ],
+      },
+    });
+    const mark = pricing.router["liner-mark-1.3"];
+    expect(c.usd).toBeCloseTo((1000 * sonnet.input_per_million + 100 * sonnet.output_per_million) / 1e6 + (2 * (1000 * mark.input_per_million + 100 * mark.output_per_million)) / 1e6, 12);
+    expect(c.unpriced).toBe(false);
+  });
+
+  it("라우터 단가 출처: 요청 모델 → 답한 모델 → 대용값", () => {
+    expect(routerPrice(pricing, { model: "liner-mark-1.3" })).toEqual({ price: pricing.router["liner-mark-1.3"], estimated: false });
+    expect(routerPrice(pricing, { model: "liner-claude-router", served_model: "claude-haiku-5.5" }).estimated).toBe(false);
+    expect(routerPrice(pricing, { model: "liner-gpt-router", served_model: "gpt-6.1-sol" })).toEqual({ price: pricing.unpriced_router_ceiling, estimated: true });
+    expect(routerPrice({ router: {} }, { model: "x" })).toEqual({ price: null, estimated: true });
+  });
+
+  it("단계별 소요 중앙값을 낸다", () => {
+    expect(medianStages([{ stage_ms: { analyze: 1000, answer: 10_000 } }, { stage_ms: { analyze: 3000, answer: 20_000 } }, { stage_ms: null }])).toEqual({ analyze: 2000, answer: 15_000 });
   });
 
   it("목 파이프라인 결과를 채점·집계한다", async () => {

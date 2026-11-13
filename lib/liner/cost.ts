@@ -8,6 +8,11 @@ export const MODEL_PRICES: Record<string, { input: number; output: number }> = {
   // liner-mark·liner-mark-latest는 늘 최신 버전을 가리킨다. 지금은 1.3과 같은 값이지만 버전이 바뀌면 다시 확인한다
   "liner-mark": { input: 1, output: 5 },
   "liner-mark-latest": { input: 1, output: 5 },
+  // 라우터(liner-claude-router)가 고른 모델. 라우터는 답한 모델 가격으로 과금된다.
+  // 출처: liner.com/llms-full.txt Pricing 절·ko llm-gateway(조사_라이너API.md 4절, 검증_기록 52줄에서 대조). 11/13 확인 호출 실측과 일치
+  "claude-haiku-5.5": { input: 0.1, output: 0.5 },
+  "claude-sonnet-5.5": { input: 2, output: 10 },
+  "claude-opus-5.5": { input: 4, output: 20 },
 };
 
 /** Search 회당 단가(USD). include_knowledge:false일 때 $1/1,000(11/13 시험 확인) */
@@ -28,12 +33,12 @@ export interface UsageCost {
   priced: boolean;
 }
 
-/** 토큰 수 × 단가. 단가를 모르는 모델은 0으로 두고 priced:false */
-export function usageCost(model: string, usage: ChatUsage | undefined | null): UsageCost {
+/** 토큰 수 × 단가. 모델 ID를 여러 개 주면 단가를 아는 첫 ID로 센다(답한 모델 → 요청 모델). 모두 모르면 0으로 두고 priced:false */
+export function usageCost(model: string | string[], usage: ChatUsage | undefined | null): UsageCost {
   const prompt = usage?.prompt_tokens ?? 0;
   const completion = usage?.completion_tokens ?? 0;
   const reasoning = usage?.completion_tokens_details?.reasoning_tokens ?? 0;
-  const price = MODEL_PRICES[model];
+  const price = (Array.isArray(model) ? model : [model]).map((m) => MODEL_PRICES[m]).find(Boolean);
   const cost = price ? (prompt * price.input + completion * price.output) / 1_000_000 : 0;
   return {
     prompt_tokens: prompt,

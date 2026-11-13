@@ -1,8 +1,19 @@
 {
-  "$comment": "평가 실행기 비용 계산용 단가(USD). 응답 usage에 cost가 없어 토큰×단가로 계산한다(설계 1절). completion_tokens에 reasoning_tokens가 들어 있으므로 출력 단가는 completion_tokens에만 곱한다(11/13 시험: prompt 69 + completion 138 = total 207, reasoning 80). liner-mark-1.3 값은 확인 호출 때 적어 둔 것으로 비교 실험(9-3) 전에 문서에서 다시 확인하고, 후보 모델 단가도 그때 채운다. 비어 있는 모델은 trace의 cost_usd를 쓰고 결과에 '단가 미확인'으로 적는다.",
+  "$comment": "평가 실행기 비용 계산용 단가(USD / 100만 토큰). 응답 usage에 cost가 없어 토큰×단가로 계산한다(설계 1절). completion_tokens에 reasoning_tokens가 들어 있으므로 출력 단가는 completion_tokens에만 곱한다(11/13 시험: prompt 69 + completion 138 = total 207, reasoning 80). 라우터 호출은 답한 모델 가격으로 과금되므로 router(요청 모델) → served(응답 model) → unpriced_router_ceiling 순으로 찾는다.",
   "checked": "2026-11-13",
   "router": {
     "liner-mark-1.3": { "input_per_million": 1, "output_per_million": 5 }
+  },
+  "served": {
+    "$comment": "라우터가 고른 실제 모델. 출처: liner.com/llms-full.txt Pricing 절·ko llm-gateway(조사 문서 2_자료조사/조사_라이너API.md 4절 가격 표, 00__운영/검증_기록.md에서 대조). GPT 라우터 모델(gpt-6.x)과 claude-fable-5.1 단가는 조사 문서에 없어 넣지 않았다.",
+    "claude-haiku-5.5": { "input_per_million": 0.1, "output_per_million": 0.5 },
+    "claude-sonnet-5.5": { "input_per_million": 2, "output_per_million": 10 },
+    "claude-opus-5.5": { "input_per_million": 4, "output_per_million": 20 }
+  },
+  "unpriced_router_ceiling": {
+    "$comment": "단가를 모르는 라우터 호출(응답 model이 위 표에 없거나 비어 있음)을 --credit-limit에서 셀 때 쓰는 보수적 대용값이다. 실제 단가가 아니다. 위 표에서 가장 비싼 claude-opus-5.5 값을 썼다. 참고로 11/13 비교 실험에서 GPT 라우터의 문항당 실측 $0.0264는 이 값으로 센 것보다 작았다.",
+    "input_per_million": 4,
+    "output_per_million": 20
   },
   "search_per_call": 0.001
 }

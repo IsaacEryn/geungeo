@@ -1,6 +1,6 @@
 // ① 질문 분석(설계 2-1). LINER_MODEL_ANALYZE, json_schema(strict). 실패하면 규칙 기반 대체.
 import { LinerError, type LinerCallOptions } from "@/lib/liner/client";
-import { chat, modelFor, parseJsonObject } from "@/lib/liner/router";
+import { chatHedged, modelFor, parseJsonObject, type ReasoningEffort } from "@/lib/liner/router";
 import type { SchoolId, Synonyms } from "@/lib/cache/schema";
 import type { AskRequest, QuestionAnalysis, Scene, TraceCall } from "./types";
 
@@ -37,6 +37,25 @@ export interface AnalyzeContext {
   synonyms?: Synonyms;
   model?: string;
   call?: LinerCallOptions;
+  /** 생략하면 LINER_REASONING_ANALYZE, 그것도 없으면 DEFAULT_ANALYZE_REASONING */
+  reasoningEffort?: ReasoningEffort;
+}
+
+/**
+ * ①의 추론 강도 기본값. ①은 검색어를 뽑는 짧은 일이라 low로 둔다(③은 Liner 기본 medium 그대로).
+ * 11/13 같은 질문 4개로 잰 값: 기본(medium) 6.1~8.0초·reasoning 52~176토큰 → low 4.3~4.9초·reasoning 0, 장면·외부 필요 판단은 4개 모두 같았다.
+ * 되돌리려면 LINER_REASONING_ANALYZE=medium
+ */
+export const DEFAULT_ANALYZE_REASONING: ReasoningEffort = "low";
+
+/** ①은 짧은 JSON이라 보통 몇 초면 끝난다. 10초 안에 안 오면 같은 요청을 하나 더 보내고, 요청마다 25초가 넘으면 규칙 기반으로 대신한다 */
+export const ANALYZE_HEDGE = { afterMs: 10_000, timeoutMs: 25_000 };
+
+const EFFORTS: readonly ReasoningEffort[] = ["none", "low", "medium", "high", "max"];
+
+export function reasoningFromEnv(name: string): ReasoningEffort | undefined {
+  const v = process.env[name]?.trim().toLowerCase();
+  return v && (EFFORTS as readonly string[]).includes(v) ? (v as ReasoningEffort) : undefined;
 }
 
 export interface AnalyzeOutcome {
@@ -131,7 +150,7 @@ export async function analyzeQuestion(request: AskRequest, asOf: string, ctx: An
   const started = Date.now();
   const user = `질문: ${request.question}\n기준일: ${asOf}\n화면에서 고른 학교: ${request.school ?? "지정 안 함"}`;
   try {
-    const res = await chat(
+    const res = await chatHedged(
       {
         model,
         messages: [
@@ -139,14 +158,18 @@ export async function analyzeQuestion(request: AskRequest, asOf: string, ctx: An
           { role: "user", content: user },
         ],
         jsonSchema: { name: "question_analysis", schema: ANALYZE_SCHEMA as unknown as Record<string, unknown> },
+        reasoningEffort: ctx.reasoningEffort ?? reasoningFromEnv("LINER_REASONING_ANALYZE") ?? DEFAULT_ANALYZE_REASONING,
       },
-      ctx.call,
+      ctx.call ?? {},
+      ANALYZE_HEDGE,
     );
     const parsed = coerceAnalysis(parseJsonObject(res.content));
     const call: TraceCall = {
       stage: "analyze",
       api: "router",
       model,
+      ...(res.served_model ? { served_model: res.served_model } : {}),
+      ...(res.duplicate_requests ? { duplicate_requests: res.duplicate_requests } : {}),
       http_status: res.status,
       duration_ms: res.duration_ms,
       usage: {
@@ -155,7 +178,7 @@ export async function analyzeQuestion(request: AskRequest, asOf: string, ctx: An
         reasoning_tokens: res.usage.reasoning_tokens,
         cost_usd: res.usage.cost_usd,
       },
-      note: [res.json_fallback ? "json_object 대체" : "", res.usage.priced ? "" : "단가 미확인", parsed ? "" : "형식 오류 — 규칙 기반 대체"]
+      note: [res.json_fallback ? "json_object 대체" : "", res.duplicate_requests ? "늦어서 한 번 더 보냄" : "", res.usage.priced ? "" : "단가 미확인", parsed ? "" : "형식 오류 — 규칙 기반 대체"]
         .filter(Boolean)
         .join(", ") || undefined,
     };
