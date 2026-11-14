@@ -1,5 +1,6 @@
 // ④ 코드 검증(설계 2-4). 모델이 낸 인용을 캐시·검색 결과와 대조해 지어낸 근거를 버린다.
-import type { ArticleCandidate, ChangeSignal, Citation, DraftAnswer, Verdict, VerificationIssue, VerificationIssueKind, WebResult } from "./types";
+import type { ArticleCandidate, ChangeSignal, Citation, DraftAnswer, Scene, Verdict, VerificationIssue, VerificationIssueKind, WebResult } from "./types";
+import { mentionsAnyConcept } from "./concepts";
 import { dice, extractClaimNumbers, findNormalized, formatKoreanDate, mentionsDate, normalizeForMatch } from "./text";
 
 export interface VerifyInput {
@@ -12,6 +13,10 @@ export interface VerifyInput {
   question?: string;
   /** 공고 위임 문구가 있는 후보 조 ID("교육부장관이 정하여 공고") */
   noticeDelegated?: string[];
+  /** ① 장면. 업무 시작(initiating)일 때만 근거 조문과 개념어를 대조한다 */
+  scene?: Scene;
+  /** 질문의 드문 개념어 묶음(개념어마다 동의어 포함, concepts.ts rareConceptTerms). 비면 대조하지 않는다 */
+  conceptTerms?: string[][];
 }
 
 export interface VerifyOutcome {
@@ -472,8 +477,19 @@ export function verifyDraft(input: VerifyInput): VerifyOutcome {
   for (const c of unnamed) {
     issues.push({ kind: "unnamed_article", citation_id: c.id, detail: `결론이 조 번호 없이 조문을 가리켰고 근거로 든 ${c.law_name} ${c.number}의 번호가 결론에 없습니다.` });
   }
+  // 업무 시작(제도 신설·근거 조항) 질문에서 근거로 든 조문 원문 어디에도 질문의 드문 개념어가 없으면, 허용 조문을 신설 근거로 든 것일 수 있어 한 번 다시 묻는다(판정은 바꾸지 않는다).
+  // 드문 개념어는 법령 조문으로 고른 말이라, 학칙 조만 근거로 든 답(학칙은 말이 다를 수 있음)은 보지 않는다
+  const lacksConcept =
+    verdict !== "no_basis" &&
+    input.scene === "initiating" &&
+    (input.conceptTerms?.length ?? 0) > 0 &&
+    basisArticles.some((c) => c.grade === "L1") &&
+    !basisArticles.some((c) => mentionsAnyConcept(c.text, input.conceptTerms!));
+  if (lacksConcept) {
+    issues.push({ kind: "basis_lacks_concept", detail: "근거로 든 조문 원문에 질문의 핵심 개념어(동의어 포함)가 없습니다." });
+  }
   const removalRetry = (forcedNoBasis && removed > 0) || removed >= 2;
-  const needsRetry = removalRetry || hedged || schoolRuleUnused.length > 0 || unnamed.length > 0;
+  const needsRetry = removalRetry || hedged || schoolRuleUnused.length > 0 || unnamed.length > 0 || lacksConcept;
   const retryReasons: VerificationIssueKind[] = [];
   if (removalRetry) {
     for (const i of issues) {
@@ -483,6 +499,7 @@ export function verifyDraft(input: VerifyInput): VerifyOutcome {
   if (hedged) retryReasons.push("hedged_basis");
   if (unnamed.length) retryReasons.push("unnamed_article");
   if (schoolRuleUnused.length) retryReasons.push("school_rule_not_cited");
+  if (lacksConcept) retryReasons.push("basis_lacks_concept");
   const feedback = [
     ...issues
       .filter((i) => i.kind === "unknown_id" || i.kind === "quote_not_found" || i.kind === "not_yet_as_current")
@@ -493,6 +510,11 @@ export function verifyDraft(input: VerifyInput): VerifyOutcome {
     ...(unnamed.length
       ? [
           `- 결론이 '단서', '…조항에 따라'처럼 조 번호 없이 조문을 가리켰습니다. 근거로 든 조(${unnamed.map((c) => `${c.law_name} ${c.number}`).join(", ")})를 결론에서 말할 때는 '제N조 단서'처럼 조 번호를 함께 쓰세요. 내용과 판정이 맞다면 바꾸지 마세요.`,
+        ]
+      : []),
+    ...(lacksConcept
+      ? [
+          `- 근거(basis)로 든 조문(${basisArticles.map((c) => `${c.law_name} ${c.number}`).join(", ")}) 원문에 질문의 핵심 개념(${input.conceptTerms!.map((t) => t[0]).join(", ")})이 나오지 않습니다. 그 조문이 질문한 제도·업무 자체를 정했는지, 다른 일을 허용할 뿐인지 다시 확인하세요. 질문한 제도 자체를 정한 조문이 아니면 reference로 두고 판정(verdict)을 다시 정하세요. 직접 정한 조문이 맞으면 그대로 두세요.`,
         ]
       : []),
     ...(schoolRuleUnused.length

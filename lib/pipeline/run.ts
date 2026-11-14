@@ -6,7 +6,7 @@ import { roundUsd } from "@/lib/liner/cost";
 import { analyzeQuestion, ruleBasedAnalysis } from "./analyze";
 import { answerQuestion, type AnswerInput } from "./answer";
 import { buildCards } from "./cards";
-import { collectFromCache, collectNotices, collectSignals, collectWeb, mergeWeb, planWebSearch, schoolRulesInCache, type MergedWeb, type SignalCollectOutcome } from "./collect";
+import { collectFromCache, collectNotices, rareConceptTermsFor, collectSignals, collectWeb, mergeWeb, planWebSearch, schoolRulesInCache, type MergedWeb, type SignalCollectOutcome } from "./collect";
 import { PipelineError, badRequest, toPipelineError } from "./errors";
 import { formatKoreanDate, isIsoDate, mentionsDate, todayKst } from "./text";
 import type { AgentMode, ArticleCandidate, AskRequest, AskResult, ChangeSignal, Citation, RetryReason, SearchedScope, StageEvent, StageName, TraceCall } from "./types";
@@ -291,6 +291,8 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
     notices: cached.notices,
   };
   const noticeDelegated = cached.notices.map((n) => n.from);
+  const conceptTerms = rareConceptTermsFor(cache, analysis);
+  const scene = analysis.scene;
   let answered = await stage("answer", () => answerQuestion(answerInput, { model: options.models?.answer, call }));
   calls.push(answered.call);
   let retried = false;
@@ -308,7 +310,7 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
   }
 
   let verified = await stage("verify", () =>
-    verifyDraft({ draft: answered.draft!, candidates: cached.candidates, web: merged.results, signals: merged.signals, asOf, question, noticeDelegated }),
+    verifyDraft({ draft: answered.draft!, candidates: cached.candidates, web: merged.results, signals: merged.signals, asOf, question, noticeDelegated, scene, conceptTerms }),
   );
   if (verified.needs_retry && !retried) {
     retried = true;
@@ -320,7 +322,7 @@ async function run(request: AskRequest, options: RunOptions, emit: (e: StageEven
     calls.push(second.call);
     if (second.draft) {
       const again = await stage("verify", () =>
-        verifyDraft({ draft: second.draft!, candidates: cached.candidates, web: merged.results, signals: merged.signals, asOf, question, noticeDelegated }),
+        verifyDraft({ draft: second.draft!, candidates: cached.candidates, web: merged.results, signals: merged.signals, asOf, question, noticeDelegated, scene, conceptTerms }),
       );
       // 재시도 결과는 지어낸 인용이 줄었을 때만 쓴다. 평가 채점 4번을 위해 처음 제거 수도 합산한다
       if (again.removed_citations <= verified.removed_citations) {

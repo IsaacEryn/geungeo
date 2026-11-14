@@ -10,6 +10,7 @@ import { LinerError, type LinerCallOptions } from "@/lib/liner/client";
 import { searchWeb, type RawSearchResult, type SearchQuery } from "@/lib/liner/search";
 import type { ArticleCandidate, ChangeSignal, QuestionAnalysis, TraceCall, WebResult } from "./types";
 import { bigrams } from "./text";
+import { conceptHits, conceptTerms, mentionsAnyConcept, rareConceptTerms, restrictingArticles, type RestrictionArticle } from "./concepts";
 
 // ───────── ②-a 캐시 ─────────
 
@@ -63,6 +64,103 @@ export const LOW_CACHE_SCORE = 8;
 export function versionTitle(text: string, fallback: string): string {
   const m = /^\s*제\d+조(?:의\d+)?\((.+?)\)(?=\s|$)/.exec(text);
   return m ? m[1] : fallback;
+}
+
+/** 검색 점수와 상관없이 더 넣는 조(개념어가 원문에 나오는 조 + 적용 제외 조)의 상한 */
+export const CONCEPT_EXTRA_LIMIT = 3;
+/** 개념어가 이보다 많은 조에 나오면 그 개념어로는 조를 더 넣지 않는다(흔한 말이면 주제를 가르지 못한다) */
+export const CONCEPT_DIRECT_MAX_ARTICLES = 3;
+
+const restrictionArticleCache = new WeakMap<ArticleIndex, RestrictionArticle[]>();
+
+/** 색인한 법령 조 전부(모든 판의 원문을 합침) */
+function restrictionArticles(index: ArticleIndex): RestrictionArticle[] {
+  let list = restrictionArticleCache.get(index);
+  if (!list) {
+    list = [...index.byId.values()].map(({ article, law }) => ({
+      id: article.id,
+      law_id: law.law_id,
+      number: article.number,
+      text: [...new Set(article.versions.map((v) => v.text))].join("\n"),
+    }));
+    restrictionArticleCache.set(index, list);
+  }
+  return list;
+}
+
+export interface ConceptExtra {
+  id: string;
+  /** 적용 제외 조로 넣었으면 그 제외가 가리키는 조 ID */
+  restricts?: string;
+}
+
+/**
+ * 개념어 직접 등장 조가 담아야 하는 ① 개념어 수(흔한 말 포함, 서로 다른 개념어). 드문 낱말 하나만 우연히 들어 있는 조
+ * (다른 위원회의 '위원 구성', 다른 절차의 '회의 소집')가 들어오지 않게 한다
+ */
+export const CONCEPT_DIRECT_MIN_CONCEPTS = 2;
+/** 개념어 직접 등장 조끼리 질문 관련도를 견줄 때의 하한(가장 높은 조 점수 대비) */
+export const CONCEPT_DIRECT_RELATIVE = 0.5;
+/** 더 넣는 조 가운데 개념어 직접 등장 조의 몫(나머지는 적용 제외 조) */
+export const CONCEPT_DIRECT_SLOT = 2;
+
+/**
+ * ① 검색어가 매번 달라 후보가 흔들리지 않게, 검색 점수와 상관없이 두 가지 조를 더 넣는다.
+ *  1) ①이 뽑은 개념어(동의어 포함)가 원문에 직접 나오는 조. 개념어가 CONCEPT_DIRECT_MAX_ARTICLES개 넘는 조에 나오면
+ *     그 개념어로는 넣지 않는다. 그 조에 ① 개념어가 CONCEPT_DIRECT_MIN_CONCEPTS개 이상 함께 나와야 한다. 여럿이면 질문과 더 가까운(검색 점수가 높은) 조부터 CONCEPT_DIRECT_SLOT개(CONCEPT_DIRECT_RELATIVE 하한).
+ *  2) 검색으로 고른 조와 1)의 조를 같은 법령 안에서 가리키며 "적용하지 아니한다", "…는 제외한다"고 한 조.
+ * 합쳐 CONCEPT_EXTRA_LIMIT개까지. 규칙 기반 대체 분석(질문 낱말을 그대로 자른 것)에는 쓰지 않는다.
+ */
+export function conceptExtras(input: {
+  analysis: QuestionAnalysis;
+  index: ArticleIndex;
+  /** 질문(관련도 순위에 쓴다) */
+  question: string;
+  searched: string[];
+  exclude: Set<string>;
+  synonyms?: LawCache["synonyms"];
+  limit?: number;
+}): ConceptExtra[] {
+  const limit = input.limit ?? CONCEPT_EXTRA_LIMIT;
+  if (input.analysis.fallback || limit <= 0) return [];
+  const all = restrictionArticles(input.index);
+  const out: ConceptExtra[] = [];
+  const taken = new Set(input.exclude);
+  const push = (e: ConceptExtra, cap: number) => {
+    if (out.length >= cap || taken.has(e.id)) return;
+    taken.add(e.id);
+    out.push(e);
+  };
+  const hitIds = new Set<string>();
+  const termGroups = [...new Map(input.analysis.concepts.map((c) => conceptTerms(c, input.synonyms)).filter((t) => t.length).map((t) => [t[0], t])).values()];
+  const textOf = new Map(all.map((a) => [a.id, a.text]));
+  for (const hit of conceptHits(input.analysis.concepts, all, input.synonyms)) {
+    if (hit.ids.length < 1 || hit.ids.length > CONCEPT_DIRECT_MAX_ARTICLES) continue;
+    for (const id of hit.ids) {
+      const text = textOf.get(id) ?? "";
+      if (termGroups.filter((t) => mentionsAnyConcept(text, [t])).length >= CONCEPT_DIRECT_MIN_CONCEPTS) hitIds.add(id);
+    }
+  }
+  const query = expandSynonyms([input.question, ...input.analysis.concepts].join(" "), input.synonyms);
+  // 질문과 가까운 순. 가장 가까운 조 점수의 CONCEPT_DIRECT_RELATIVE 배에 못 미치면 넣지 않는다(흔한 수식어가 든 엉뚱한 조)
+  const scored = input.index.search(query, { limit: hitIds.size || 1, filter: (id) => hitIds.has(id) });
+  const floor = (scored[0]?.score ?? 0) * CONCEPT_DIRECT_RELATIVE;
+  const direct = scored.filter((h) => h.score >= floor).map((h) => h.id);
+  for (const id of direct) push({ id }, Math.min(limit, CONCEPT_DIRECT_SLOT));
+  const byId = new Map(all.map((a) => [a.id, a]));
+  for (const targetId of [...input.searched, ...out.map((e) => e.id)]) {
+    const target = byId.get(targetId);
+    if (!target) continue;
+    const sameLaw = all.filter((a) => a.law_id === target.law_id);
+    for (const id of restrictingArticles(target, sameLaw)) push({ id, restricts: target.id }, limit);
+  }
+  return out;
+}
+
+/** ④ 대조용: ①이 뽑은 개념어 가운데 법령 조문에 드물게 나오는 말과 그 동의어. 규칙 기반 대체 분석이면 빈 배열 */
+export function rareConceptTermsFor(cache: LawCache, analysis: QuestionAnalysis): string[][] {
+  if (analysis.fallback) return [];
+  return rareConceptTerms(conceptHits(analysis.concepts, restrictionArticles(lawIndexFor(cache)), cache.synonyms));
 }
 
 /** 학교를 지정했을 때 학칙 색인에서 따로 넣는 조 수(법령 상위 조와 점수를 겨루지 않게) */
@@ -143,6 +241,17 @@ export function collectFromCache(input: CacheCollectInput): CacheCollectOutcome 
   for (const id of [...upward.articles.keys(), ...upward.scope.keys()]) {
     if (!entries.some((e) => e.id === id)) entries.push({ id, score: 0, via: "delegation" });
   }
+  // 개념어가 원문에 나오는 조와 적용 제외 조(검색 점수와 상관없이)
+  const extras = conceptExtras({
+    analysis,
+    index: lawIndex,
+    question: input.question,
+    searched: law.chosen.map((h) => h.id),
+    exclude: new Set(entries.map((e) => e.id)),
+    synonyms: cache.synonyms,
+  });
+  const restrictsOf = new Map(extras.filter((e) => e.restricts).map((e) => [e.id, e.restricts!]));
+  for (const e of extras) entries.push({ id: e.id, score: 0, via: "concept" });
   const entryIds = new Set(entries.map((e) => e.id));
   const upperOf = (id: string) =>
     upward.relations.filter((r) => r.from === id && entryIds.has(r.upper)).map((r) => ({ id: r.upper, phrase: r.phrase, quote: r.quote }));
@@ -181,6 +290,7 @@ export function collectFromCache(input: CacheCollectInput): CacheCollectOutcome 
         ...(upperOf(article.id).length ? { upper: upperOf(article.id) } : {}),
         ...(lowerOf(article.id).length ? { upper_of: lowerOf(article.id) } : {}),
         ...(upward.scope.has(article.id) ? { scope_of: upward.scope.get(article.id) } : {}),
+        ...(restrictsOf.has(article.id) ? { restricts: restrictsOf.get(article.id) } : {}),
       });
     }
   }
@@ -195,7 +305,7 @@ export function collectFromCache(input: CacheCollectInput): CacheCollectOutcome 
       api: "cache",
       query: queries.slice(1).join(" | ") || queries[0],
       duration_ms: Date.now() - started,
-      note: `조 ${chosen.length}개(학칙 ${school.chosen.length}), 위임 ${delegation.articles.size + delegation.schoolArticles.size}개, 상위 ${upward.articles.size + upward.scope.size}개`,
+      note: `조 ${chosen.length}개(학칙 ${school.chosen.length}), 위임 ${delegation.articles.size + delegation.schoolArticles.size}개, 상위 ${upward.articles.size + upward.scope.size}개${extras.length ? `, 개념 ${extras.length}개` : ""}`,
       candidate_ids: candidates.map((c) => c.id),
     },
   };

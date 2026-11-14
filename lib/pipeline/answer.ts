@@ -91,6 +91,7 @@ function articleBlock(c: ArticleCandidate): string {
   if (c.scope_of) flags.push("적용 범위 조 — 적용 대상·적용 제외를 먼저 확인");
   if (c.excerpt_note) flags.push(`일부 항만 수록: ${c.excerpt_note}`);
   if (c.via === "delegation") flags.push("위임 사슬로 찾음");
+  if (c.via === "concept") flags.push(c.restricts ? `적용 제외 조 — ${c.restricts}의 적용 대상을 빼거나 적용하지 않음` : "질문 개념어가 원문에 나오는 조");
   return `[${c.id}] ${c.law_name} ${c.number}(${c.title}) | ${flags.join(" | ")}\n${text}`;
 }
 
