@@ -657,6 +657,9 @@ export function linkDelegations(parent: LawDocument, child: LawDocument, phrase:
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const ID = /^[a-z0-9_]+:\d{3}-\d{2}$/;
+const LAW_GO_KR = /^https:\/\/www\.law\.go\.kr\//;
+// 법제처에 없는 사립대 학칙은 그 학교 공식 규정 웹사이트의 공개본을 사람이 옮겨 적는다(manifest method "manual")
+const SCHOOL_RULE_SITES: Partial<Record<string, RegExp>> = { dcu: /^https:\/\/rule\.dcu\.ac\.kr\// };
 
 /** LawDocument 형식 검사. 문제 목록(빈 배열이면 통과) */
 export function validateLawDocument(doc: LawDocument): string[] {
@@ -681,7 +684,8 @@ export function validateLawDocument(doc: LawDocument): string[] {
       if (!DATE.test(v.effective_from) || !DATE.test(v.promulgated)) errs.push(w("날짜 형식"));
       if (v.effective_to !== null && !DATE.test(v.effective_to)) errs.push(w("effective_to 형식"));
       if (v.effective_to !== null && v.effective_to < v.effective_from) errs.push(w(`effective_to(${v.effective_to}) < effective_from(${v.effective_from})`));
-      if (!/^https:\/\/www\.law\.go\.kr\//.test(v.source_url)) errs.push(w("source_url이 law.go.kr가 아님"));
+      const schoolSite = doc.kind === "school_rule" && doc.school ? SCHOOL_RULE_SITES[doc.school] : undefined;
+      if (!LAW_GO_KR.test(v.source_url) && !schoolSite?.test(v.source_url)) errs.push(w("source_url이 law.go.kr(또는 그 학교 공식 규정 웹사이트)가 아님"));
       if (prev) {
         if (prev.effective_from >= v.effective_from) errs.push(w("versions가 시행일 오름차순이 아님"));
         if (prev.effective_to === null || prev.effective_to >= v.effective_from) errs.push(w("판 구간이 겹침"));

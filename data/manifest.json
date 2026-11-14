@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-13T02:18:28+09:00",
+  "generated_at": "2026-11-15T01:45:59+09:00",
   "entries": [
     {
       "id": "heaf",
@@ -871,6 +871,98 @@
         "학과 명칭은 학칙 별표에 있어 수록하지 않았다. 학과명 변경 시점은 부칙<제1315호> 제1조·제2조로만 판단한다."
       ],
       "path": "rules/knou_rule_a1315.json"
+    },
+    {
+      "id": "knu_rule",
+      "name": "경북대학교 학칙",
+      "kind": "school_rule",
+      "school": "knu",
+      "editions": [
+        {
+          "effective_from": "2026-08-31",
+          "promulgated": "2026-08-31",
+          "promulgation_no": "경북대학교학칙 제2889호",
+          "source_url": "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000160585"
+        }
+      ],
+      "collected_at": "2026-11-15T01:44:28+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000160585",
+      "attribution": "경북대학교 학칙(제2889호, 시행 2026. 8. 31.), 법제처 국가법령정보센터 게재본",
+      "redistribution": "확인 못 함 — 재배포 근거를 확인하지 못해 시연·평가에 쓰는 조·항만 인용 수준으로 수록",
+      "storage": "file",
+      "scope": "시연·평가에 쓰는 조·항만: 제17조의4, 제26조, 제27조, 제36조제2항·제4항, 제47조제1항·제5항, 제51조, 제66조, 제67조, 제83조, 제84조",
+      "path": "rules/knu_rule.json"
+    },
+    {
+      "id": "seoultech_rule",
+      "name": "서울과학기술대학교 학칙",
+      "kind": "school_rule",
+      "school": "seoultech",
+      "editions": [
+        {
+          "effective_from": "2026-09-01",
+          "promulgated": "2026-09-01",
+          "promulgation_no": "서울과학기술대학교학칙 제915호",
+          "source_url": "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000159467"
+        }
+      ],
+      "collected_at": "2026-11-15T01:44:28+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000159467",
+      "attribution": "서울과학기술대학교 학칙(제915호, 시행 2026. 9. 1.), 법제처 국가법령정보센터 게재본",
+      "redistribution": "확인 못 함 — 재배포 근거를 확인하지 못해 시연·평가에 쓰는 조·항만 인용 수준으로 수록",
+      "storage": "file",
+      "scope": "시연·평가에 쓰는 조·항만: 제24조, 제40조제5항·제6항·제8항, 제42조, 제43조, 제57조, 제62조, 제65조, 제86조, 제90조, 제93조",
+      "path": "rules/seoultech_rule.json"
+    },
+    {
+      "id": "dnue_rule",
+      "name": "대구교육대학교 학칙",
+      "kind": "school_rule",
+      "school": "dnue",
+      "editions": [
+        {
+          "effective_from": "2024-08-06",
+          "promulgated": "2024-08-06",
+          "promulgation_no": "대구교육대학교학칙 제792호",
+          "source_url": "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000135753"
+        }
+      ],
+      "collected_at": "2026-11-15T01:44:29+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000135753",
+      "attribution": "대구교육대학교 학칙(제792호, 시행 2024. 8. 6.), 법제처 국가법령정보센터 게재본",
+      "redistribution": "확인 못 함 — 재배포 근거를 확인하지 못해 시연·평가에 쓰는 조·항만 인용 수준으로 수록",
+      "storage": "file",
+      "scope": "시연·평가에 쓰는 조·항만: 제4조, 제16조, 제17조, 제18조, 제23조, 제45조, 제57조, 제63조제3항, 제76조, 제77조",
+      "path": "rules/dnue_rule.json"
+    },
+    {
+      "id": "dcu_rule",
+      "name": "대구사이버대학교 학칙",
+      "kind": "school_rule",
+      "school": "dcu",
+      "editions": [
+        {
+          "effective_from": "2026-10-15",
+          "promulgated": "2026-10-15",
+          "promulgation_no": "대구사이버대학교 학칙(2026. 10. 15. 개정)",
+          "source_url": "https://rule.dcu.ac.kr/lmxsrv/law/lawFullView.srv?SEQ=141"
+        }
+      ],
+      "collected_at": "2026-11-15T01:46:37+09:00",
+      "method": "manual",
+      "source_url": "https://rule.dcu.ac.kr/lmxsrv/law/lawFullView.srv?SEQ=141",
+      "attribution": "대구사이버대학교 학칙(시행 2026. 10. 15.), 대구사이버대학교 규정 웹사이트(rule.dcu.ac.kr) 공개본, 2026. 11. 15. 확인",
+      "redistribution": "확인 못 함 — 재배포 근거를 확인하지 못해 시연·평가에 쓰는 조·항만 인용 수준으로 수록",
+      "storage": "file",
+      "scope": "시연·평가에 쓰는 조·항만: 제11조, 제34조, 제35조, 제36조, 제50조, 제58조제3항·제5항·제7항, 제96조, 제103조, 제104조, 제106조",
+      "limitations": [
+        "법제처 국가법령정보센터에 게재되지 않은 사립대 학칙이다. 학교 공식 규정 웹사이트(rule.dcu.ac.kr)의 공개 화면(로그인 없음)에서 사람이 옮겨 적고 원문과 한 글자씩 대조했다. 수집기는 이 학칙을 받거나 덮어쓰지 않으므로 개정되면 사람이 다시 옮겨야 한다.",
+        "원문에 공포 번호와 공포일이 따로 적혀 있지 않아 최종개정일(2026. 10. 15., 부칙 시행일과 같음)을 판 표시와 공포일로 두었다. 같은 부칙 ②(제4조제2항·별표, 2027. 3. 1. 적용)는 수록한 조와 관계없다."
+      ],
+      "path": "rules/dcu_rule.json"
     }
   ]
 }

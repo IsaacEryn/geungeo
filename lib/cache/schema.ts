@@ -15,7 +15,8 @@ export type LawKind =
   | "school_rule"; // 학칙
 
 /** 지원 학교. 화면의 '지정 안 함'은 null */
-export type SchoolId = "snu" | "pnu" | "knou";
+export const SCHOOL_IDS = ["snu", "pnu", "knou", "knu", "seoultech", "dnue", "dcu"] as const;
+export type SchoolId = (typeof SCHOOL_IDS)[number];
 
 /** 목(가·나·다…) */
 export interface SubItem {
@@ -46,7 +47,7 @@ export interface ArticleVersion {
   text: string; // 조 전체 원문(제목 줄 포함, 공백 정리만)
   paragraphs: Paragraph[];
   amend_tags: string[]; // 원문 꼬리표 그대로: "<개정 2024. 2. 20.>", "[본조신설 2026. 3. 10.]"
-  source_url: string; // law.go.kr 해당 판 URL
+  source_url: string; // law.go.kr 해당 판 URL(법제처에 없는 학칙은 그 학교 공식 규정 웹사이트 공개 URL)
 }
 
 /** 위임 연결(설계 2-2 위임 사슬). 수집 때 미리 만든다 */

@@ -360,10 +360,26 @@ async function collectSchoolRule(rule) {
   }
 }
 
+// 수동 출처 학칙(config의 manual): 법제처에 없어 학교 공식 규정 웹사이트에서 사람이 옮겨 적은 것.
+// 수집기는 받지도 덮어쓰지도 않고 manifest 항목과 data/rules 파일을 그대로 둔다
+function keepManualRule(rule) {
+  const old = oldManifest.entries.find((e) => e.id === rule.id);
+  if (!old) {
+    console.warn(`  ${rule.id}: 수동 출처인데 manifest에 항목이 없음(사람이 data/rules와 manifest를 함께 적어야 함)`);
+    return;
+  }
+  console.log(`  ${rule.id}: 수동 출처 — 그대로 둠(${old.attribution})`);
+  entries.push(old);
+}
+
 console.log(`수집 시작 ${kstNow()} ${offline ? "(오프라인)" : ""}`);
 for (const law of config.laws) if (want(law.id)) await collectLaw(law);
 for (const rule of config.admin_rules) if (want(rule.id)) await collectAdminRule(rule);
-for (const rule of config.school_rules) if (want(rule.id)) await collectSchoolRule(rule);
+for (const rule of config.school_rules) {
+  if (!want(rule.id)) continue;
+  if (rule.manual) keepManualRule(rule);
+  else await collectSchoolRule(rule);
+}
 
 // 위임 연결(상위 법 → 시행령·규칙 조), 사람이 적은 연결
 for (const d of config.delegations) {

@@ -35,11 +35,13 @@ describe("loadCache(실제 data/)", () => {
     expect(cache.collectedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+09:00$/);
     // 학칙: 쓰는 조·항만 data/rules/에 담아 파일로 읽는다
     const rules = cache.manifest.entries.filter((e) => e.kind === "school_rule");
-    expect(rules.map((e) => e.school).sort()).toEqual(["knou", "pnu", "snu"]);
+    expect(rules.map((e) => e.school).sort()).toEqual(["dcu", "dnue", "knou", "knu", "pnu", "seoultech", "snu"]);
     for (const e of rules) {
       expect(e.storage).toBe("file");
       expect(e.attribution.startsWith(e.name)).toBe(true); // 대학명 먼저
-      expect(e.attribution).toContain("법제처 국가법령정보센터 게재본");
+      // 법제처에 없는 학칙(대구사이버대학교)만 학교 공식 규정 웹사이트 공개본을 사람이 옮겼다
+      if (e.method === "manual") expect(e.attribution).toContain("규정 웹사이트(rule.dcu.ac.kr) 공개본");
+      else expect(e.attribution).toContain("법제처 국가법령정보센터 게재본");
       expect(e.scope).toMatch(/^시연·평가에 쓰는 조·항만/);
     }
     expect(cache.warnings).toEqual([]);

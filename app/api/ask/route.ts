@@ -7,6 +7,7 @@ import { allowRequest } from "@/lib/deploy/rate-limit";
 import { runPipeline } from "@/lib/pipeline/run";
 import { toPipelineError } from "@/lib/pipeline/errors";
 import type { AskRequest, PipelineErrorCode, StageEvent } from "@/lib/pipeline/types";
+import { SCHOOL_IDS, type SchoolId } from "@/lib/cache/schema";
 import messages from "@/messages/ko.json";
 
 export const runtime = "nodejs";
@@ -32,7 +33,7 @@ function pickRequest(body: unknown): AskRequest | null {
   if (!body || typeof body !== "object") return null;
   const b = body as Record<string, unknown>;
   if (typeof b.question !== "string") return null;
-  const school = b.school === "snu" || b.school === "pnu" || b.school === "knou" ? b.school : null;
+  const school = typeof b.school === "string" && (SCHOOL_IDS as readonly string[]).includes(b.school) ? (b.school as SchoolId) : null;
   return {
     question: b.question,
     asOf: typeof b.asOf === "string" && b.asOf ? b.asOf : undefined,
