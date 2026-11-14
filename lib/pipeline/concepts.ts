@@ -55,9 +55,16 @@ export function conceptHits(concepts: string[], articles: ConceptArticle[], syno
  */
 export const RARE_CONCEPT_MAX_ARTICLES = 10;
 
-/** 드문 개념어(조문 1~RARE_CONCEPT_MAX_ARTICLES개에 나오는 말)의 대조어 묶음 */
+/**
+ * ④ 대조에 필요한 드문 개념어 수. 하나만 남으면(핵심어는 조문에 없어 빠지고 '국립대학'처럼 범위를 정하는 말만 남는 경우,
+ * ①이 질문 말을 조문과 다르게 뽑은 경우) 그 말 하나로 근거 조문을 판단하지 않는다
+ */
+export const RARE_CONCEPT_MIN_GROUPS = 2;
+
+/** 드문 개념어(조문 1~RARE_CONCEPT_MAX_ARTICLES개에 나오는 말)의 대조어 묶음. RARE_CONCEPT_MIN_GROUPS개 미만이면 빈 배열 */
 export function rareConceptTerms(hits: ConceptHits[]): string[][] {
-  return hits.filter((h) => h.ids.length >= 1 && h.ids.length <= RARE_CONCEPT_MAX_ARTICLES).map((h) => h.terms);
+  const groups = hits.filter((h) => h.ids.length >= 1 && h.ids.length <= RARE_CONCEPT_MAX_ARTICLES).map((h) => h.terms);
+  return groups.length >= RARE_CONCEPT_MIN_GROUPS ? groups : [];
 }
 
 /** 원문에 대조어 묶음 가운데 하나라도 나오는지 */

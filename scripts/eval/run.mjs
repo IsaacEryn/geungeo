@@ -260,6 +260,9 @@ async function runCandidate({ questions, opts, models, pipeline, costOf, spentBe
         verdict: result?.verdict ?? null,
         summary: result?.summary ?? null,
         card_ids: (result?.cards ?? []).map((c) => c.id),
+        // 카드 역할(basis·reference·delegation)과 ① 장면. 검증 규칙을 기록으로 다시 돌려 볼 때 쓴다
+        card_roles: (result?.cards ?? []).map((c) => c.role),
+        scene: result?.scene ?? null,
         // ② 캐시 단계가 ③에 넘긴 후보 조 ID(카드에 안 나온 조가 후보에 있었는지 가르는 데 쓴다)
         candidate_ids: (result?.trace?.calls ?? []).find((c) => c.stage === "collect_cache")?.candidate_ids ?? [],
         removed_citations: result?.verification?.removed_citations ?? null,

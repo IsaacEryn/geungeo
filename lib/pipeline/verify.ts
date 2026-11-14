@@ -477,12 +477,13 @@ export function verifyDraft(input: VerifyInput): VerifyOutcome {
   for (const c of unnamed) {
     issues.push({ kind: "unnamed_article", citation_id: c.id, detail: `결론이 조 번호 없이 조문을 가리켰고 근거로 든 ${c.law_name} ${c.number}의 번호가 결론에 없습니다.` });
   }
-  // 업무 시작(제도 신설·근거 조항) 질문에서 근거로 든 조문 원문 어디에도 질문의 드문 개념어가 없으면, 허용 조문을 신설 근거로 든 것일 수 있어 한 번 다시 묻는다(판정은 바꾸지 않는다)
+  // 업무 시작(제도 신설·근거 조항) 질문에서 근거로 든 조문 원문 어디에도 질문의 드문 개념어가 없으면, 허용 조문을 신설 근거로 든 것일 수 있어 한 번 다시 묻는다(판정은 바꾸지 않는다).
+  // 드문 개념어는 법령 조문으로 고른 말이라, 학칙 조만 근거로 든 답(학칙은 말이 다를 수 있음)은 보지 않는다
   const lacksConcept =
     verdict !== "no_basis" &&
     input.scene === "initiating" &&
     (input.conceptTerms?.length ?? 0) > 0 &&
-    basisArticles.length > 0 &&
+    basisArticles.some((c) => c.grade === "L1") &&
     !basisArticles.some((c) => mentionsAnyConcept(c.text, input.conceptTerms!));
   if (lacksConcept) {
     issues.push({ kind: "basis_lacks_concept", detail: "근거로 든 조문 원문에 질문의 핵심 개념어(동의어 포함)가 없습니다." });

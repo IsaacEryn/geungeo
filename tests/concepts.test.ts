@@ -53,7 +53,11 @@ const STAFF = law("staff", [
   article("staff", 10, "준용", "「다른 법」 제3조는 교원에게 적용하지 아니한다."),
   article("staff", 11, "기간제", "기간제교원에 대해서는 제2조, 제3조, 제4조, 제5조 및 제6조를 적용하지 아니한다."),
 ]);
-const ACADEMIC = law("academic", [article("academic", 1, "학사", "교원은 학사 운영에 참여한다. 안식 학기는 학칙으로 정한다.")]);
+const ACADEMIC = law("academic", [
+  article("academic", 1, "학사", "교원은 학사 운영에 참여한다. 안식 학기는 학칙으로 정한다."),
+  // 드문 개념어 하나만 우연히 들어 있는 조(다른 개념어는 없음)
+  article("academic", 2, "세칙", "안식 학기의 운영 세칙은 따로 둔다."),
+]);
 
 const index = new ArticleIndex([STAFF, ACADEMIC]);
 const asArticles = (doc: LawDocument) => doc.articles.map((a) => ({ id: a.id, law_id: a.law_id, number: a.number, text: a.versions[0].text }));
@@ -81,10 +85,15 @@ describe("개념어와 동의어", () => {
   });
 
   it("조문 수로 드문 개념어만 고른다(흔한 말·조문에 없는 말은 뺀다)", () => {
-    const hits = conceptHits(["교원", "안식 학기", "없는 말"], asArticles(STAFF).concat(asArticles(ACADEMIC)), SYN);
+    const hits = conceptHits(["교원", "안식 학기", "대체 강사", "없는 말"], asArticles(STAFF).concat(asArticles(ACADEMIC)), SYN);
     expect(hits.find((h) => h.concept === "교원")!.ids.length).toBeGreaterThan(RARE_CONCEPT_MAX_ARTICLES);
-    expect(hits.find((h) => h.concept === "안식 학기")!.ids).toEqual(["staff:007-00", "academic:001-00"]);
-    expect(rareConceptTerms(hits)).toEqual([["안식학기", "강의면제학기"]]);
+    expect(hits.find((h) => h.concept === "안식 학기")!.ids).toEqual(["staff:007-00", "academic:001-00", "academic:002-00"]);
+    expect(rareConceptTerms(hits)).toEqual([["안식학기", "강의면제학기"], ["대체강사"]]);
+  });
+
+  it("드문 개념어가 하나만 남으면(범위를 정하는 말 하나 등) 대조어로 쓰지 않는다", () => {
+    const hits = conceptHits(["교원", "대체 강사", "없는 말"], asArticles(STAFF).concat(asArticles(ACADEMIC)), SYN);
+    expect(rareConceptTerms(hits)).toEqual([]);
   });
 
   it("원문 대조는 공백·가운뎃점 변형을 무시한다", () => {
@@ -127,12 +136,17 @@ describe("conceptExtras(② 후보 보강)", () => {
   });
 
   it("이미 후보에 있는 조는 다시 넣지 않고 상한을 지킨다", () => {
-    const extras = conceptExtras({ analysis: analysis(["안식 학기"]), index, question, searched: ["staff:003-00"], exclude: new Set(["staff:003-00", "staff:007-00"]), synonyms: SYN, limit: 1 });
+    const extras = conceptExtras({ analysis: analysis(["교원", "안식 학기"]), index, question, searched: ["staff:003-00"], exclude: new Set(["staff:003-00", "staff:007-00"]), synonyms: SYN, limit: 1 });
     expect(extras.map((e) => e.id)).toEqual(["academic:001-00"]);
   });
 
   it(`개념어가 ${CONCEPT_DIRECT_MAX_ARTICLES}개 넘는 조에 나오는 흔한 말이면 넣지 않는다`, () => {
     expect(conceptExtras({ analysis: analysis(["교원"]), index, question, searched: [], exclude: new Set(), synonyms: SYN })).toEqual([]);
+  });
+
+  it("드문 개념어 하나만 우연히 들어 있고 다른 개념어가 없는 조는 넣지 않는다", () => {
+    const extras = conceptExtras({ analysis: analysis(["교원", "안식 학기"]), index, question, searched: [], exclude: new Set(["staff:007-00", "academic:001-00"]), synonyms: SYN });
+    expect(extras.map((e) => e.id)).not.toContain("academic:002-00");
   });
 
   it("규칙 기반 대체 분석이면 아무것도 넣지 않는다", () => {
@@ -188,6 +202,20 @@ describe("④ 근거 조문에 개념어가 없을 때 재질문", () => {
 
   it("근거 조문에 동의어가 있으면 걸리지 않는다", () => {
     expect(run(draft(mention.id)).needs_retry).toBe(false);
+  });
+
+  it("학칙 조만 근거로 들었으면 보지 않는다", () => {
+    const school: ArticleCandidate = { ...permit, id: "school:003-00", grade: "L2", kind: "school_rule" };
+    const out = verifyDraft({
+      draft: { ...draft(permit.id), citations: [{ id: school.id, quote: school.text.slice(0, 20), role: "basis" }] },
+      candidates: [school],
+      web: [],
+      signals: [],
+      asOf: "2026-11-05",
+      scene: "initiating",
+      conceptTerms: terms,
+    });
+    expect(out.retry_reasons).not.toContain("basis_lacks_concept");
   });
 
   it("처리 중 장면, 근거 없음 판정, 대조어가 없을 때는 보지 않는다", () => {
