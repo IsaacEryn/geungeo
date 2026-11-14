@@ -63,7 +63,7 @@ npm run dev             # http://localhost:3000
   - `eval/questions.jsonl`: 평가 문항(문항·정답 요지·근거 조문을 정리한 사본)
   - `data/synonyms.json`: 동의어(그 평가 문항에서 뽑음)
   - `components/mock/fixtures.ts`: 목 화면의 질문(평가 문항 그대로)과 결론·체크리스트(정답 요지를 줄임)
-  - `components/mock/quotes.json`: 목 화면의 조문 인용(평가 세트의 법제처 원문 캡처에서 옮김)
+  - `components/mock/quotes.json`: 목 화면의 조문 인용(법제처 원문 캡처와 저장소의 조문 데이터에서 옮김)
   - `messages/ko.json`의 `examples`: 예시 질문 6개(평가 문항 그대로)
   - `tests/support/laws.fixture.json`: 시험용 법령 조문(평가 세트의 원문 캡처에서 옮김, 학칙은 시험용 문구)
   - `tests/live.test.ts`의 `QUESTIONS`: 실제 호출 확인용 질문 4개(평가 문항 그대로)
