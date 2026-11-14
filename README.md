@@ -87,6 +87,17 @@ npm run build
 - 커밋 전 비밀 검사: 저장소를 받은 뒤 `git config core.hooksPath .githooks` 한 번. 훅이 `gitleaks git --staged --redact`를 돌리고, gitleaks가 없으면 커밋을 막습니다
 - 구조: 화면(`app/`, `components/`, `messages/`)은 `lib/pipeline/types.ts`의 타입만 압니다. 파이프라인은 `data/`를 `lib/cache/load.ts`를 거쳐서만 읽습니다
 
+## 배포(선택)
+
+로컬 실행에는 필요 없습니다. 외부에 주소를 열 때(예: Vercel) 아래 환경변수를 배포 쪽에만 넣습니다. 비어 있으면 각 기능이 꺼지고 로컬과 똑같이 동작합니다.
+
+- `ACCESS_CODE`: 넣으면 화면에 접근 코드 입력칸이 생기고, 코드가 맞는 요청만 질문을 받습니다. 맞은 코드는 그 브라우저 탭에만 기억합니다.
+- `DAILY_QUESTION_LIMIT`·`BUDGET_START_DATE`·`BUDGET_START_USD`: 셋이 모두 있을 때 하루 질문 상한이 켜집니다. 질문을 받기 전 Liner 사용량 조회(`GET /credits/usage`, 무료)로 시작일 이후 쓴 금액을 보고, 시작일(한국 시간)부터 오늘까지 일수 × 하루 상한 × 질문당 단가를 넘으면 그날은 더 받지 않습니다. `BUDGET_START_USD`에는 시작하는 날 열기 직전의 사용량 조회 합계(`summary.credits_usd`)를 넣습니다. 조회가 실패하면 막지 않고 통과시킵니다. 사용량 조회는 최근 30일 합계라 30일 넘게 운영할 때는 시작일과 시작 금액을 다시 잡습니다.
+- `QUESTION_COST_USD`: 질문당 단가(비우면 0.02달러).
+- `RATE_LIMIT_PER_MIN`: 같은 IP에서 1분에 받을 요청 수. 서버 인스턴스마다 따로 세는 보조 수단입니다.
+
+`/api/ask`의 최대 실행 시간은 120초로 두었습니다. 접근 코드 입력칸을 보일지는 빌드할 때 정해지므로, 변수를 바꾼 뒤에는 다시 배포합니다.
+
 ## 한계
 
 법률 자문이 아닙니다. 수집일 이후 개정은 변경 신호로만 알려 줍니다.

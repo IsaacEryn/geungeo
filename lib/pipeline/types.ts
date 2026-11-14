@@ -284,5 +284,7 @@ export type PipelineErrorCode =
   | "invalid_api_key" // 401·403: 키가 틀렸거나 권한 없음
   | "insufficient_credit" // 402: 크레딧 부족
   | "liner_unavailable" // 네트워크 오류·5xx·타임아웃(재시도 뒤)
-  | "rate_limited" // 429
+  | "rate_limited" // 429(Liner 한도 또는 배포의 분당 제한)
+  | "access_denied" // 401: 배포에서 접근 코드가 없거나 틀림(ACCESS_CODE 설정 때만)
+  | "daily_limit" // 429: 배포의 하루 질문 상한에 닿음(예산 변수 설정 때만)
   | "internal";

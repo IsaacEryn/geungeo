@@ -13,6 +13,35 @@
 //   - /api/ask가 501(not_implemented)을 돌려주면 목 데이터로 넘어간다(파이프라인이 붙기 전 임시).
 import type { AskRequest, AskResult, PipelineErrorCode, StageEvent } from "@/lib/pipeline/types";
 
+/** 서버의 lib/deploy/access.ts와 같은 헤더 이름(서버 모듈은 node:crypto를 써서 여기서 가져오지 않는다) */
+const ACCESS_CODE_HEADER = "x-access-code";
+const ACCESS_CODE_STORAGE_KEY = "geungeo.accessCode";
+
+/** 이 탭에서 맞았던 접근 코드(sessionStorage). 저장소를 못 쓰면 null */
+export function loadAccessCode(): string | null {
+  try {
+    return typeof window === "undefined" ? null : window.sessionStorage.getItem(ACCESS_CODE_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** 맞은 접근 코드를 이 탭에만 기억한다. null이면 지운다. 저장소를 못 쓰면 조용히 넘어간다 */
+export function saveAccessCode(code: string | null): void {
+  try {
+    if (typeof window === "undefined") return;
+    if (code) window.sessionStorage.setItem(ACCESS_CODE_STORAGE_KEY, code);
+    else window.sessionStorage.removeItem(ACCESS_CODE_STORAGE_KEY);
+  } catch {
+    // 사생활 보호 모드 등: 기억하지 못해도 질문은 된다
+  }
+}
+
+export interface AskOptions {
+  /** 배포에서 접근 코드를 요구할 때만 넣는다 */
+  accessCode?: string;
+}
+
 export interface AskOutcome {
   /** 목 데이터로 답했으면 true(화면에 안내 띠를 띄운다) */
   mock: boolean;
@@ -60,14 +89,19 @@ export async function ask(
   request: AskRequest,
   onEvent: (event: StageEvent) => void,
   signal: AbortSignal,
+  options: AskOptions = {},
 ): Promise<AskOutcome> {
   if (mockRequested()) return runMock(request, onEvent, signal);
+
+  const headers: Record<string, string> = { "Content-Type": "application/json", Accept: "application/x-ndjson, application/json" };
+  // 헤더에는 한글 등을 그대로 못 넣어 인코딩해 보낸다(서버가 풀어서 비교)
+  if (options.accessCode) headers[ACCESS_CODE_HEADER] = encodeURIComponent(options.accessCode);
 
   let response: Response;
   try {
     response = await fetch("/api/ask", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/x-ndjson, application/json" },
+      headers,
       body: JSON.stringify(request),
       signal,
     });
