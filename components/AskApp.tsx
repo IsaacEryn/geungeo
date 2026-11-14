@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { AskResult, SchoolId, StageEvent, StageName } from "@/lib/pipeline/types";
 import messages from "@/messages/ko.json";
-import { ask, AskError, demoExampleId } from "./ask-client";
+import { ask, AskError, demoExampleId, loadAccessCode, saveAccessCode } from "./ask-client";
 import { StatusBadge, VerdictBadge, Badge } from "./Badge";
 import { EvidenceCard } from "./EvidenceCard";
 import { fmt, formatKoDate, isValidIsoDate, todayKst } from "./format";
@@ -16,8 +16,12 @@ const SCHOOLS = Object.keys(tf.schools) as SchoolId[];
 
 type Phase = "idle" | "running" | "done" | "error";
 
-export function AskApp() {
+export function AskApp({ accessCodeRequired = false }: { accessCodeRequired?: boolean }) {
   const [question, setQuestion] = useState("");
+  // 접근 코드 입력칸: 서버가 필요하다고 알렸거나(배포에 ACCESS_CODE 설정), 서버가 401로 거절했을 때만 보인다
+  const [needsAccessCode, setNeedsAccessCode] = useState(accessCodeRequired);
+  const [accessCode, setAccessCode] = useState("");
+  const [accessCodeError, setAccessCodeError] = useState<string | null>(null);
   const [school, setSchool] = useState<SchoolId | "">("");
   const [asOf, setAsOf] = useState(todayKst);
   const [questionError, setQuestionError] = useState<string | null>(null);
@@ -31,6 +35,7 @@ export function AskApp() {
   const [liveMessage, setLiveMessage] = useState("");
   const [mock, setMock] = useState(false);
 
+  const accessCodeRef = useRef<HTMLInputElement>(null);
   const questionRef = useRef<HTMLTextAreaElement>(null);
   const asOfRef = useRef<HTMLInputElement>(null);
   const resultHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -40,6 +45,8 @@ export function AskApp() {
   const questionErrorId = `${ids}-q-error`;
   const asOfHintId = `${ids}-d-hint`;
   const asOfErrorId = `${ids}-d-error`;
+  const accessCodeHintId = `${ids}-c-hint`;
+  const accessCodeErrorId = `${ids}-c-error`;
 
   function handleEvent(event: StageEvent) {
     switch (event.type) {
@@ -79,7 +86,13 @@ export function AskApp() {
 
   async function run(q: string) {
     const trimmed = q.trim();
+    const code = accessCode.trim();
     let invalid = false;
+    const codeMissing = needsAccessCode && !code;
+    if (codeMissing) {
+      setAccessCodeError(tf.accessCodeRequired);
+      invalid = true;
+    } else setAccessCodeError(null);
     if (!trimmed) {
       setQuestionError(tf.questionRequired);
       invalid = true;
@@ -89,7 +102,7 @@ export function AskApp() {
       invalid = true;
     } else setAsOfError(null);
     if (invalid) {
-      (!trimmed ? questionRef : asOfRef).current?.focus();
+      (codeMissing ? accessCodeRef : !trimmed ? questionRef : asOfRef).current?.focus();
       return;
     }
 
@@ -112,10 +125,21 @@ export function AskApp() {
           if (!controller.signal.aborted) handleEvent(event);
         },
         controller.signal,
+        { accessCode: code || undefined },
       );
+      // 서버가 받아 준 코드만 이 탭에 기억한다(틀린 코드는 401로 아래 catch에 간다)
+      if (code && !outcome.mock) saveAccessCode(code);
       if (!controller.signal.aborted) setMock(outcome.mock);
     } catch (error) {
       if (controller.signal.aborted) return;
+      if (error instanceof AskError && error.code === "access_denied") {
+        saveAccessCode(null);
+        setNeedsAccessCode(true);
+        setAccessCodeError(code ? tf.accessCodeInvalid : tf.accessCodeRequired);
+        showError(messages.errors.access_denied);
+        requestAnimationFrame(() => accessCodeRef.current?.focus());
+        return;
+      }
       if (error instanceof AskError) {
         const key = error.code === "mock_unknown_question" ? "mockUnknownQuestion" : error.code;
         setMock(error.code === "mock_unknown_question");
@@ -126,6 +150,14 @@ export function AskApp() {
       }
     }
   }
+
+  // 이 탭에서 이미 맞았던 접근 코드가 있으면 채워 둔다(서버 렌더링과 어긋나지 않게 마운트 뒤에 읽는다)
+  useEffect(() => {
+    const saved = loadAccessCode();
+    if (!saved) return;
+    const timer = setTimeout(() => setAccessCode(saved), 0);
+    return () => clearTimeout(timer);
+  }, []);
 
   // 개발 서버 전용: ?demo=E22 등으로 열면 그 예시를 바로 실행한다(접근성 검사·영상 촬영)
   useEffect(() => {
@@ -157,6 +189,33 @@ export function AskApp() {
           {tf.heading}
         </h2>
         <form onSubmit={onSubmit} noValidate className="space-y-4">
+          {needsAccessCode ? (
+            <div className="max-w-sm">
+              <label htmlFor={`${ids}-c`} className="block font-bold">
+                {tf.accessCodeLabel}
+              </label>
+              <p id={accessCodeHintId} className="mt-1 text-sm text-muted">
+                {tf.accessCodeHint}
+              </p>
+              <input
+                id={`${ids}-c`}
+                ref={accessCodeRef}
+                type="password"
+                autoComplete="off"
+                spellCheck={false}
+                value={accessCode}
+                onChange={(e) => setAccessCode(e.target.value)}
+                aria-invalid={accessCodeError ? true : undefined}
+                aria-describedby={accessCodeError ? `${accessCodeErrorId} ${accessCodeHintId}` : accessCodeHintId}
+                className="mt-2 block min-h-11 w-full rounded-md border border-line bg-bg px-3"
+              />
+              {accessCodeError ? (
+                <p id={accessCodeErrorId} className="mt-1 font-semibold text-danger-fg">
+                  {accessCodeError}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
           <div>
             <label htmlFor={`${ids}-q`} className="block font-bold">
               {tf.questionLabel}

@@ -23,7 +23,11 @@
     "submit": "근거 찾기",
     "submitting": "찾는 중…",
     "examplesHeading": "예시 질문",
-    "examplesHint": "누르면 질문을 채우고 바로 찾습니다."
+    "examplesHint": "누르면 질문을 채우고 바로 찾습니다.",
+    "accessCodeLabel": "접근 코드",
+    "accessCodeHint": "이 화면은 접근 코드를 아는 분만 쓸 수 있습니다. 안내받은 코드를 입력해 주세요.",
+    "accessCodeRequired": "접근 코드를 입력해 주세요.",
+    "accessCodeInvalid": "접근 코드가 맞지 않습니다. 다시 확인해 주세요."
   },
   "examples": [
     {
@@ -204,6 +208,8 @@
     "insufficient_credit": "Liner API 크레딧이 부족합니다. Liner 계정의 남은 크레딧을 확인해 주세요.",
     "liner_unavailable": "Liner API에 연결하지 못했습니다. 잠시 뒤 다시 시도해 주세요.",
     "rate_limited": "요청이 많아 잠시 막혔습니다. 잠시 뒤 다시 시도해 주세요.",
+    "access_denied": "접근 코드가 맞지 않습니다. 안내받은 접근 코드를 다시 입력해 주세요.",
+    "daily_limit": "오늘 사용량이 다 찼습니다. 한국 시간 자정이 지나면 다시 질문할 수 있습니다.",
     "internal": "처리 중 문제가 생겼습니다. 다시 시도해 주세요.",
     "network": "서버에 연결하지 못했습니다. 잠시 뒤 다시 시도해 주세요.",
     "aborted": "요청이 취소되었습니다.",
