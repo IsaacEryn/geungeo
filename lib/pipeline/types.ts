@@ -75,7 +75,7 @@ export interface ArticleCandidate {
   grade: "L1" | "L2";
   source_url: string;
   score: number; // 검색 점수(BM25 등)
-  via: "direct" | "search" | "delegation"; // 조번호 직접 조회 / 검색 / 위임 사슬
+  via: "direct" | "search" | "delegation" | "concept"; // 조번호 직접 조회 / 검색 / 위임 사슬 / 개념어·적용 제외(점수와 상관없이 넣음)
   delegated_to_school_rule: boolean; // "학칙으로 위임 — 학교별 확인"
   excerpt_note?: string; // 일부 항만 담은 조의 안내(LawArticle.excerpt.note)
   /** 이 조에 권한을 맡긴 상위 조(후보에 있는 것만). quote는 상위 조 원문 그대로 */
@@ -84,6 +84,8 @@ export interface ArticleCandidate {
   upper_of?: string[];
   /** 같은 행정규칙의 적용 범위 조라서 넣었으면 그 계기가 된 조 ID */
   scope_of?: string;
+  /** 같은 법령에서 이 조가 적용을 빼거나 적용하지 않는다고 가리킨 조 ID(그래서 넣었을 때) */
+  restricts?: string;
   /** 기준일 판이 개정으로 바뀐 판이면(같은 조의 이전 판이 있음) true */
   amended?: boolean;
 }
@@ -173,6 +175,7 @@ export type VerificationIssueKind =
   | "notice_delegation" // 공고에 맡긴 사항 + 공고 있음 → no_basis를 partial로
   | "upper_added" // 학칙·하위 규범 근거에 상위 위임 조를 코드가 덧붙임
   | "hedged_basis" // 결론이 "근거로 제시할 수 있다"처럼 에둘러 근거로 삼음 → ③ 한 번 더
+  | "basis_lacks_concept" // 업무 시작 장면에서 근거로 든 조문 원문에 질문의 드문 개념어(동의어 포함)가 하나도 없음 → ③ 한 번 더
   | "unnamed_article"; // 결론이 "단서에 따라"처럼 번호 없이 조문을 가리키고 근거 조 번호가 결론에 없음 → ③ 한 번 더
 
 /** ③을 다시 부른 이유 */
