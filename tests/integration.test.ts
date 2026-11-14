@@ -43,7 +43,15 @@ describe("실제 data/ 읽기", () => {
     for (const id of ["edu_official_act", "heaf", "heaf_decree", "private_school_act", "remote_class_rule", "tuition_rule"]) {
       expect(cache.laws.has(id)).toBe(true);
     }
-    expect([...cache.laws.values()].filter((l) => l.kind === "school_rule").map((l) => l.law_id).sort()).toEqual(["knou_rule_a1315", "pnu_rule", "snu_rule"]);
+    expect([...cache.laws.values()].filter((l) => l.kind === "school_rule").map((l) => l.law_id).sort()).toEqual([
+      "dcu_rule",
+      "dnue_rule",
+      "knou_rule_a1315",
+      "knu_rule",
+      "pnu_rule",
+      "seoultech_rule",
+      "snu_rule",
+    ]);
     expect(cache.articles.get("heaf:011-02")?.versions.at(-1)?.effective_from).toBe("2027-03-11");
     expect(cache.collectedAt).toMatch(/^2026-11-13T/);
   });
