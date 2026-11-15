@@ -2,6 +2,7 @@
 import type { LinerCallOptions } from "@/lib/liner/client";
 import { chatHedged, hedgeTraceFields, modelFor, parseJsonObject, reasoningFromEnv, type ReasoningEffort } from "@/lib/liner/router";
 import { statusLabel } from "@/lib/cache/status";
+import { SCHOOL_NAMES, type SchoolId } from "@/lib/cache/schema";
 import type { ArticleCandidate, ChangeSignal, Citation, ChecklistItem, DraftAnswer, QuestionAnalysis, TraceCall, Verdict, WebResult } from "./types";
 
 export const ANSWER_SCHEMA = {
@@ -125,7 +126,7 @@ export function buildAnswerUserMessage(input: AnswerInput): string {
   const parts = [
     `질문: ${input.question}`,
     `기준일: ${input.asOf}`,
-    `학교: ${input.school ?? "지정 안 함"}`,
+    `학교: ${input.school ? (SCHOOL_NAMES[input.school as SchoolId] ?? input.school) : "지정 안 함"}`,
     `장면: ${SCENE_LABEL[input.analysis.scene]} / 업무: ${input.analysis.task || "(분석 없음)"}`,
     "",
     `## 후보 조문 (${input.candidates.length}개)`,

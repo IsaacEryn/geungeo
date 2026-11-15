@@ -18,6 +18,17 @@ export type LawKind =
 export const SCHOOL_IDS = ["snu", "pnu", "knou", "knu", "seoultech", "dnue", "dcu"] as const;
 export type SchoolId = (typeof SCHOOL_IDS)[number];
 
+/** 답변 단계에 넘기는 정식 학교명. 화면 문구(messages/ko.json form.schools)와 같아야 한다 */
+export const SCHOOL_NAMES: Record<SchoolId, string> = {
+  snu: "서울대학교",
+  pnu: "부산대학교",
+  knou: "한국방송통신대학교",
+  knu: "경북대학교",
+  seoultech: "서울과학기술대학교",
+  dnue: "대구교육대학교",
+  dcu: "대구사이버대학교",
+};
+
 /** 목(가·나·다…) */
 export interface SubItem {
   no: string; // "가"
