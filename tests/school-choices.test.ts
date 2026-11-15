@@ -2,7 +2,8 @@
 // 학교를 고르면 그 학교 학칙만 후보가 되는지, 질문에 적힌 학교 이름을 알아보는지. 네트워크·Liner 호출은 없다.
 import { beforeAll, describe, expect, it } from "vitest";
 import { loadCache, loadSchoolRules, type LawCache } from "@/lib/cache/load";
-import { SCHOOL_IDS, type SchoolId } from "@/lib/cache/schema";
+import { SCHOOL_IDS, SCHOOL_NAMES, type SchoolId } from "@/lib/cache/schema";
+import { buildAnswerUserMessage } from "@/lib/pipeline/answer";
 import { detectSchool, ruleBasedAnalysis } from "@/lib/pipeline/analyze";
 import { collectFromCache, schoolRulesInCache } from "@/lib/pipeline/collect";
 import messages from "@/messages/ko.json";
@@ -84,5 +85,26 @@ describe("새로 더한 학교 학칙", () => {
     expect(detectSchool("대구교대 재학연한")).toBe("dnue");
     expect(detectSchool("대구사이버대학교 휴학")).toBe("dcu");
     expect(detectSchool("서울대 휴학")).toBe("snu");
+  });
+});
+
+describe("답변 단계에 넘기는 학교", () => {
+  it("정식 학교명이 화면 문구와 같다", () => {
+    expect(SCHOOL_NAMES).toEqual(messages.form.schools);
+  });
+
+  it("학교 id 대신 정식 학교명을 넘긴다", () => {
+    const msg = buildAnswerUserMessage({
+      question: "휴학은 통산 몇 학기까지?",
+      asOf: "2026-11-15",
+      school: "dcu",
+      analysis: ruleBasedAnalysis("휴학은 통산 몇 학기까지?"),
+      candidates: [],
+      web: [],
+      signals: [],
+      notices: [],
+    } as Parameters<typeof buildAnswerUserMessage>[0]);
+    expect(msg).toContain("학교: 대구사이버대학교");
+    expect(msg).not.toMatch(/\(dcu\)|학교: dcu/);
   });
 });
