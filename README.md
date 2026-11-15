@@ -5,9 +5,9 @@
 
 ## 실행 (5분)
 
-필요: Node.js 22.12 이상(`.nvmrc`, 22.13과 24에서 확인), Liner API 키
+필요: Node.js 22.13.1 이상(`.nvmrc`, 22.13.1과 24.7에서 확인), Liner API 키
 
-평가 실행기(`npm run eval`)가 쓰는 vite와 수집기(`npm run collect`)가 22.12 이상을 요구해 이 버전에 맞췄습니다.
+평가 실행기(`npm run eval`)가 쓰는 vite와 수집기(`npm run collect`)는 22.12 이상을 요구합니다. 실제로 설치·빌드·테스트를 확인한 가장 낮은 버전인 22.13.1을 최소 버전으로 적었습니다.
 
 ```sh
 npm install

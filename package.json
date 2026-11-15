@@ -5,7 +5,7 @@
   "description": "대학 행정 근거 찾기 에이전트 — 조문·시행일·출처를 함께 찾아 주고, 근거가 없으면 없다고 답합니다.",
   "license": "MIT",
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=22.13.1"
   },
   "scripts": {
     "dev": "next dev",
