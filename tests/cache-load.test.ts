@@ -268,6 +268,10 @@ describe("lawdata 파서·판 비교", () => {
       { lsiSeq: "283883", promulgated: "2026-03-10", promulgation_number: "21423", effective_from: "2027-03-11", current: false, amendment_kind: "일부개정" },
       { lsiSeq: "283883", promulgated: "2026-03-10", promulgation_number: "21423", effective_from: "2026-09-11", current: true, amendment_kind: "일부개정" },
     ]);
+    // 개정 구분 인자가 빠진 여섯 인자 형식(2026. 11. 20. 확인)
+    expect(parseHistoryList("lsViewLsHst2('286083', '20260519', '21654', '20261120', 'Y', '0');return false;")).toEqual([
+      { lsiSeq: "286083", promulgated: "2026-05-19", promulgation_number: "21654", effective_from: "2026-11-20", current: true, amendment_kind: "" },
+    ]);
     expect(toIsoDate("2026. 3. 10.")).toBe("2026-03-10");
     expect(toIsoDate("2027.3.1.")).toBe("2027-03-01");
     expect(addDays("2027-03-11", -1)).toBe("2027-03-10");
