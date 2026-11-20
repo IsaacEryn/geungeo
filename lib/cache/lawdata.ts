@@ -364,7 +364,8 @@ export interface HistoryEntry {
 /** lsHstListR.do 화면(연혁 목록)에서 판 목록을 읽는다 */
 export function parseHistoryList(html: string): HistoryEntry[] {
   const out: HistoryEntry[] = [];
-  const re = /lsViewLsHst2\('(\d+)',\s*'(\d{8})',\s*'([^']*)',\s*'(\d{8})',\s*'([YN])',\s*'[^']*'\s*,\s*'([^']*)'\)/g;
+  // 2026. 11. 20. 무렵부터 법제처가 일곱째 인자(개정 구분)를 빼고 여섯 개만 넘긴다. 두 형식을 모두 읽는다.
+  const re = /lsViewLsHst2\('(\d+)',\s*'(\d{8})',\s*'([^']*)',\s*'(\d{8})',\s*'([YN])',\s*'[^']*'(?:\s*,\s*'([^']*)')?\s*\)/g;
   for (const m of html.matchAll(re)) {
     out.push({
       lsiSeq: m[1],
@@ -372,7 +373,7 @@ export function parseHistoryList(html: string): HistoryEntry[] {
       promulgation_number: m[3],
       effective_from: toIsoDate(m[4])!,
       current: m[5] === "Y",
-      amendment_kind: m[6],
+      amendment_kind: m[6] ?? "",
     });
   }
   return out;

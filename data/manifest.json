@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-15T01:45:59+09:00",
+  "generated_at": "2026-11-20T13:02:07+09:00",
   "entries": [
     {
       "id": "heaf",
@@ -86,7 +86,7 @@
           "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=283883&efYd=20270311"
         }
       ],
-      "collected_at": "2026-11-13T01:09:56+09:00",
+      "collected_at": "2026-11-20T13:01:47+09:00",
       "method": "html",
       "source_url": "https://www.law.go.kr/LSW/lsHstListR.do?lsId=000899",
       "attribution": "출처: 법제처 국가법령정보센터",
@@ -106,7 +106,7 @@
           "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:09:56+09:00",
+      "collected_at": "2026-11-20T13:01:47+09:00",
       "method": "html",
       "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
@@ -126,7 +126,7 @@
           "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:09:56+09:00",
+      "collected_at": "2026-11-20T13:01:47+09:00",
       "method": "html",
       "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
@@ -146,7 +146,7 @@
           "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:09:56+09:00",
+      "collected_at": "2026-11-20T13:01:47+09:00",
       "method": "html",
       "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
@@ -166,7 +166,7 @@
           "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:09:56+09:00",
+      "collected_at": "2026-11-20T13:01:47+09:00",
       "method": "html",
       "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
@@ -186,7 +186,7 @@
           "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:09:56+09:00",
+      "collected_at": "2026-11-20T13:01:47+09:00",
       "method": "html",
       "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
@@ -206,7 +206,7 @@
           "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:09:56+09:00",
+      "collected_at": "2026-11-20T13:01:47+09:00",
       "method": "html",
       "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
@@ -226,7 +226,7 @@
           "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:09:56+09:00",
+      "collected_at": "2026-11-20T13:01:47+09:00",
       "method": "html",
       "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
@@ -246,7 +246,7 @@
           "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:09:56+09:00",
+      "collected_at": "2026-11-20T13:01:47+09:00",
       "method": "html",
       "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
@@ -266,7 +266,7 @@
           "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:09:56+09:00",
+      "collected_at": "2026-11-20T13:01:47+09:00",
       "method": "html",
       "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=286083&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
@@ -370,13 +370,19 @@
           "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
         },
         {
+          "effective_from": "2026-11-20",
+          "promulgated": "2026-11-19",
+          "promulgation_no": "대통령령 제36846호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120"
+        },
+        {
           "effective_from": "2026-12-03",
           "promulgated": "2026-07-21",
           "promulgation_no": "대통령령 제36508호",
           "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=288157&efYd=20261203"
         }
       ],
-      "collected_at": "2026-11-13T01:10:15+09:00",
+      "collected_at": "2026-11-20T13:02:07+09:00",
       "method": "html",
       "source_url": "https://www.law.go.kr/LSW/lsHstListR.do?lsId=002233",
       "attribution": "출처: 법제처 국가법령정보센터",
@@ -393,12 +399,12 @@
           "effective_from": "2024-02-20",
           "promulgated": "2024-02-20",
           "promulgation_no": "대통령령 제34227호",
-          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:10:15+09:00",
+      "collected_at": "2026-11-20T13:02:07+09:00",
       "method": "html",
-      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
       "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
       "storage": "file",
@@ -413,12 +419,12 @@
           "effective_from": "2024-04-30",
           "promulgated": "2024-04-30",
           "promulgation_no": "대통령령 제34455호",
-          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:10:15+09:00",
+      "collected_at": "2026-11-20T13:02:07+09:00",
       "method": "html",
-      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
       "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
       "storage": "file",
@@ -433,12 +439,12 @@
           "effective_from": "2024-05-21",
           "promulgated": "2024-05-21",
           "promulgation_no": "대통령령 제34517호",
-          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:10:15+09:00",
+      "collected_at": "2026-11-20T13:02:07+09:00",
       "method": "html",
-      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
       "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
       "storage": "file",
@@ -453,12 +459,12 @@
           "effective_from": "2024-07-09",
           "promulgated": "2024-07-09",
           "promulgation_no": "대통령령 제34669호",
-          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:10:15+09:00",
+      "collected_at": "2026-11-20T13:02:07+09:00",
       "method": "html",
-      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
       "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
       "storage": "file",
@@ -473,12 +479,12 @@
           "effective_from": "2025-03-11",
           "promulgated": "2025-03-11",
           "promulgation_no": "대통령령 제35381호",
-          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:10:15+09:00",
+      "collected_at": "2026-11-20T13:02:07+09:00",
       "method": "html",
-      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
       "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
       "storage": "file",
@@ -493,12 +499,12 @@
           "effective_from": "2025-03-12",
           "promulgated": "2025-03-12",
           "promulgation_no": "대통령령 제35382호",
-          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:10:15+09:00",
+      "collected_at": "2026-11-20T13:02:07+09:00",
       "method": "html",
-      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
       "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
       "storage": "file",
@@ -513,12 +519,12 @@
           "effective_from": "2025-05-27",
           "promulgated": "2025-05-27",
           "promulgation_no": "대통령령 제35536호",
-          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:10:15+09:00",
+      "collected_at": "2026-11-20T13:02:07+09:00",
       "method": "html",
-      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
       "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
       "storage": "file",
@@ -533,12 +539,12 @@
           "effective_from": "2025-06-02",
           "promulgated": "2025-06-02",
           "promulgation_no": "대통령령 제35554호",
-          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:10:15+09:00",
+      "collected_at": "2026-11-20T13:02:07+09:00",
       "method": "html",
-      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
       "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
       "storage": "file",
@@ -553,12 +559,12 @@
           "effective_from": "2025-06-02",
           "promulgated": "2025-06-02",
           "promulgation_no": "대통령령 제35555호",
-          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:10:15+09:00",
+      "collected_at": "2026-11-20T13:02:07+09:00",
       "method": "html",
-      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
       "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
       "storage": "file",
@@ -573,12 +579,12 @@
           "effective_from": "2025-10-01",
           "promulgated": "2025-10-01",
           "promulgation_no": "대통령령 제35802호",
-          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:10:15+09:00",
+      "collected_at": "2026-11-20T13:02:07+09:00",
       "method": "html",
-      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
       "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
       "storage": "file",
@@ -593,12 +599,12 @@
           "effective_from": "2025-12-30",
           "promulgated": "2025-12-30",
           "promulgation_no": "대통령령 제35948호",
-          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:10:15+09:00",
+      "collected_at": "2026-11-20T13:02:07+09:00",
       "method": "html",
-      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
       "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
       "storage": "file",
@@ -613,12 +619,12 @@
           "effective_from": "2026-02-27",
           "promulgated": "2026-02-27",
           "promulgation_no": "대통령령 제36146호",
-          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:10:15+09:00",
+      "collected_at": "2026-11-20T13:02:07+09:00",
       "method": "html",
-      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
       "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
       "storage": "file",
@@ -633,12 +639,12 @@
           "effective_from": "2026-07-21",
           "promulgated": "2026-07-21",
           "promulgation_no": "대통령령 제36508호",
-          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:10:15+09:00",
+      "collected_at": "2026-11-20T13:02:07+09:00",
       "method": "html",
-      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
       "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
       "storage": "file",
@@ -653,16 +659,36 @@
           "effective_from": "2026-09-08",
           "promulgated": "2026-09-08",
           "promulgation_no": "대통령령 제36644호",
-          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911"
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120"
         }
       ],
-      "collected_at": "2026-11-13T01:10:15+09:00",
+      "collected_at": "2026-11-20T13:02:07+09:00",
       "method": "html",
-      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120",
       "attribution": "출처: 법제처 국가법령정보센터",
       "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
       "storage": "file",
       "path": "laws/addenda/heaf_decree_a36644.json"
+    },
+    {
+      "id": "heaf_decree_a36846",
+      "name": "고등교육법 시행령 부칙 <대통령령 제36846호, 2026. 11. 19.>",
+      "kind": "presidential_decree",
+      "editions": [
+        {
+          "effective_from": "2026-11-19",
+          "promulgated": "2026-11-19",
+          "promulgation_no": "대통령령 제36846호",
+          "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120"
+        }
+      ],
+      "collected_at": "2026-11-20T13:02:07+09:00",
+      "method": "html",
+      "source_url": "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=291931&efYd=20261120",
+      "attribution": "출처: 법제처 국가법령정보센터",
+      "redistribution": "저작권법 제7조제1호(헌법·법률·조약·명령·조례 및 규칙)",
+      "storage": "file",
+      "path": "laws/addenda/heaf_decree_a36846.json"
     },
     {
       "id": "tuition_rule",
