@@ -1,9 +1,14 @@
 {
   "app": {
     "title": "근거",
-    "description": "대학 행정 업무의 근거 조항·절차·선행 요건을 시행일·출처와 함께 찾아 줍니다.",
+    "description": "업무 상황을 평소 말투로 물으면 법령·학칙에서 근거 조문을 찾아 시행일·원문 링크와 함께 답합니다.",
     "skipLink": "본문으로 건너뛰기",
-    "tagline": "공개 법령·학칙 기준"
+    "homeLabel": "근거 처음 화면",
+    "subtitle": "대학 행정 근거 찾기",
+    "helpNavLabel": "도움말",
+    "coverageButton": "수록 범위",
+    "guideButton": "사용 안내",
+    "close": "닫기"
   },
   "form": {
     "heading": "질문",
@@ -22,12 +27,20 @@
       "dcu": "대구사이버대학교"
     },
     "asOfLabel": "기준일",
-    "asOfHint": "이 날짜에 시행 중인 조문으로 답합니다. 형식: 연도-월-일(예 2026-11-13)",
+    "asOfHint": "이 날짜에 시행 중인 조문으로 답합니다. (형식 예: 2026-11-13)",
     "asOfInvalid": "기준일을 연도-월-일 형식으로 입력해 주세요.",
     "submit": "근거 찾기",
     "submitting": "찾는 중…",
     "examplesHeading": "예시 질문",
-    "examplesHint": "누르면 질문을 채우고 바로 찾습니다.",
+    "examplesHint": "카드의 태그는 업무 상황 네 가지(처리 중·업무 시작·시행 전·근거 없음)입니다. 누르면 바로 찾습니다.",
+    "conditionsLabel": "검색 조건",
+    "conditionsSummary": "검색 조건: 기준일 {date} · 학칙 {school}",
+    "conditionsNoDate": "입력 안 됨",
+    "examplesOther": "다른 예시",
+    "examplesOtherHint": "새 질문을 시작하려면 눌러 보세요. 누르면 바로 찾습니다.",
+    "examplesMore": "예시 2개 더 보기",
+    "examplesLess": "예시 접기",
+    "questionLine": "질문",
     "accessCodeLabel": "접근 코드",
     "accessCodeHint": "이 화면은 접근 코드를 아는 분만 쓸 수 있습니다. 안내받은 코드를 입력해 주세요.",
     "accessCodeRequired": "접근 코드를 입력해 주세요.",
@@ -40,19 +53,14 @@
       "question": "다른 대학에서 딴 학점을 우리 학교 학점으로 몇 학점까지 인정해 줄 수 있나요?"
     },
     {
-      "id": "E03",
-      "tag": "처리 중",
-      "question": "군 복무로 휴학 중인 학생이 원격수업 들어서 딴 학점, 한 학기에 몇 학점까지 인정돼요?"
-    },
-    {
       "id": "E14",
       "tag": "업무 시작",
       "question": "등심위 첫 회의 소집 공문을 돌리려는데, 며칠 전까지 무엇을 보내야 하나요?"
     },
     {
-      "id": "E13",
-      "tag": "업무 시작",
-      "question": "내년도 등록금심의위원회를 새로 꾸려야 해요. 위원 수와 구성 비율 조건이 뭐예요?"
+      "id": "E22",
+      "tag": "시행 전",
+      "question": "기숙사비심의위원회를 만들어야 한다는 법이 생겼다던데, 지금 당장 설치해야 하나요?"
     },
     {
       "id": "E28",
@@ -60,11 +68,26 @@
       "question": "등록금심의위원회 외부 위원 회의 참석 수당은 법정 기준이 얼마예요?"
     },
     {
-      "id": "E22",
-      "tag": "시행 전",
-      "question": "기숙사비심의위원회를 만들어야 한다는 법이 생겼다던데, 지금 당장 설치해야 하나요?"
+      "id": "E03",
+      "tag": "처리 중",
+      "question": "군 복무로 휴학 중인 학생이 원격수업 들어서 딴 학점, 한 학기에 몇 학점까지 인정돼요?"
+    },
+    {
+      "id": "E13",
+      "tag": "업무 시작",
+      "question": "내년도 등록금심의위원회를 새로 꾸려야 해요. 위원 수와 구성 비율 조건이 뭐예요?"
     }
   ],
+  "hero": {
+    "title": "대학 행정 규정, 조문 근거와 시행일까지 찾아 드립니다",
+    "lead": "업무 상황을 평소 말투로 물으면 법령·학칙에서 근거 조문을 찾아 시행일·원문 링크와 함께 답합니다. 근거가 없으면 없다고 답합니다.",
+    "featuresLabel": "이 서비스의 특징",
+    "features": [
+      "조문·시행일·원문 링크",
+      "근거 없으면 없다고 답함",
+      "처리 과정 공개"
+    ]
+  },
   "stages": {
     "heading": "처리 단계",
     "names": {
@@ -84,12 +107,17 @@
     "liveRunning": "{stage} 중입니다.",
     "liveDone": "답을 찾았습니다. 근거 카드 {count}개.",
     "liveNoBasis": "직접 근거를 찾지 못했습니다. 찾아본 범위를 확인해 주세요.",
-    "liveError": "오류: {message}"
+    "liveError": "오류: {message}",
+    "noData": "해당 자료 없음",
+    "progressTitle": "근거를 찾는 중입니다",
+    "progressHint": "보통 20~40초 걸립니다",
+    "progressDone": "처리 단계 {count}개 완료 · 처리 과정 보기에서 자세히",
+    "progressDoneShort": "근거 찾기 완료 · {count}단계"
   },
   "result": {
     "heading": "결론",
     "asOf": "{date} 기준",
-    "collectedAt": "법령 데이터 수집일 {date}",
+    "collectedAt": "가장 이른 법령 데이터 수집일 {date}",
     "sceneLabel": "장면",
     "scenes": {
       "processing": "처리 중",
@@ -138,6 +166,7 @@
       "reference": "웹 참고"
     },
     "gradeLabel": "근거 등급",
+    "amendHistory": "개정 이력 보기",
     "effectiveFrom": "시행 {date}",
     "notYetFrom": "{date}부터 시행 예정",
     "postedDate": "게시 {date}(검색 결과 기준, 참고)",
@@ -155,7 +184,7 @@
   },
   "signals": {
     "heading": "변경 신호",
-    "intro": "확정된 개정이 아닙니다. 수집일 뒤 바뀔 수 있는 것을 Liner Search로 찾았습니다.",
+    "intro": "확정된 개정이 아닙니다. 수집일 뒤 바뀔 수 있는 것을 웹 검색으로 찾았습니다.",
     "kinds": {
       "legislative_notice": "입법예고",
       "amendment_news": "개정 소식",
@@ -205,6 +234,41 @@
     "excluded": "제외",
     "total": "합계"
   },
+  "actions": {
+    "copy": "결과 복사",
+    "copied": "복사했습니다",
+    "liveCopied": "결과를 복사했습니다.",
+    "liveCopyFailed": "복사하지 못했습니다. 직접 선택해 복사해 주세요.",
+    "askAgain": "다시 묻기",
+    "retry": "다시 시도",
+    "fixQuestion": "질문 고치기",
+    "errorTitle": "답을 받지 못했습니다",
+    "tocLabel": "이 답의 목차",
+    "tocConclusion": "결론",
+    "tocChecklist": "업무 시작 체크리스트",
+    "tocCards": "근거 조문과 자료",
+    "tocSignals": "변경 신호",
+    "tocTrace": "처리 과정 보기",
+    "sideLabel": "결과 동작",
+    "text": {
+      "question": "[근거] 질문: {question}",
+      "meta": "기준일 {date} · 판정: {verdict} · 장면: {scene}",
+      "summary": "결론: {summary}",
+      "warnings": "주의:",
+      "caveats": "확인할 점:",
+      "checklist": "체크리스트:",
+      "deadline": "기한: {deadline}",
+      "basis": "근거:",
+      "effective": "시행 {date}",
+      "posted": "게시 {date}",
+      "scope": "찾아본 범위:",
+      "scopeLaws": "본 법령: {values}",
+      "scopeQueries": "쓴 검색어: {values}",
+      "scopeWhere": "확인할 곳: {values}",
+      "signals": "변경 신호:",
+      "disclaimer": "법률 자문이 아닙니다. 원문을 확인해 주세요."
+    }
+  },
   "errors": {
     "bad_request": "질문이나 기준일 형식을 확인해 주세요.",
     "missing_api_key": "서버에 LINER_API_KEY가 설정되지 않았습니다. README의 실행 절을 확인해 주세요.",
@@ -223,7 +287,57 @@
     "banner": "목 데이터 화면입니다. Liner API를 부르지 않았고, 처리 과정의 호출 기록·토큰·금액은 예시 값입니다. 조문 인용은 실제 원문입니다."
   },
   "footer": {
-    "source": "출처: 법제처 국가법령정보센터 · 대구사이버대학교 규정 웹사이트(대구사이버대학교 학칙) · 교육부(공공누리 제1유형, 해당 자료에 한함)",
-    "disclaimer": "법률 자문이 아닙니다. 수집일 이후 개정은 변경 신호로만 알려 줍니다."
+    "disclaimer": "법률 자문이 아닙니다. 수집일 이후 개정은 변경 신호로만 알려 줍니다.",
+    "coverageButton": "수록 범위·출처"
+  },
+  "coverage": {
+    "title": "수록 범위",
+    "lawsHeading": "법령·행정규칙",
+    "lawsSource": "국가법령정보센터",
+    "laws": [
+      "고등교육법",
+      "고등교육법 시행령",
+      "대학 등록금에 관한 규칙",
+      "사립학교법",
+      "교육공무원법",
+      "대학등의 원격수업 운영에 관한 훈령"
+    ],
+    "rulesHeading": "학칙",
+    "rulesIntro": "7개 대학의 학칙을 담았습니다.",
+    "schools": [
+      "서울대학교",
+      "부산대학교",
+      "한국방송통신대학교",
+      "경북대학교",
+      "서울과학기술대학교",
+      "대구교육대학교",
+      "대구사이버대학교"
+    ],
+    "rulesNote": "학칙은 질문 화면의 '검색 조건'에서 학교를 골랐을 때만 함께 찾습니다.",
+    "webHeading": "웹 자료",
+    "webBody": "교육부 공개 자료와 입법예고·개정 소식은 질문할 때 Liner Search로 찾고, 출처 등급(W1 정부 원문 등)을 붙여 보여 줍니다.",
+    "dateHeading": "수집일",
+    "dateBody": "법령 데이터는 2026. 11. 13.~11. 20.에 모았고, 고등교육법과 시행령은 11. 20. 시행 판까지 담았습니다.",
+    "sourcesHeading": "출처와 이용 조건",
+    "sources": [
+      "법제처 국가법령정보센터",
+      "각 대학 규정 웹사이트(학칙)",
+      "교육부(공공누리 제1유형, 해당 자료에 한함)"
+    ]
+  },
+  "guide": {
+    "title": "사용 안내",
+    "steps": [
+      "업무 상황을 평소 말투로 적고 [근거 찾기]를 누릅니다. 예시 질문을 누르면 바로 찾습니다.",
+      "결론 아래에 근거 조문, 시행일, 원문 링크가 나옵니다. 판정이 '근거 없음'이면 찾아본 범위와 확인할 곳을 알려 줍니다.",
+      "'검색 조건'에서 기준일을 바꾸면 그날 시행 중인 조문으로 답합니다. 학교를 고르면 그 학교 학칙도 함께 찾습니다.",
+      "'처리 과정 보기'를 펼치면 Liner API 호출과 소요 시간·금액을 볼 수 있습니다.",
+      "법률 자문이 아닙니다. 중요한 결정은 원문을 직접 확인해 주세요."
+    ]
+  },
+  "access": {
+    "title": "접근 코드를 입력해 주세요",
+    "description": "이 서비스는 안내받은 분만 쓸 수 있습니다. 안내받은 접근 코드를 넣으면 이 탭을 닫을 때까지 다시 묻지 않습니다.",
+    "submit": "들어가기"
   }
 }

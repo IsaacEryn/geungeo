@@ -49,3 +49,19 @@ export function formatUsd(value: number): string {
 export function formatNumber(value: number): string {
   return new Intl.NumberFormat("ko-KR").format(value);
 }
+
+/** 조문 원문 끝의 이력 꼬리표 "<개정 2024. 2. 20.>", "[본조신설 …]" 등 */
+const AMEND_TAG = /\s*[<[]\s*(?:전문|전부|제목|본조)?(?:개정|신설|삭제|이동|종전|시행)[^>\]\n]*[>\]]/g;
+
+/** 화면 표시용: 이력 꼬리표를 본문에서 떼어 따로 돌려준다. 원문 데이터는 바꾸지 않는다 */
+export function splitAmendTags(quote: string): { body: string; tags: string[] } {
+  const tags: string[] = [];
+  const body = quote
+    .replace(AMEND_TAG, (m) => {
+      tags.push(m.trim());
+      return "";
+    })
+    .replace(/[ \t]+\n/g, "\n")
+    .trim();
+  return { body, tags };
+}

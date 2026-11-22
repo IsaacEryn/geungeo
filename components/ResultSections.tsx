@@ -2,6 +2,7 @@ import type { AskResult, ChangeSignal, ChecklistItem, EvidenceCard, SearchedScop
 import messages from "@/messages/ko.json";
 import { Badge } from "./Badge";
 import { ExternalLink } from "./ExternalLink";
+import { XCircleIcon } from "./icons";
 import { fmt, formatKoDate } from "./format";
 
 /** 체크리스트의 근거 ID → 카드 안 이름(같은 화면 안 링크) */
@@ -19,13 +20,13 @@ export function Checklist({ items, cards }: { items: ChecklistItem[]; cards: Evi
   const t = messages.checklist;
   return (
     <section aria-labelledby="checklist-heading" className="mt-8">
-      <h2 id="checklist-heading" className="text-xl font-bold">
+      <h2 id="checklist-heading" className="text-section font-bold">
         {t.heading}
       </h2>
       <p className="mt-1 text-sm text-muted">{t.intro}</p>
       <ol className="mt-3 space-y-3">
         {items.map((item, index) => (
-          <li key={`${index}-${item.step}`} className="flex gap-3 rounded-lg border border-line p-3">
+          <li key={`${index}-${item.step}`} className="flex gap-3 rounded-card border border-divider bg-bg p-3 shadow-card sm:p-4">
             <span
               aria-hidden="true"
               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-white"
@@ -35,9 +36,9 @@ export function Checklist({ items, cards }: { items: ChecklistItem[]; cards: Evi
             <div className="min-w-0">
               <p className="font-semibold">{item.step}</p>
               {item.deadline ? (
-                <p className="mt-1 text-sm">
-                  <span className="font-semibold">{t.deadline}: </span>
-                  {item.deadline}
+                <p className="mt-1 text-small">
+                  <span className="font-bold">{t.deadline}: </span>
+                  <span className="font-semibold text-warn-fg">{item.deadline}</span>
                 </p>
               ) : null}
               {item.basis_ids.length > 0 ? (
@@ -72,13 +73,13 @@ export function ChangeSignals({ signals }: { signals: ChangeSignal[] }) {
   const t = messages.signals;
   return (
     <section aria-labelledby="signals-heading" className="mt-8">
-      <h2 id="signals-heading" className="text-xl font-bold">
+      <h2 id="signals-heading" className="text-section font-bold">
         {t.heading}
       </h2>
       <p className="mt-1 text-sm text-muted">{t.intro}</p>
       <ul className="mt-3 space-y-3">
         {signals.map((signal) => (
-          <li key={signal.web_id} className="rounded-lg border border-dashed border-info-line p-3">
+          <li key={signal.web_id} className="rounded-card border border-dashed border-info-line bg-bg p-3 sm:p-4">
             <div className="flex flex-wrap items-center gap-2">
               <Badge tone="info" icon="dashed">
                 {t.kinds[signal.kind]}
@@ -118,14 +119,15 @@ export function NoBasis({ scope }: { scope: SearchedScope }) {
     [t.whereToCheck, scope.where_to_check],
   ];
   return (
-    <section aria-labelledby="nobasis-heading" className="mt-8 rounded-lg border-2 border-danger-line p-4">
-      <h2 id="nobasis-heading" className="text-xl font-bold">
+    <section aria-labelledby="nobasis-heading" className="mt-6 rounded-card border-2 border-danger-line bg-bg p-4 sm:p-5">
+      <h2 id="nobasis-heading" className="flex items-center gap-2 text-section font-bold text-danger-fg">
+        <XCircleIcon size={20} className="shrink-0" />
         {t.heading}
       </h2>
       <p className="mt-1">{t.intro}</p>
-      <div className="mt-3 grid gap-4 sm:grid-cols-3">
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
         {groups.map(([label, values]) => (
-          <div key={label}>
+          <div key={label} className="rounded-lg bg-canvas p-3">
             <h3 className="font-bold">{label}</h3>
             <ul className="mt-1 list-disc space-y-1 pl-5 text-sm">
               {values.map((value) => (
@@ -145,7 +147,7 @@ export function SourcesUsed({ result }: { result: AskResult }) {
   if (attributions.length === 0) return null;
   return (
     <section aria-labelledby="sources-heading" className="mt-8">
-      <h2 id="sources-heading" className="text-xl font-bold">
+      <h2 id="sources-heading" className="text-section font-bold">
         {messages.result.sourcesHeading}
       </h2>
       <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
