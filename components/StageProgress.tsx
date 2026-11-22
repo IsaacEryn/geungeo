@@ -7,6 +7,17 @@ export type StageState = { state: "running" | "done" | "failed"; duration_ms?: n
 
 const ICON = { running: ClockIcon, done: CheckIcon, failed: XCircleIcon } as const;
 
+/** '처리 과정 보기'를 펼치고 그 제목 줄로 초점·스크롤을 옮긴다 */
+function openTrace() {
+  const details = document.getElementById("trace-details") as HTMLDetailsElement | null;
+  if (!details) return;
+  details.open = true;
+  const summary = details.querySelector("summary");
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  details.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  summary?.focus({ preventScroll: true });
+}
+
 /**
  * 진행 카드. 진행 중에는 시작된 단계를 세로 목록으로 보여 주고(글자 상태 + 아이콘, 회전 없음),
  * 결과가 오면 한 줄 요약으로 줄어든다. 화면 읽기 프로그램 알림은 AskApp의 상태 메시지가 맡는다.
@@ -30,7 +41,17 @@ export function StageProgress({
     return (
       <p className="mt-3 flex items-center gap-2 text-small text-muted">
         <CheckIcon size={16} className="shrink-0 text-ok-line" />
-        <span>{fmt(t.progressDone, { count: doneCount })}</span>
+        <span>
+          {fmt(t.progressDone, { count: doneCount })}
+          <button
+            type="button"
+            aria-controls="trace-details"
+            onClick={openTrace}
+            className="inline-flex min-h-8 items-center rounded font-semibold text-primary underline underline-offset-2 hover:text-primary-strong"
+          >
+            {t.progressTraceLink}
+          </button>
+        </span>
       </p>
     );
   }

@@ -34,7 +34,12 @@ export function EvidenceCard({ card, headingId }: { card: EvidenceCardData; head
         <Badge tone="neutral">
           <span className="sr-only">{t.gradeLabel}: </span>
           {gradeName}
-          {gradeCode ? <span className="ml-1 text-xs font-normal opacity-80">{gradeCode}</span> : null}
+          {gradeCode ? (
+            <>
+              <span className="ml-1 text-xs font-normal opacity-80">{gradeCode}</span>
+              <span className="sr-only"> ({t.gradeNotes[card.grade]})</span>
+            </>
+          ) : null}
         </Badge>
         <span className="text-sm text-muted">{t.roles[card.role]}</span>
         {card.changed_after_collection ? (
@@ -53,7 +58,9 @@ export function EvidenceCard({ card, headingId }: { card: EvidenceCardData; head
       <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
         {law && card.effective_from ? <span>{fmt(t.effectiveFrom, { date: formatKoDate(card.effective_from) })}</span> : null}
         {!law && card.posted_date ? <span>{fmt(t.postedDate, { date: formatKoDate(card.posted_date) })}</span> : null}
-        {card.collected_at ? <span>{fmt(t.collectedAt, { date: formatKoDate(card.collected_at) })}</span> : null}
+        {card.collected_at ? (
+          <span>{fmt(law ? t.collectedAt : t.collectedAtWeb, { date: formatKoDate(card.collected_at) })}</span>
+        ) : null}
       </p>
 
       <figure className="mt-3">

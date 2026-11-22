@@ -267,7 +267,6 @@ export function AskApp({ accessCodeRequired = false }: { accessCodeRequired?: bo
           <ResultSkeleton />
         </>
       ) : null}
-      {phase === "done" ? <StageProgress phase="done" order={stageOrder} stages={stages} /> : null}
 
       {mock && (phase === "done" || phase === "error") ? <MockNotice /> : null}
 
@@ -286,6 +285,8 @@ export function AskApp({ accessCodeRequired = false }: { accessCodeRequired?: bo
           question={asked}
           headingRef={resultHeadingRef}
           onNotify={announce}
+          onAskAgain={() => toEdit("question")}
+          progress={<StageProgress phase="done" order={stageOrder} stages={stages} />}
         />
       ) : null}
 

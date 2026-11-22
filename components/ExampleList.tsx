@@ -9,7 +9,7 @@ const FIRST_COUNT = 4;
 
 /**
  * 예시 질문 버튼. 누르면 질문을 채우고 바로 실행한다(AskApp의 onExample).
- * 처음엔 네 개(E01·E14·E22·E28)만 보이고 나머지는 '더 보기'로 펼친다.
+ * 처음엔 네 개(E09·E13·E22·E28)만 보이고 나머지는 '더 보기'로 펼친다.
  * variant "other"는 결과 아래 '다른 예시'(새 질문 시작점)
  */
 export function ExampleList({
@@ -27,9 +27,9 @@ export function ExampleList({
   return (
     <section aria-labelledby={`${id}-h`} className={other ? "mt-10" : "mt-6"}>
       <h2 id={`${id}-h`} className="text-base font-bold">
-        {other ? tf.examplesOther : tf.examplesHeading}{" "}
-        <span className="text-small font-normal text-muted">· {other ? tf.examplesOtherHint : tf.examplesHint}</span>
+        {other ? tf.examplesOther : tf.examplesHeading}
       </h2>
+      <p className="mt-0.5 text-small text-muted">{other ? tf.examplesOtherHint : tf.examplesHint}</p>
       <ul id={`${id}-list`} className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {items.map((ex) => (
           <li key={ex.id}>

@@ -120,7 +120,11 @@ function QuestionEditor({
         >
           <summary className="flex min-h-11 cursor-pointer list-none items-center gap-1.5 rounded-lg text-small font-semibold text-fg [&::-webkit-details-marker]:hidden">
             <ChevronDownIcon size={16} className="shrink-0 -rotate-90 group-open:rotate-0" />
-            <span>{fmt(tf.conditionsSummary, { date: dateText, school: schoolText })}</span>
+            <span>
+              {school
+                ? fmt(tf.conditionsSummary, { date: dateText, school: schoolText })
+                : fmt(tf.conditionsSummaryNoSchool, { date: dateText })}
+            </span>
           </summary>
           <div className="flex flex-wrap items-start gap-4 pb-1 pt-2">
             <div>
@@ -131,6 +135,7 @@ function QuestionEditor({
                 id={`${ids}-s`}
                 value={school}
                 onChange={(e) => onSchoolChange(e.target.value as SchoolId | "")}
+                aria-describedby={`${ids}-s-hint`}
                 className="mt-2 block min-h-11 rounded-lg border border-line bg-bg px-3"
               >
                 <option value="">{tf.schoolNone}</option>
@@ -140,6 +145,9 @@ function QuestionEditor({
                   </option>
                 ))}
               </select>
+              <p id={`${ids}-s-hint`} className="mt-1 max-w-xs text-small text-muted">
+                {tf.schoolHint}
+              </p>
             </div>
             <div className="min-w-0 max-w-sm">
               <label htmlFor={`${ids}-d`} className="block font-bold">
