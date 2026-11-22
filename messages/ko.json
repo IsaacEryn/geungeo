@@ -30,6 +30,7 @@
     "examplesHint": "누르면 바로 찾습니다.",
     "conditionsLabel": "검색 조건",
     "conditionsSummary": "검색 조건: 기준일 {date} · 학칙 {school}",
+    "conditionsNoDate": "입력 안 됨",
     "examplesOther": "다른 예시",
     "examplesOtherHint": "새 질문을 시작하려면 눌러 보세요. 누르면 바로 찾습니다.",
     "examplesMore": "예시 2개 더 보기",
