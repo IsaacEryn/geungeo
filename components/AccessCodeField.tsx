@@ -32,7 +32,7 @@ export function AccessCodeField({
         className="mt-2 block min-h-11 w-full rounded-lg border border-line bg-bg px-3"
       />
       {error ? (
-        <p id={errorId} className="mt-2 font-semibold text-danger-fg">
+        <p id={errorId} role="alert" className="mt-2 font-semibold text-danger-fg">
           {error}
         </p>
       ) : null}

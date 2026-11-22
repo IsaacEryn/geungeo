@@ -51,9 +51,16 @@ export function AccessGate({ required, children }: { required: boolean; children
     requestAnimationFrame(() => document.querySelector<HTMLTextAreaElement>("main textarea")?.focus());
   }, [locked]);
 
+  // 오류를 띄울 때마다 수를 올려, 접근 코드 화면이 다시 그려진 뒤(effect) 입력란으로 초점을 옮긴다.
+  // 401로 화면이 새로 마운트되는 경우에도 입력란이 생긴 다음에 초점이 가도록 rAF 대신 effect를 쓴다
+  const [errorSeq, setErrorSeq] = useState(0);
+  useEffect(() => {
+    if (errorSeq > 0 && locked) inputRef.current?.focus();
+  }, [errorSeq, locked]);
+
   const showError = useCallback((message: string) => {
     setError(message);
-    requestAnimationFrame(() => inputRef.current?.focus());
+    setErrorSeq((n) => n + 1);
   }, []);
 
   const value = useMemo<AccessContextValue>(
