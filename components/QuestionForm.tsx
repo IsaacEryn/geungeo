@@ -47,7 +47,7 @@ function QuestionSummary({ asked, onAskAgain }: QuestionFormProps) {
       <button
         type="button"
         onClick={onAskAgain}
-        className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg border border-line bg-bg px-3 font-semibold text-primary hover:bg-primary-soft hover:text-primary-strong"
+        className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg border border-line bg-bg px-3 font-semibold text-primary hover:border-primary hover:bg-primary-soft hover:text-primary-strong active:bg-primary-soft"
       >
         <RefreshIcon size={16} />
         {messages.actions.askAgain}
@@ -169,7 +169,7 @@ function QuestionEditor({
 
         <button
           type="submit"
-          className="inline-flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-6 font-bold text-white hover:bg-primary-strong sm:w-auto"
+          className="inline-flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-6 font-bold text-white shadow-card hover:bg-primary-strong active:bg-primary-strong active:shadow-none sm:w-auto"
         >
           {tf.submit}
           <ArrowRightIcon size={18} />

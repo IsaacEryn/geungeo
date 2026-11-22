@@ -5,7 +5,7 @@ import { PanelButton } from "./PanelButton";
 const ta = messages.app;
 
 const BUTTON =
-  "inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line bg-bg px-3 text-small font-semibold text-fg hover:border-primary hover:text-primary";
+  "inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line bg-bg px-3 text-small font-semibold text-fg hover:border-primary hover:bg-primary-soft hover:text-primary-strong active:bg-primary-soft";
 
 /** 머리글(설계 4-1). 높이 56px 이상, sticky 아님. 로고+이름은 처음 화면으로 가는 링크 */
 export function SiteHeader() {
@@ -18,10 +18,10 @@ export function SiteHeader() {
           <a
             href="/"
             aria-label={ta.homeLabel}
-            className="inline-flex min-h-11 items-center gap-2 rounded-lg text-primary"
+            className="group inline-flex min-h-11 items-center gap-2 rounded-lg text-primary"
           >
             <LogoIcon size={28} />
-            <span className="text-xl font-bold text-fg">{ta.title}</span>
+            <span className="text-xl font-bold tracking-tight text-fg group-hover:text-primary-strong">{ta.title}</span>
           </a>
           <span className="hidden text-small text-muted sm:inline">{ta.subtitle}</span>
         </div>

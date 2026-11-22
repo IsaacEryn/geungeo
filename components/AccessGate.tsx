@@ -4,6 +4,7 @@ import { createContext, useCallback, useEffect, useId, useMemo, useRef, useState
 import messages from "@/messages/ko.json";
 import { AccessCodeField } from "./AccessCodeField";
 import { loadAccessCode, saveAccessCode } from "./ask-client";
+import { useDocTitle } from "./useDocTitle";
 
 const tf = messages.form;
 const ta = messages.access;
@@ -43,6 +44,9 @@ export function AccessGate({ required, children }: { required: boolean; children
     const timer = setTimeout(() => setCode(saved.trim()), 0);
     return () => clearTimeout(timer);
   }, [required]);
+
+  // 접근 코드 화면이 떠 있는 동안 탭 제목을 바꾼다. 풀리면 기본 제목으로 돌아간다
+  useDocTitle(locked ? messages.docTitle.access + messages.docTitle.suffix : null);
 
   // 코드를 넣고 질문 화면으로 넘어온 직후에는 질문 입력란으로 초점을 옮긴다
   useEffect(() => {
@@ -111,7 +115,7 @@ export function AccessGate({ required, children }: { required: boolean; children
             <AccessCodeField id={`${id}-code`} inputRef={inputRef} error={error} />
             <button
               type="submit"
-              className="min-h-12 w-full rounded-lg bg-primary px-4 font-bold text-white hover:bg-primary-strong"
+              className="min-h-12 w-full rounded-lg bg-primary px-4 font-bold text-white shadow-card hover:bg-primary-strong active:shadow-none"
             >
               {ta.submit}
             </button>

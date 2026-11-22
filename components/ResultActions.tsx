@@ -59,7 +59,7 @@ export function ResultActions({
         <button
           type="button"
           onClick={() => void copy()}
-          className={`${buttonBase} border-line bg-bg text-primary hover:bg-primary-soft hover:text-primary-strong lg:w-full`}
+          className={`${buttonBase} border-line bg-bg text-primary hover:border-primary hover:bg-primary-soft hover:text-primary-strong active:bg-primary-soft lg:w-full`}
         >
           {copied ? <CheckIcon size={16} /> : <CopyIcon size={16} />}
           {copied ? t.copied : t.copy}

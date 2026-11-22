@@ -36,7 +36,7 @@ export function ExampleList({
             <button
               type="button"
               onClick={() => onExample(ex.question)}
-              className="flex h-full min-h-28 w-full flex-col items-start gap-2 rounded-card border border-line bg-bg p-4 text-left shadow-card hover:border-primary hover:bg-primary-soft"
+              className="flex h-full min-h-28 w-full flex-col items-start gap-2 rounded-card border border-line bg-bg p-4 text-left shadow-card hover:border-primary hover:shadow-card-hover active:border-primary-strong active:bg-primary-soft"
             >
               <span className="rounded-full bg-primary-soft px-2.5 py-0.5 text-small font-bold text-primary-strong">
                 {ex.tag}
@@ -52,7 +52,7 @@ export function ExampleList({
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
           aria-controls={`${id}-list`}
-          className="mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-small font-semibold text-primary hover:bg-primary-soft hover:text-primary-strong"
+          className="mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-small font-semibold text-primary hover:bg-primary-soft hover:text-primary-strong active:bg-primary-soft"
         >
           {expanded ? tf.examplesLess : tf.examplesMore}
           <ChevronDownIcon size={16} className={expanded ? "rotate-180" : undefined} />
