@@ -35,10 +35,11 @@ export function LogoIcon({ size = 28, ...rest }: IconProps) {
     <svg viewBox="0 0 28 28" width={size} height={size} aria-hidden="true" focusable="false" {...rest}>
       <rect width="28" height="28" rx="7" fill="currentColor" />
       <path
-        d="M17.2 8.6c-.5-1.3-1.7-2-3.2-2-1.8 0-3.1 1-3.1 2.5 0 1.6 1.3 2.1 3.1 2.6 1.9.5 3.1 1.1 3.1 2.6 0 1.5-1.3 2.5-3.1 2.5M10.8 13.3c0 1.5 1.2 2.1 3.2 2.6 1.9.5 3.1 1.1 3.1 2.6 0 1.5-1.3 2.5-3.1 2.5-1.5 0-2.7-.7-3.2-2"
+        d="M17.4 9C16.9 7.7 15.6 7 13.9 7C12 7 10.6 8.1 10.6 9.4C10.6 10.9 11.8 11.2 14 11.5C16.2 11.8 17.4 12.1 17.4 13.6C17.4 14.9 16 16 14.1 16C12.3 16 11 15.3 10.5 14M17.4 14C16.9 12.7 15.6 12 13.9 12C12 12 10.6 13.1 10.6 14.4C10.6 15.9 11.8 16.2 14 16.5C16.2 16.8 17.4 17.1 17.4 18.6C17.4 19.9 16 21 14.1 21C12.3 21 11 20.3 10.5 19"
         fill="none"
         stroke="#ffffff"
-        strokeWidth="1.8"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
         strokeLinecap="round"
       />
     </svg>

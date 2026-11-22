@@ -1,0 +1,117 @@
+"use client";
+
+import { createContext, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import messages from "@/messages/ko.json";
+import { AccessCodeField } from "./AccessCodeField";
+import { loadAccessCode, saveAccessCode } from "./ask-client";
+
+const tf = messages.form;
+const ta = messages.access;
+
+/** 질문 화면이 접근 코드에 대해 아는 것. useAccessCode가 이 값을 읽어 돌려준다 */
+export interface AccessContextValue {
+  /** 지금 보낼 코드(앞뒤 공백 뺌). 접근 코드 화면을 지나지 않았으면 빈 문자열 */
+  code: string;
+  /** 접근 코드 화면이 떠 있는 동안 true */
+  locked: boolean;
+  checkMissing(): boolean;
+  focus(): void;
+  remember(code: string): void;
+  reject(sent: string): void;
+}
+
+export const AccessContext = createContext<AccessContextValue | null>(null);
+
+/**
+ * 접근 코드 화면(설계 6절). 코드가 필요한 배포에서 처음 한 번 보이고, 값은 메모리와 sessionStorage에만 둔다.
+ * 질문 화면(children)은 접근 코드 화면이 떠 있는 동안에도 마운트된 채 숨겨 둬서, 묻던 질문이 그대로 남는다.
+ */
+export function AccessGate({ required, children }: { required: boolean; children: React.ReactNode }) {
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const afterEntry = useRef(false);
+  const id = useId();
+  const locked = required && !code;
+
+  // 이 탭에서 이미 맞았던 코드가 있으면 화면을 건너뛴다(서버 렌더링과 어긋나지 않게 마운트 뒤에 읽는다).
+  // 되살린 코드는 입력란에 넣지 않고 메모리에만 둔다
+  useEffect(() => {
+    if (!required) return;
+    const saved = loadAccessCode();
+    if (!saved) return;
+    const timer = setTimeout(() => setCode(saved.trim()), 0);
+    return () => clearTimeout(timer);
+  }, [required]);
+
+  // 코드를 넣고 질문 화면으로 넘어온 직후에는 질문 입력란으로 초점을 옮긴다
+  useEffect(() => {
+    if (locked || !afterEntry.current) return;
+    afterEntry.current = false;
+    requestAnimationFrame(() => document.querySelector<HTMLTextAreaElement>("main textarea")?.focus());
+  }, [locked]);
+
+  const showError = useCallback((message: string) => {
+    setError(message);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }, []);
+
+  const value = useMemo<AccessContextValue>(
+    () => ({
+      code,
+      locked,
+      checkMissing() {
+        if (locked) showError(tf.accessCodeRequired);
+        return locked;
+      },
+      focus() {
+        inputRef.current?.focus();
+      },
+      remember(accepted) {
+        saveAccessCode(accepted);
+      },
+      reject(sent) {
+        saveAccessCode(null);
+        setCode("");
+        showError(sent ? tf.accessCodeInvalid : tf.accessCodeRequired);
+      },
+    }),
+    [code, locked, showError],
+  );
+
+  function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const input = inputRef.current;
+    if (!input) return;
+    const entered = input.value.trim();
+    input.value = "";
+    if (!entered) {
+      showError(tf.accessCodeRequired);
+      return;
+    }
+    setError(null);
+    afterEntry.current = true;
+    setCode(entered);
+  }
+
+  return (
+    <AccessContext.Provider value={value}>
+      {locked ? (
+        <section className="mx-auto max-w-[25rem] rounded-card border border-divider bg-bg p-5 shadow-card sm:p-6">
+          <h1 className="text-title font-bold">{ta.title}</h1>
+          <p className="mt-2 text-muted">{ta.description}</p>
+          <form onSubmit={submit} noValidate className="mt-5 space-y-4">
+            <AccessCodeField id={`${id}-code`} inputRef={inputRef} error={error} />
+            <button
+              type="submit"
+              className="min-h-12 w-full rounded-lg bg-primary px-4 font-bold text-white hover:bg-primary-strong"
+            >
+              {ta.submit}
+            </button>
+          </form>
+        </section>
+      ) : null}
+      <div hidden={locked}>{children}</div>
+    </AccessContext.Provider>
+  );
+}

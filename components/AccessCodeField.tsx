@@ -2,44 +2,37 @@ import messages from "@/messages/ko.json";
 
 const tf = messages.form;
 
-/** 접근 코드 입력칸. 값은 화면 상태와 sessionStorage에만 있고 HTML로 렌더링되지 않는다(type=password, 서버 렌더링 때는 빈 값) */
+/**
+ * 접근 코드 입력란(비제어). 값은 화면 상태에 묶지 않고 제출할 때 ref로만 읽는다.
+ * 그래서 서버 HTML에도 브라우저 DOM의 value 속성에도 코드가 남지 않는다(type=password).
+ */
 export function AccessCodeField({
   id,
   inputRef,
-  value,
-  onChange,
   error,
 }: {
   id: string;
   inputRef: React.RefObject<HTMLInputElement | null>;
-  value: string;
-  onChange: (value: string) => void;
   error: string | null;
 }) {
-  const hintId = `${id}-c-hint`;
-  const errorId = `${id}-c-error`;
+  const errorId = `${id}-error`;
   return (
-    <div className="max-w-sm">
-      <label htmlFor={`${id}-c`} className="block font-bold">
+    <div>
+      <label htmlFor={id} className="block font-bold">
         {tf.accessCodeLabel}
       </label>
-      <p id={hintId} className="mt-1 text-sm text-muted">
-        {tf.accessCodeHint}
-      </p>
       <input
-        id={`${id}-c`}
+        id={id}
         ref={inputRef}
         type="password"
         autoComplete="off"
         spellCheck={false}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${errorId} ${hintId}` : hintId}
-        className="mt-2 block min-h-11 w-full rounded-md border border-line bg-bg px-3"
+        aria-describedby={error ? errorId : undefined}
+        className="mt-2 block min-h-11 w-full rounded-lg border border-line bg-bg px-3"
       />
       {error ? (
-        <p id={errorId} className="mt-1 font-semibold text-danger-fg">
+        <p id={errorId} className="mt-2 font-semibold text-danger-fg">
           {error}
         </p>
       ) : null}
