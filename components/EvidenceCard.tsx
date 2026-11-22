@@ -20,7 +20,7 @@ export function EvidenceCard({ card, headingId }: { card: EvidenceCardData; head
   const law = isLawCard(card);
   const location = card.location ?? "";
   return (
-    <article aria-labelledby={headingId} className="rounded-lg border border-line bg-bg p-4">
+    <article aria-labelledby={headingId} className="rounded-card border border-divider bg-bg p-4 shadow-card sm:p-5">
       <div className="flex flex-wrap items-center gap-2">
         <StatusBadge status={card.badge} label={statusLabel(card, card.effective_from)} />
         <Badge tone="neutral">
@@ -35,7 +35,7 @@ export function EvidenceCard({ card, headingId }: { card: EvidenceCardData; head
         ) : null}
       </div>
 
-      <h3 id={headingId} className="mt-3 text-lg font-bold">
+      <h3 id={headingId} className="mt-3 text-card-title font-bold">
         {card.title}
         {location ? <span className="font-bold"> {location}</span> : null}
         {card.kind ? <span className="ml-1 text-base font-normal text-muted">({t.kinds[card.kind]})</span> : null}
@@ -49,7 +49,7 @@ export function EvidenceCard({ card, headingId }: { card: EvidenceCardData; head
 
       <figure className="mt-3">
         <figcaption className="sr-only">{t.quote}</figcaption>
-        <blockquote className="whitespace-pre-line border-l-4 border-line bg-surface px-3 py-2 text-[0.95rem]">
+        <blockquote className="whitespace-pre-line border-l-4 border-primary bg-canvas px-3 py-2 text-[0.95rem]">
           {card.quote}
         </blockquote>
       </figure>
@@ -66,11 +66,11 @@ export function EvidenceCard({ card, headingId }: { card: EvidenceCardData; head
         </ul>
       ) : null}
 
-      <div className="mt-3 flex flex-col gap-1 text-sm">
-        <ExternalLink href={card.source_url}>
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <ExternalLink href={card.source_url} variant="button">
           {fmt(t.sourceLink, { title: card.title, location }).replace(/\s+/g, " ")}
         </ExternalLink>
-        <p className="text-muted">{card.attribution}</p>
+        <p className="text-small text-muted">{card.attribution}</p>
       </div>
     </article>
   );
