@@ -21,10 +21,22 @@ describe("수록 범위 패널 글", () => {
     expect([...Object.values(messages.form.schools)].sort()).toEqual([...messages.coverage.schools].sort());
   });
 
-  it("수집일이 manifest 생성일과 같다", () => {
-    const [y, m, d] = manifest.generated_at.slice(0, 10).split("-").map(Number);
-    const text = `${y}. ${m}. ${d}.`;
-    expect(messages.coverage.dateBody).toContain(text);
+  it("수집일 범위가 manifest의 가장 이른·늦은 수집일과 같다", () => {
+    const days = manifest.entries.map((e) => e.collected_at.slice(0, 10)).sort();
+    const fmtDay = (iso: string) => {
+      const [y, m, d] = iso.split("-").map(Number);
+      return { y, m, d };
+    };
+    const first = fmtDay(days[0]);
+    const last = fmtDay(days[days.length - 1]);
+    expect(messages.coverage.dateBody).toContain(`${first.y}. ${first.m}. ${first.d}.~${last.m}. ${last.d}.`);
+  });
+
+  it("고등교육법·시행령은 가장 늦은 수집일에 받았다", () => {
+    const latest = manifest.entries.map((e) => e.collected_at.slice(0, 10)).sort().pop();
+    for (const name of ["고등교육법", "고등교육법 시행령"]) {
+      expect(manifest.entries.find((e) => e.name === name)?.collected_at.slice(0, 10), name).toBe(latest);
+    }
   });
 
   it("머리글·바닥글 글에는 특정 대학 이름이 없다", () => {

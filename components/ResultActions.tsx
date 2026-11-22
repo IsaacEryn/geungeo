@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { AskResult } from "@/lib/pipeline/types";
 import messages from "@/messages/ko.json";
 import { fmt, formatKoDate } from "./format";
-import { CheckIcon, CopyIcon, RefreshIcon } from "./icons";
+import { CheckIcon, CopyIcon } from "./icons";
 import { resultToText } from "./resultText";
 
 const t = messages.actions;
@@ -15,7 +15,7 @@ export interface TocItem {
 }
 
 /**
- * 결과 곁 칸: 결과 복사·다시 묻기 버튼, 이 답의 목차, 법령 데이터 수집일.
+ * 결과 곁 칸: 결과 복사 버튼(보조 모양; 다시 묻기는 질문 줄에 한 번만 둔다), 이 답의 목차, 법령 데이터 수집일.
  * 1024px 이상에서는 오른쪽에 붙어 따라오고, 좁은 화면에서는 결론 아래 버튼 한 줄이 되며 목차는 숨긴다.
  * 복사 결과는 AskApp의 상태 메시지(aria-live)로 알린다(onNotify)
  */
@@ -23,13 +23,11 @@ export function ResultActions({
   result,
   question,
   toc,
-  onAskAgain,
   onNotify,
 }: {
   result: AskResult;
   question: string;
   toc: TocItem[];
-  onAskAgain: () => void;
   onNotify: (message: string) => void;
 }) {
   const [copied, setCopied] = useState(false);
@@ -61,18 +59,10 @@ export function ResultActions({
         <button
           type="button"
           onClick={() => void copy()}
-          className={`${buttonBase} border-primary bg-primary text-white hover:bg-primary-strong lg:w-full`}
+          className={`${buttonBase} border-line bg-bg text-primary hover:bg-primary-soft hover:text-primary-strong lg:w-full`}
         >
           {copied ? <CheckIcon size={16} /> : <CopyIcon size={16} />}
           {copied ? t.copied : t.copy}
-        </button>
-        <button
-          type="button"
-          onClick={onAskAgain}
-          className={`${buttonBase} border-line bg-bg text-primary hover:bg-primary-soft hover:text-primary-strong lg:w-full`}
-        >
-          <RefreshIcon size={16} />
-          {t.askAgain}
         </button>
       </div>
 

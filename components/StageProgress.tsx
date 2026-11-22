@@ -62,7 +62,9 @@ export function StageProgress({
               <span className="font-semibold">{t.names[name]}</span>
               <span className="text-small text-muted">{t.state[state]}</span>
               {s?.duration_ms !== undefined && state === "done" ? (
-                <span className="text-small text-muted">{formatDuration(s.duration_ms)}</span>
+                <span className="text-small text-muted">
+                  {Math.round(s.duration_ms) === 0 ? t.noData : formatDuration(s.duration_ms)}
+                </span>
               ) : null}
             </li>
           );

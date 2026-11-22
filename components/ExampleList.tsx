@@ -13,11 +13,9 @@ const FIRST_COUNT = 4;
  * variant "other"는 결과 아래 '다른 예시'(새 질문 시작점)
  */
 export function ExampleList({
-  running,
   onExample,
   variant = "first",
 }: {
-  running: boolean;
   onExample: (question: string) => void;
   variant?: "first" | "other";
 }) {
@@ -38,8 +36,7 @@ export function ExampleList({
             <button
               type="button"
               onClick={() => onExample(ex.question)}
-              disabled={running}
-              className="flex h-full min-h-28 w-full flex-col items-start gap-2 rounded-card border border-line bg-bg p-4 text-left shadow-card hover:border-primary hover:bg-primary-soft disabled:cursor-wait disabled:opacity-70"
+              className="flex h-full min-h-28 w-full flex-col items-start gap-2 rounded-card border border-line bg-bg p-4 text-left shadow-card hover:border-primary hover:bg-primary-soft"
             >
               <span className="rounded-full bg-primary-soft px-2.5 py-0.5 text-small font-bold text-primary-strong">
                 {ex.tag}

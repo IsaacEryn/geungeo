@@ -32,7 +32,7 @@
     "submit": "근거 찾기",
     "submitting": "찾는 중…",
     "examplesHeading": "예시 질문",
-    "examplesHint": "누르면 바로 찾습니다.",
+    "examplesHint": "카드의 태그는 업무 상황 네 가지(처리 중·업무 시작·시행 전·근거 없음)입니다. 누르면 바로 찾습니다.",
     "conditionsLabel": "검색 조건",
     "conditionsSummary": "검색 조건: 기준일 {date} · 학칙 {school}",
     "conditionsNoDate": "입력 안 됨",
@@ -108,6 +108,7 @@
     "liveDone": "답을 찾았습니다. 근거 카드 {count}개.",
     "liveNoBasis": "직접 근거를 찾지 못했습니다. 찾아본 범위를 확인해 주세요.",
     "liveError": "오류: {message}",
+    "noData": "해당 자료 없음",
     "progressTitle": "근거를 찾는 중입니다",
     "progressHint": "보통 20~40초 걸립니다",
     "progressDone": "처리 단계 {count}개 완료 · 처리 과정 보기에서 자세히",
@@ -116,7 +117,7 @@
   "result": {
     "heading": "결론",
     "asOf": "{date} 기준",
-    "collectedAt": "법령 데이터 수집일 {date}",
+    "collectedAt": "가장 이른 법령 데이터 수집일 {date}",
     "sceneLabel": "장면",
     "scenes": {
       "processing": "처리 중",
@@ -165,6 +166,7 @@
       "reference": "웹 참고"
     },
     "gradeLabel": "근거 등급",
+    "amendHistory": "개정 이력 보기",
     "effectiveFrom": "시행 {date}",
     "notYetFrom": "{date}부터 시행 예정",
     "postedDate": "게시 {date}(검색 결과 기준, 참고)",
@@ -182,7 +184,7 @@
   },
   "signals": {
     "heading": "변경 신호",
-    "intro": "확정된 개정이 아닙니다. 수집일 뒤 바뀔 수 있는 것을 Liner Search로 찾았습니다.",
+    "intro": "확정된 개정이 아닙니다. 수집일 뒤 바뀔 수 있는 것을 웹 검색으로 찾았습니다.",
     "kinds": {
       "legislative_notice": "입법예고",
       "amendment_news": "개정 소식",
@@ -315,7 +317,7 @@
     "webHeading": "웹 자료",
     "webBody": "교육부 공개 자료와 입법예고·개정 소식은 질문할 때 Liner Search로 찾고, 출처 등급(W1 정부 원문 등)을 붙여 보여 줍니다.",
     "dateHeading": "수집일",
-    "dateBody": "법령 데이터는 2026. 11. 20. 기준으로 모았습니다.",
+    "dateBody": "법령 데이터는 2026. 11. 13.~11. 20.에 모았고, 고등교육법과 시행령은 11. 20. 시행 판까지 담았습니다.",
     "sourcesHeading": "출처와 이용 조건",
     "sources": [
       "법제처 국가법령정보센터",

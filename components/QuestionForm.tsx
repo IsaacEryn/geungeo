@@ -25,7 +25,6 @@ export interface QuestionFormProps {
   onAsOfChange: (value: string) => void;
   asOfError: string | null;
   asOfRef: React.RefObject<HTMLInputElement | null>;
-  running: boolean;
   onSubmit: () => void;
   /** 카드 맨 앞에 넣을 칸(접근 코드 입력칸 자리) */
   before?: React.ReactNode;
@@ -40,8 +39,8 @@ export function QuestionForm(props: QuestionFormProps) {
 
 function QuestionSummary({ asked, onAskAgain }: QuestionFormProps) {
   return (
-    <div className={`${CARD} flex items-start gap-3 p-3 sm:px-5`}>
-      <p className="min-w-0 flex-1 py-2 leading-snug [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] overflow-hidden">
+    <div className={`${CARD} flex flex-col items-start gap-1 p-3 sm:flex-row sm:gap-3 sm:px-5`}>
+      <p className="min-w-0 flex-1 break-words py-2 leading-snug sm:overflow-hidden sm:[display:-webkit-box] sm:[-webkit-box-orient:vertical] sm:[-webkit-line-clamp:2]">
         <span className="font-bold">{tf.questionLine}: </span>
         {asked}
       </p>
@@ -68,7 +67,6 @@ function QuestionEditor({
   onAsOfChange,
   asOfError,
   asOfRef,
-  running,
   onSubmit,
   before,
 }: QuestionFormProps) {
@@ -171,17 +169,10 @@ function QuestionEditor({
 
         <button
           type="submit"
-          disabled={running}
-          className="inline-flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-6 font-bold text-white hover:bg-primary-strong disabled:cursor-wait disabled:opacity-80 sm:w-auto"
+          className="inline-flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-6 font-bold text-white hover:bg-primary-strong sm:w-auto"
         >
-          {running ? (
-            tf.submitting
-          ) : (
-            <>
-              {tf.submit}
-              <ArrowRightIcon size={18} />
-            </>
-          )}
+          {tf.submit}
+          <ArrowRightIcon size={18} />
         </button>
       </div>
     </form>

@@ -16,13 +16,11 @@ export function ResultView({
   result,
   question,
   headingRef,
-  onAskAgain,
   onNotify,
 }: {
   result: AskResult;
   question: string;
   headingRef: React.RefObject<HTMLHeadingElement | null>;
-  onAskAgain: () => void;
   onNotify: (message: string) => void;
 }) {
   const tr = messages.result;
@@ -81,7 +79,7 @@ export function ResultView({
           ) : null}
         </section>
 
-        <ResultActions result={result} question={question} toc={toc} onAskAgain={onAskAgain} onNotify={onNotify} />
+        <ResultActions result={result} question={question} toc={toc} onNotify={onNotify} />
 
         <div className="min-w-0 lg:col-start-1">
           {noBasis ? <NoBasis scope={result.searched_scope!} /> : null}

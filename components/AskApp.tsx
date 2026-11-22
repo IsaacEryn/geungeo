@@ -123,17 +123,21 @@ export function AskApp({ accessCodeRequired = false }: { accessCodeRequired?: bo
     const trimmed = q.trim();
     const code = access.code;
     let invalid = false;
+    const problems: string[] = [];
     const codeMissing = access.checkMissing();
     if (codeMissing) invalid = true;
     if (!trimmed) {
       setQuestionError(tf.questionRequired);
+      problems.push(tf.questionRequired);
       invalid = true;
     } else setQuestionError(null);
     if (!isValidIsoDate(asOf)) {
       setAsOfError(tf.asOfInvalid);
+      problems.push(tf.asOfInvalid);
       invalid = true;
     } else setAsOfError(null);
     if (invalid) {
+      if (problems.length > 0) announce(problems.join(" "));
       if (codeMissing) access.focus();
       else if (phase === "idle") (!trimmed ? questionRef : asOfRef).current?.focus();
       else toEdit("asOf"); // 결과 모드에는 기준일 칸이 없다: 입력 상태로 돌아가 그 칸에서 고치게 한다
@@ -227,7 +231,6 @@ export function AskApp({ accessCodeRequired = false }: { accessCodeRequired?: bo
           onAsOfChange={setAsOf}
           asOfError={asOfError}
           asOfRef={asOfRef}
-          running={running}
           onSubmit={() => void run(question)}
         />
       </section>
@@ -239,7 +242,7 @@ export function AskApp({ accessCodeRequired = false }: { accessCodeRequired?: bo
 
       {idle ? (
         <>
-          <ExampleList running={running} onExample={onExample} />
+          <ExampleList onExample={onExample} />
           <HeroFeatures />
         </>
       ) : null}
@@ -265,13 +268,12 @@ export function AskApp({ accessCodeRequired = false }: { accessCodeRequired?: bo
           result={result}
           question={asked}
           headingRef={resultHeadingRef}
-          onAskAgain={() => toEdit("question")}
           onNotify={announce}
         />
       ) : null}
 
       {phase === "done" || (phase === "error" && mock) ? (
-        <ExampleList running={running} onExample={onExample} variant="other" />
+        <ExampleList onExample={onExample} variant="other" />
       ) : null}
     </>
   );
