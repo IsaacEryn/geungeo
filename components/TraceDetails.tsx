@@ -1,6 +1,7 @@
 import type { AskResult, TraceCall } from "@/lib/pipeline/types";
 import messages from "@/messages/ko.json";
 import { fmt, formatDuration, formatNumber, formatUsd } from "./format";
+import { ChevronDownIcon } from "./icons";
 
 const t = messages.trace;
 
@@ -21,9 +22,12 @@ export function TraceDetails({ result }: { result: AskResult }) {
   const { trace, verification } = result;
   const linerCalls = trace.calls.filter((c) => c.api !== "cache").length;
   return (
-    <details id="trace-details" className="mt-8 rounded-card border border-divider bg-bg shadow-card">
-      <summary className="flex min-h-11 flex-wrap items-center gap-x-3 px-4 py-2 font-bold">
-        <span>{t.summary}</span>
+    <details id="trace-details" className="group mt-8 rounded-card border border-divider bg-bg shadow-card">
+      <summary className="flex min-h-11 list-none flex-wrap items-center gap-x-3 rounded-card px-4 py-2 font-bold hover:bg-primary-soft [&::-webkit-details-marker]:hidden">
+        <span className="inline-flex items-center gap-1.5">
+          <ChevronDownIcon size={16} className="shrink-0 -rotate-90 text-primary group-open:rotate-0" />
+          {t.summary}
+        </span>
         <span className="text-sm font-normal text-muted">
           {fmt(t.summaryTotals, {
             count: linerCalls,

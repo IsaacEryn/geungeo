@@ -84,6 +84,8 @@
   /* 카드: 둥근 12px, 약한 그림자 */
   --radius-card: 0.75rem;
   --shadow-card: 0 1px 2px rgb(16 24 40 / 0.06);
+  /* 누를 수 있는 카드에 마우스를 올렸을 때 한 단계 뜨는 그림자(장식, 대비 기준 밖) */
+  --shadow-card-hover: 0 4px 12px rgb(16 24 40 / 0.08), 0 1px 2px rgb(16 24 40 / 0.06);
   /* 실행 때 외부 글꼴을 받지 않도록 시스템 글꼴 스택만 쓴다. */
   --font-sans: system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
 }
@@ -109,6 +111,53 @@ body {
 
 html {
   scroll-padding-block: 4rem;
+  /* 첫 화면 → 결과로 바뀌며 스크롤바가 생길 때 가로로 튀지 않게 자리를 늘 둔다 */
+  scrollbar-gutter: stable;
+}
+
+/* 프로그램이 옮겨 준 초점(결과·진행·오류 제목, main, 패널 제목은 tabIndex -1)에는 링을 그리지 않는다.
+   조작할 수 있는 요소가 아니라서 2.4.7 대상이 아니고, 결과가 뜰 때 제목 둘레의 굵은 상자가 오류처럼 보였다.
+   버튼·링크·입력란의 포커스 링(위 3px)은 그대로다 */
+[tabindex="-1"]:focus,
+[tabindex="-1"]:focus-visible {
+  outline: none;
+}
+
+/* 큰 글자는 시스템 한글 글꼴에서 헐거워 보여 자간을 조금 좁힌다 */
+h1,
+h2,
+h3 {
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: #c7d7fe; /* fg 글자 11.24:1, primary 링크 4.65:1 */
+  color: var(--gg-fg);
+}
+
+/* 누를 수 있는 것의 색 전환. 움직임 줄이기 설정이면 아래 규칙이 끈다 */
+a,
+button,
+summary {
+  transition-property: color, background-color, border-color, box-shadow;
+  transition-duration: 120ms;
+  transition-timing-function: ease-out;
+}
+
+/* 진행 중 결과 자리 스켈레톤. 밝기만 아주 느리게 바뀐다(움직임 줄이기면 멈춘 회색 막대) */
+@keyframes gg-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .gg-skeleton {
+    animation: gg-breathe 2.4s ease-in-out infinite;
+  }
 }
 
 /* 움직임 줄이기 설정을 지킨다 */

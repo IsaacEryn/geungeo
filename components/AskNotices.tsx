@@ -45,7 +45,7 @@ export function ErrorNotice({
         <button
           type="button"
           onClick={onRetry}
-          className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-5 font-bold text-white hover:bg-primary-strong"
+          className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-5 font-bold text-white shadow-card hover:bg-primary-strong active:shadow-none"
         >
           <RefreshIcon size={16} />
           {t.retry}
@@ -53,7 +53,7 @@ export function ErrorNotice({
         <button
           type="button"
           onClick={onFix}
-          className="inline-flex min-h-11 items-center rounded-lg border border-line bg-bg px-5 font-semibold text-fg hover:bg-primary-soft"
+          className="inline-flex min-h-11 items-center rounded-lg border border-line bg-bg px-5 font-semibold text-fg hover:border-primary hover:bg-primary-soft active:bg-primary-soft"
         >
           {t.fixQuestion}
         </button>

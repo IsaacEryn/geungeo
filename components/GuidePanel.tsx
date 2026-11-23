@@ -22,6 +22,15 @@ export function GuidePanel() {
           </li>
         ))}
       </ol>
+      <h3 className="mt-6 text-card-title font-bold">{messages.guide.terms.heading}</h3>
+      <dl className="mt-2 space-y-3">
+        {messages.guide.terms.items.map((item) => (
+          <div key={item.term}>
+            <dt className="font-bold">{item.term}</dt>
+            <dd className="text-muted">{item.body}</dd>
+          </div>
+        ))}
+      </dl>
     </Dialog>
   );
 }

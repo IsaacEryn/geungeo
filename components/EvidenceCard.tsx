@@ -22,7 +22,7 @@ export function EvidenceCard({ card, headingId }: { card: EvidenceCardData; head
   // 이력 꼬리표는 화면에서만 본문과 떼어 접는다(원문 데이터는 그대로)
   const { body: quoteBody, tags: quoteTags } = splitAmendTags(card.quote);
   const history = Array.from(new Set([...quoteTags, ...card.amend_tags]));
-  // 등급 표기는 "L1 법령·행정규칙"처럼 코드가 앞에 있다. 사람이 읽는 말을 앞에 두고 코드는 뒤에 작게 붙인다
+  // 등급 표기는 "L1 법령·행정규칙"처럼 코드가 앞에 있다. 화면에는 사람이 읽는 말만 보이고, 코드 대신 뜻을 화면 읽기 프로그램에 알린다
   const gradeText = t.grades[card.grade];
   const gradeSplit = gradeText.indexOf(" ");
   const gradeCode = gradeSplit > 0 ? gradeText.slice(0, gradeSplit) : "";
@@ -34,7 +34,7 @@ export function EvidenceCard({ card, headingId }: { card: EvidenceCardData; head
         <Badge tone="neutral">
           <span className="sr-only">{t.gradeLabel}: </span>
           {gradeName}
-          {gradeCode ? <span className="ml-1 text-xs font-normal opacity-80">{gradeCode}</span> : null}
+          {gradeCode ? <span className="sr-only"> ({t.gradeNotes[card.grade]})</span> : null}
         </Badge>
         <span className="text-sm text-muted">{t.roles[card.role]}</span>
         {card.changed_after_collection ? (
@@ -53,7 +53,9 @@ export function EvidenceCard({ card, headingId }: { card: EvidenceCardData; head
       <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
         {law && card.effective_from ? <span>{fmt(t.effectiveFrom, { date: formatKoDate(card.effective_from) })}</span> : null}
         {!law && card.posted_date ? <span>{fmt(t.postedDate, { date: formatKoDate(card.posted_date) })}</span> : null}
-        {card.collected_at ? <span>{fmt(t.collectedAt, { date: formatKoDate(card.collected_at) })}</span> : null}
+        {card.collected_at ? (
+          <span>{fmt(law ? t.collectedAt : t.collectedAtWeb, { date: formatKoDate(card.collected_at) })}</span>
+        ) : null}
       </p>
 
       <figure className="mt-3">
@@ -79,7 +81,7 @@ export function EvidenceCard({ card, headingId }: { card: EvidenceCardData; head
       {card.notes.length > 0 ? (
         <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
           {card.notes.map((note) => (
-            <li key={note}>{note}</li>
+            <li key={note}>{displayNote(note)}</li>
           ))}
         </ul>
       ) : null}
@@ -92,4 +94,11 @@ export function EvidenceCard({ card, headingId }: { card: EvidenceCardData; head
       </div>
     </article>
   );
+}
+
+// 파이프라인이 붙이는 "개정 — 2022. 2. 7.부터 시행"은 조 단위 판의 시행일이다.
+// 항·호 카드에서 그 항이 그날 바뀐 것처럼 읽히지 않게 화면에서만 뜻을 풀어 쓴다.
+export function displayNote(note: string): string {
+  const m = /^개정 — (.+)부터 시행$/.exec(note);
+  return m ? `조 현행 판 ${m[1]} 시행` : note;
 }

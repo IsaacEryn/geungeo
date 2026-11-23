@@ -10,8 +10,9 @@ import { fmt, isValidIsoDate, todayKst } from "./format";
 import { Hero, HeroFeatures } from "./Hero";
 import { QuestionForm } from "./QuestionForm";
 import { ResultView } from "./ResultView";
-import { StageProgress, type StageState } from "./StageProgress";
+import { ResultSkeleton, StageProgress, type StageState } from "./StageProgress";
 import { useAccessCode } from "./useAccessCode";
+import { useDocTitle } from "./useDocTitle";
 
 const tf = messages.form;
 
@@ -60,6 +61,19 @@ export function AskApp({ accessCodeRequired = false }: { accessCodeRequired?: bo
       pendingFocus.current = null;
     }
   }, [phase]);
+
+  // 탭 제목에 지금 상태를 적는다(찾는 중·결과·오류). 첫 화면에서는 손대지 않아 기본 제목이 남는다
+  const td = messages.docTitle;
+  const shortAsked = asked.length > 24 ? `${asked.slice(0, 24)}…` : asked;
+  useDocTitle(
+    phase === "running"
+      ? fmt(td.running, { question: shortAsked }) + td.suffix
+      : phase === "done"
+        ? fmt(td.done, { question: shortAsked }) + td.suffix
+        : phase === "error"
+          ? td.error + td.suffix
+          : null,
+  );
 
   /** 상태 메시지를 다시 알린다(같은 문구여도 읽히게 한 번 비웠다가 넣는다) */
   function announce(message: string) {
@@ -248,9 +262,11 @@ export function AskApp({ accessCodeRequired = false }: { accessCodeRequired?: bo
       ) : null}
 
       {running ? (
-        <StageProgress phase="running" order={stageOrder} stages={stages} headingRef={progressHeadingRef} />
+        <>
+          <StageProgress phase="running" order={stageOrder} stages={stages} headingRef={progressHeadingRef} />
+          <ResultSkeleton />
+        </>
       ) : null}
-      {phase === "done" ? <StageProgress phase="done" order={stageOrder} stages={stages} /> : null}
 
       {mock && (phase === "done" || phase === "error") ? <MockNotice /> : null}
 
@@ -269,6 +285,8 @@ export function AskApp({ accessCodeRequired = false }: { accessCodeRequired?: bo
           question={asked}
           headingRef={resultHeadingRef}
           onNotify={announce}
+          onAskAgain={() => toEdit("question")}
+          progress={<StageProgress phase="done" order={stageOrder} stages={stages} />}
         />
       ) : null}
 

@@ -52,7 +52,7 @@ export function Dialog({
             <button
               type="button"
               onClick={() => ref.current?.close()}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line bg-bg px-3 text-small font-semibold hover:border-primary hover:text-primary"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line bg-bg px-3 text-small font-semibold hover:border-primary hover:bg-primary-soft hover:text-primary-strong active:bg-primary-soft"
             >
               <CloseIcon size={16} />
               {messages.app.close}

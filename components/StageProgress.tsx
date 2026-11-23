@@ -7,6 +7,17 @@ export type StageState = { state: "running" | "done" | "failed"; duration_ms?: n
 
 const ICON = { running: ClockIcon, done: CheckIcon, failed: XCircleIcon } as const;
 
+/** '처리 과정 보기'를 펼치고 그 제목 줄로 초점·스크롤을 옮긴다 */
+function openTrace() {
+  const details = document.getElementById("trace-details") as HTMLDetailsElement | null;
+  if (!details) return;
+  details.open = true;
+  const summary = details.querySelector("summary");
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  details.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  summary?.focus({ preventScroll: true });
+}
+
 /**
  * 진행 카드. 진행 중에는 시작된 단계를 세로 목록으로 보여 주고(글자 상태 + 아이콘, 회전 없음),
  * 결과가 오면 한 줄 요약으로 줄어든다. 화면 읽기 프로그램 알림은 AskApp의 상태 메시지가 맡는다.
@@ -30,7 +41,17 @@ export function StageProgress({
     return (
       <p className="mt-3 flex items-center gap-2 text-small text-muted">
         <CheckIcon size={16} className="shrink-0 text-ok-line" />
-        <span>{fmt(t.progressDone, { count: doneCount })}</span>
+        <span>
+          {fmt(t.progressDone, { count: doneCount })}
+          <button
+            type="button"
+            aria-controls="trace-details"
+            onClick={openTrace}
+            className="inline-flex min-h-8 items-center rounded font-semibold text-primary underline underline-offset-2 hover:text-primary-strong"
+          >
+            {t.progressTraceLink}
+          </button>
+        </span>
       </p>
     );
   }
@@ -52,7 +73,7 @@ export function StageProgress({
             <li
               key={name}
               className={`flex flex-wrap items-center gap-x-3 gap-y-0.5 rounded-lg border px-3 py-2 ${
-                state === "running" ? "border-primary bg-primary-soft" : "border-divider bg-bg"
+                state === "running" ? "border-primary border-l-4 bg-primary-soft pl-2.5" : "border-divider bg-bg"
               }`}
             >
               <Icon
@@ -71,5 +92,34 @@ export function StageProgress({
         })}
       </ol>
     </section>
+  );
+}
+
+const BAR = "rounded bg-divider";
+
+/**
+ * 진행 중 결과 자리 스켈레톤. 결론 카드가 나올 자리를 회색 막대로 미리 보여 줘 화면이 멈춘 것처럼 보이지 않게 한다.
+ * 장식이라 화면 읽기에서 숨긴다(진행은 상태 메시지가 알림). 밝기 변화는 움직임 줄이기 설정이면 멈춘다(globals.css)
+ */
+export function ResultSkeleton() {
+  return (
+    <div aria-hidden="true" className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_18.75rem] lg:gap-x-6">
+      <div className="gg-skeleton rounded-card border border-divider bg-bg p-4 shadow-card sm:p-5">
+        <div className={`${BAR} h-6 w-24`} />
+        <div className="mt-3 flex gap-2">
+          <div className={`${BAR} h-6 w-28 rounded-full`} />
+          <div className={`${BAR} h-6 w-24 rounded-full`} />
+        </div>
+        <div className={`${BAR} mt-4 h-4 w-full`} />
+        <div className={`${BAR} mt-2.5 h-4 w-11/12`} />
+        <div className={`${BAR} mt-2.5 h-4 w-3/5`} />
+      </div>
+      <div className="gg-skeleton hidden rounded-card border border-divider bg-bg p-4 shadow-card lg:block">
+        <div className={`${BAR} h-4 w-20`} />
+        <div className={`${BAR} mt-3 h-3.5 w-32`} />
+        <div className={`${BAR} mt-2.5 h-3.5 w-28`} />
+        <div className={`${BAR} mt-2.5 h-3.5 w-36`} />
+      </div>
+    </div>
   );
 }

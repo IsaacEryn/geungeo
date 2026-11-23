@@ -16,8 +16,8 @@ export function ExternalLink({
 }) {
   const className =
     variant === "button"
-      ? "inline-flex min-h-11 items-center gap-2 rounded-lg border border-line bg-bg px-3 py-2 text-small font-semibold text-primary hover:bg-primary-soft hover:text-primary-strong"
-      : "inline-flex min-h-6 items-center text-primary underline underline-offset-2 hover:text-primary-strong";
+      ? "inline-flex min-h-11 items-center gap-2 rounded-lg border border-line bg-bg px-3 py-2 text-small font-semibold text-primary hover:border-primary hover:bg-primary-soft hover:text-primary-strong active:bg-primary-soft"
+      : "inline-flex min-h-6 items-center text-primary underline underline-offset-2 hover:text-primary-strong hover:decoration-2";
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
       <span>

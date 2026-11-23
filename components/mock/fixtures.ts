@@ -28,6 +28,7 @@ const URL_HEAF = "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=283883&efYd=202609
 const URL_HEAF_270311 = "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=283883&efYd=20270311";
 const URL_HEDEC = "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911";
 const URL_TUITION = "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=240223&efYd=20220207";
+const URL_REMOTE = "https://www.law.go.kr/LSW/admRulLsInfoR.do?admRulSeq=2100000232140";
 const URL_SNU = "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000157427";
 // 학칙 인용을 받은 시각(data/manifest.json의 snu_rule collected_at)
 const COLLECTED_AT_SNU = "2026-11-13T02:17:37+09:00";
@@ -530,7 +531,205 @@ const E22: MockScenario = {
   },
 };
 
-const SCENARIOS: MockScenario[] = [E01, E03, E14, E13, E28, E22];
+const E09: MockScenario = {
+  id: "E09",
+  stages: [
+    ["analyze", 2000],
+    ["collect_cache", 60],
+    ["collect_signals", 1300],
+    ["answer", 5000],
+    ["verify", 30],
+  ],
+  calls: [
+    { stage: "analyze", api: "router", model: MODEL, http_status: 200, duration_ms: 2000, usage: routerUsage(1840, 400, 150) },
+    { stage: "collect_cache", api: "cache", query: "등록금 납부 후 휴학 반환 이월", duration_ms: 30 },
+    { stage: "collect_cache", api: "cache", query: "휴학자 등록금 면제", duration_ms: 30 },
+    {
+      stage: "collect_signals",
+      api: "search",
+      query: "대학 등록금에 관한 규칙 반환 개정 입법예고",
+      http_status: 200,
+      duration_ms: 1300,
+      usage: SEARCH_USAGE,
+      results: [{ hostname: "opinion.lawmaking.go.kr", grade: "W1" }],
+    },
+    { stage: "answer", api: "router", model: MODEL, http_status: 200, duration_ms: 5000, usage: routerUsage(7000, 1000, 330) },
+  ],
+  build: () => ({
+    scene: "processing",
+    verdict: "answered",
+    summary:
+      "둘 다 가능합니다. 등록금을 낸 뒤 휴학한 경우는 반환사유(규칙 제6조제2항제5호)라 별표의 기준에 따라 돌려줍니다. 다만 같은 조 제3항에 따라 학교의 장이 정하는 바에 따라 이미 낸 등록금을 다음 학기로 이월할 수도 있습니다. 이월은 '학교의 장이 정하는 바'에 따르므로 학교 규정을 확인하세요. 반환 비율은 별표에 있습니다.",
+    cards: [
+      lawCard({
+        id: "tuition_rule:006-00",
+        grade: "L1",
+        role: "basis",
+        title: "대학 등록금에 관한 규칙",
+        kind: "ministerial_ordinance",
+        location: "제6조제2항제5호, 제3항",
+        quote: joinQuote("tuition_6_2_5", "tuition_6_3"),
+        effective_from: "2022-02-07",
+        source_url: URL_TUITION,
+        notes: ["반환 비율은 별표에 있으나 이 화면의 자료에는 별표가 없습니다. 비율을 따로 확인하세요."],
+      }),
+      lawCard({
+        id: "tuition_rule:003-00",
+        grade: "L1",
+        role: "reference",
+        title: "대학 등록금에 관한 규칙",
+        kind: "ministerial_ordinance",
+        location: "제3조제4항",
+        quote: quotes.tuition_3_4,
+        effective_from: "2022-02-07",
+        source_url: URL_TUITION,
+      }),
+    ],
+    checklist: [],
+    caveats: ["이월 기준은 학교의 장이 정하는 바에 따르므로 학교 규정을 확인하세요."],
+    change_signals: [],
+    searched_scope: null,
+    warnings: [],
+  }),
+};
+
+const E06: MockScenario = {
+  id: "E06",
+  stages: [
+    ["analyze", 1900],
+    ["collect_cache", 50],
+    ["collect_signals", 1300],
+    ["answer", 4800],
+    ["verify", 30],
+  ],
+  calls: [
+    { stage: "analyze", api: "router", model: MODEL, http_status: 200, duration_ms: 1900, usage: routerUsage(1830, 390, 140) },
+    { stage: "collect_cache", api: "cache", query: "육아휴학 자녀 연령", duration_ms: 30 },
+    { stage: "collect_cache", api: "cache", query: "heaf:023-04", duration_ms: 30, note: "조번호 직접 조회" },
+    {
+      stage: "collect_signals",
+      api: "search",
+      query: "고등교육법 제23조의4 휴학 개정",
+      http_status: 200,
+      duration_ms: 1300,
+      usage: SEARCH_USAGE,
+      results: [
+        { hostname: "www.law.go.kr", grade: "W1" },
+        { hostname: "www.moe.go.kr", grade: "W1" },
+      ],
+    },
+    { stage: "answer", api: "router", model: MODEL, http_status: 200, duration_ms: 4800, usage: routerUsage(6600, 950, 310) },
+  ],
+  build: () => ({
+    scene: "processing",
+    verdict: "answered",
+    summary:
+      "대상이 됩니다. 고등교육법 제23조의4제3호는 12세 이하 또는 초등학교 6학년 이하의 자녀 양육을 휴학 사유로 둡니다. 초등학교 4학년이면 해당합니다. 다만 이 호의 사유는 학칙으로 정하는 바에 따라 휴학하게 할 수 있다는 재량 규정이고, 반드시 휴학시켜야 하는 것은 제1호(입영·복무)뿐입니다. 학칙을 함께 확인하세요.",
+    cards: [
+      lawCard({
+        id: "heaf:023-04",
+        grade: "L1",
+        role: "basis",
+        title: "고등교육법",
+        kind: "act",
+        location: "제23조의4제3호",
+        quote: joinQuote("heaf_23_4_head", "heaf_23_4_3"),
+        effective_from: "2025-04-23",
+        source_url: "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=265805&efYd=20250423",
+        amend_tags: ["<개정 2024. 10. 22.>"],
+        notes: ["학칙으로 위임 — 학교별 확인"],
+      }),
+    ],
+    checklist: [],
+    caveats: ["개정 전에는 만 8세 이하(취학 중이면 초등학교 2학년 이하)였습니다. 예전 기준으로 보지 마세요."],
+    change_signals: [],
+    searched_scope: null,
+    warnings: [],
+  }),
+};
+
+// E19: 새로 시작하는 업무(체크리스트). 11/23 실제 실행 3회의 결론·체크리스트를 줄여 옮겼다.
+const E19: MockScenario = {
+  id: "E19",
+  stages: [
+    ["analyze", 2600],
+    ["collect_cache", 70],
+    ["collect_signals", 1500],
+    ["answer", 7400],
+    ["verify", 40],
+  ],
+  calls: [
+    { stage: "analyze", api: "router", model: MODEL, http_status: 200, duration_ms: 2600, usage: routerUsage(1900, 480, 210) },
+    { stage: "collect_cache", api: "cache", query: "원격수업 학칙 규정사항", duration_ms: 35 },
+    { stage: "collect_cache", api: "cache", query: "원격교육지원센터", duration_ms: 35 },
+    {
+      stage: "collect_signals",
+      api: "search",
+      query: "대학등의 원격수업 운영에 관한 훈령 개정",
+      http_status: 200,
+      duration_ms: 1500,
+      usage: SEARCH_USAGE,
+      results: [
+        { hostname: "www.moe.go.kr", grade: "W1" },
+        { hostname: "news.example.com", grade: "W3" },
+      ],
+    },
+    { stage: "answer", api: "router", model: MODEL, http_status: 200, duration_ms: 7400, usage: routerUsage(9400, 1500, 480) },
+  ],
+  build: () => ({
+    scene: "initiating",
+    verdict: "answered",
+    summary:
+      "원격수업을 운영하려면 세부사항을 학칙 등으로 정해야 합니다. 꼭 넣을 항목은 ① 교과목 분류·개설 기준 ② 운영·이수기준·이수가능학점·평가 관리 ③ 출석관리·폐강·분반 기준 ④ 원격교육지원센터 ⑤ 외부콘텐츠 사용·인정 기준 ⑥ 정보보호 ⑦ 다른 규정이 학칙 등으로 정하게 한 사항입니다. 다만 「고등교육법」 제2조제5호에 따른 학교에는 ①~③이 적용되지 않으니 학교 유형을 먼저 확인하세요.",
+    cards: [
+      lawCard({
+        id: "remote_class_rule:003-00",
+        grade: "L1",
+        role: "basis",
+        title: "대학등의 원격수업 운영에 관한 훈령",
+        kind: "administrative_rule",
+        location: "제3조",
+        quote: quotes.remote_3,
+        effective_from: "2023-12-05",
+        source_url: URL_REMOTE,
+      }),
+      lawCard({
+        id: "remote_class_rule:004-00",
+        grade: "L1",
+        role: "basis",
+        title: "대학등의 원격수업 운영에 관한 훈령",
+        kind: "administrative_rule",
+        location: "제4조",
+        quote: quotes.remote_4,
+        effective_from: "2023-12-05",
+        source_url: URL_REMOTE,
+      }),
+      lawCard({
+        id: "remote_class_rule:007-00",
+        grade: "L1",
+        role: "basis",
+        title: "대학등의 원격수업 운영에 관한 훈령",
+        kind: "administrative_rule",
+        location: "제7조",
+        quote: quotes.remote_7,
+        effective_from: "2023-12-05",
+        source_url: URL_REMOTE,
+      }),
+    ],
+    checklist: [
+      { step: "학교 유형을 확인해 훈령 적용 대상인지, 제4조제1호~제3호 적용 제외 대상인지 먼저 구분", basis_ids: ["remote_class_rule:003-00"] },
+      { step: "현행 학칙과 원격수업 관련 규정을 대조해 교과목 분류·개설, 운영·이수·학점·평가, 출석·폐강·분반 항목의 누락을 확인", basis_ids: ["remote_class_rule:003-00", "remote_class_rule:004-00"] },
+      { step: "원격교육지원센터 규정을 정비하고, 기존 원격수업 전담조직을 센터로 쓸 수 있는지 검토", basis_ids: ["remote_class_rule:004-00", "remote_class_rule:007-00"] },
+      { step: "외부콘텐츠 사용·인정 기준, 정보보호, 다른 규정이 학칙 등으로 정하게 한 사항을 정비안에 반영", basis_ids: ["remote_class_rule:004-00"] },
+    ],
+    caveats: ["훈령은 '학칙 등'이라고 쓰므로 모든 세부를 학칙 본문에만 둘 필요는 없습니다. 학교별 규정 체계를 확인하세요."],
+    change_signals: [],
+    searched_scope: null,
+    warnings: [],
+  }),
+};
+
+const SCENARIOS: MockScenario[] = [E01, E03, E14, E13, E19, E28, E22, E09, E06];
 
 function findScenario(question: string): MockScenario | undefined {
   const example = messages.examples.find((e) => e.question === question.trim());

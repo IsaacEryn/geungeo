@@ -37,6 +37,7 @@ export function CoveragePanel() {
           ))}
         </ul>
         <p className="mt-2 text-small text-muted">{tc.rulesNote}</p>
+        <p className="mt-1 text-small text-muted">{tc.rulesOutside}</p>
       </Section>
       <Section heading={tc.webHeading}>
         <p>{tc.webBody}</p>

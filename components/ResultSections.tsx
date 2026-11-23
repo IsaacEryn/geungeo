@@ -16,6 +16,43 @@ export function cssId(id: string): string {
   return id.replace(/[^a-zA-Z0-9_-]/g, "-");
 }
 
+/** 카드 목록 안 index번째 카드의 같은 페이지 앵커 ID. 같은 조가 두 번 나오면 뒤 카드에 번호를 붙인다 */
+export function cardAnchor(cards: EvidenceCard[], index: number): string {
+  const nth = cards.slice(0, index).filter((c) => c.id === cards[index].id).length;
+  return `card-${cssId(cards[index].id)}${nth ? `-${nth + 1}` : ""}`;
+}
+
+/** 결론 카드 끝의 한 줄: 주된 근거 조문과 시행일, 그 근거 카드로 가는 링크. 응답에 이미 있는 값만 쓴다 */
+export function MainBasisLine({ cards }: { cards: EvidenceCard[] }) {
+  const usable = (c: EvidenceCard) => c.badge !== "proposed" && c.badge !== "reference";
+  const isLaw = (c: EvidenceCard) => c.grade === "L1" || c.grade === "L2";
+  const index =
+    cards.findIndex((c) => c.role === "basis" && usable(c) && isLaw(c)) >= 0
+      ? cards.findIndex((c) => c.role === "basis" && usable(c) && isLaw(c))
+      : cards.findIndex((c) => c.role === "basis" && usable(c));
+  if (index < 0) return null;
+  const card = cards[index];
+  const t = messages.result;
+  const name = [card.title, card.location].filter(Boolean).join(" ").replace(/\s+/g, " ");
+  const date =
+    card.badge === "not_yet" && card.effective_from
+      ? fmt(t.mainBasisNotYet, { date: formatKoDate(card.effective_from) })
+      : isLaw(card) && card.effective_from
+        ? fmt(t.mainBasisEffective, { date: formatKoDate(card.effective_from) })
+        : card.posted_date
+          ? fmt(t.mainBasisPosted, { date: formatKoDate(card.posted_date) })
+          : "";
+  return (
+    <p className="mt-4 border-t border-divider pt-3 text-small">
+      <span className="font-bold">{t.mainBasis}: </span>
+      <a href={`#${cardAnchor(cards, index)}`} className="inline-flex min-h-6 items-center text-primary underline underline-offset-2 hover:text-primary-strong">
+        {name}
+      </a>
+      {date ? <span className="font-semibold"> · {date}</span> : null}
+    </p>
+  );
+}
+
 export function Checklist({ items, cards }: { items: ChecklistItem[]; cards: EvidenceCard[] }) {
   const t = messages.checklist;
   return (
@@ -144,7 +181,8 @@ export function NoBasis({ scope }: { scope: SearchedScope }) {
 /** 카드에 나온 출처 표기를 모아 보여 준다(학칙은 대학명 먼저 — 카드의 attribution을 그대로) */
 export function SourcesUsed({ result }: { result: AskResult }) {
   const attributions = Array.from(new Set(result.cards.map((c) => c.attribution)));
-  if (attributions.length === 0) return null;
+  const noSchool = !result.request.school;
+  if (attributions.length === 0 && !noSchool) return null;
   return (
     <section aria-labelledby="sources-heading" className="mt-8">
       <h2 id="sources-heading" className="text-section font-bold">
@@ -154,6 +192,7 @@ export function SourcesUsed({ result }: { result: AskResult }) {
         {attributions.map((a) => (
           <li key={a}>{a}</li>
         ))}
+        {noSchool ? <li>{messages.result.sourcesNoSchool}</li> : null}
       </ul>
     </section>
   );
