@@ -28,6 +28,7 @@ const URL_HEAF = "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=283883&efYd=202609
 const URL_HEAF_270311 = "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=283883&efYd=20270311";
 const URL_HEDEC = "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=289437&efYd=20260911";
 const URL_TUITION = "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=240223&efYd=20220207";
+const URL_REMOTE = "https://www.law.go.kr/LSW/admRulLsInfoR.do?admRulSeq=2100000232140";
 const URL_SNU = "https://www.law.go.kr/LSW/schlPubRulInfoR.do?schlPubRulSeq=2200000157427";
 // 학칙 인용을 받은 시각(data/manifest.json의 snu_rule collected_at)
 const COLLECTED_AT_SNU = "2026-11-13T02:17:37+09:00";
@@ -647,7 +648,88 @@ const E06: MockScenario = {
   }),
 };
 
-const SCENARIOS: MockScenario[] = [E01, E03, E14, E13, E28, E22, E09, E06];
+// E19: 새로 시작하는 업무(체크리스트). 11/23 실제 실행 3회의 결론·체크리스트를 줄여 옮겼다.
+const E19: MockScenario = {
+  id: "E19",
+  stages: [
+    ["analyze", 2600],
+    ["collect_cache", 70],
+    ["collect_signals", 1500],
+    ["answer", 7400],
+    ["verify", 40],
+  ],
+  calls: [
+    { stage: "analyze", api: "router", model: MODEL, http_status: 200, duration_ms: 2600, usage: routerUsage(1900, 480, 210) },
+    { stage: "collect_cache", api: "cache", query: "원격수업 학칙 규정사항", duration_ms: 35 },
+    { stage: "collect_cache", api: "cache", query: "원격교육지원센터", duration_ms: 35 },
+    {
+      stage: "collect_signals",
+      api: "search",
+      query: "대학등의 원격수업 운영에 관한 훈령 개정",
+      http_status: 200,
+      duration_ms: 1500,
+      usage: SEARCH_USAGE,
+      results: [
+        { hostname: "www.moe.go.kr", grade: "W1" },
+        { hostname: "news.example.com", grade: "W3" },
+      ],
+    },
+    { stage: "answer", api: "router", model: MODEL, http_status: 200, duration_ms: 7400, usage: routerUsage(9400, 1500, 480) },
+  ],
+  build: () => ({
+    scene: "initiating",
+    verdict: "answered",
+    summary:
+      "원격수업을 운영하려면 세부사항을 학칙 등으로 정해야 합니다. 꼭 넣을 항목은 ① 교과목 분류·개설 기준 ② 운영·이수기준·이수가능학점·평가 관리 ③ 출석관리·폐강·분반 기준 ④ 원격교육지원센터 ⑤ 외부콘텐츠 사용·인정 기준 ⑥ 정보보호 ⑦ 다른 규정이 학칙 등으로 정하게 한 사항입니다. 다만 「고등교육법」 제2조제5호에 따른 학교에는 ①~③이 적용되지 않으니 학교 유형을 먼저 확인하세요.",
+    cards: [
+      lawCard({
+        id: "remote_class_rule:003-00",
+        grade: "L1",
+        role: "basis",
+        title: "대학등의 원격수업 운영에 관한 훈령",
+        kind: "administrative_rule",
+        location: "제3조",
+        quote: quotes.remote_3,
+        effective_from: "2023-12-05",
+        source_url: URL_REMOTE,
+      }),
+      lawCard({
+        id: "remote_class_rule:004-00",
+        grade: "L1",
+        role: "basis",
+        title: "대학등의 원격수업 운영에 관한 훈령",
+        kind: "administrative_rule",
+        location: "제4조",
+        quote: quotes.remote_4,
+        effective_from: "2023-12-05",
+        source_url: URL_REMOTE,
+      }),
+      lawCard({
+        id: "remote_class_rule:007-00",
+        grade: "L1",
+        role: "basis",
+        title: "대학등의 원격수업 운영에 관한 훈령",
+        kind: "administrative_rule",
+        location: "제7조",
+        quote: quotes.remote_7,
+        effective_from: "2023-12-05",
+        source_url: URL_REMOTE,
+      }),
+    ],
+    checklist: [
+      { step: "학교 유형을 확인해 훈령 적용 대상인지, 제4조제1호~제3호 적용 제외 대상인지 먼저 구분", basis_ids: ["remote_class_rule:003-00"] },
+      { step: "현행 학칙과 원격수업 관련 규정을 대조해 교과목 분류·개설, 운영·이수·학점·평가, 출석·폐강·분반 항목의 누락을 확인", basis_ids: ["remote_class_rule:003-00", "remote_class_rule:004-00"] },
+      { step: "원격교육지원센터 규정을 정비하고, 기존 원격수업 전담조직을 센터로 쓸 수 있는지 검토", basis_ids: ["remote_class_rule:004-00", "remote_class_rule:007-00"] },
+      { step: "외부콘텐츠 사용·인정 기준, 정보보호, 다른 규정이 학칙 등으로 정하게 한 사항을 정비안에 반영", basis_ids: ["remote_class_rule:004-00"] },
+    ],
+    caveats: ["훈령은 '학칙 등'이라고 쓰므로 모든 세부를 학칙 본문에만 둘 필요는 없습니다. 학교별 규정 체계를 확인하세요."],
+    change_signals: [],
+    searched_scope: null,
+    warnings: [],
+  }),
+};
+
+const SCENARIOS: MockScenario[] = [E01, E03, E14, E13, E19, E28, E22, E09, E06];
 
 function findScenario(question: string): MockScenario | undefined {
   const example = messages.examples.find((e) => e.question === question.trim());

@@ -9,7 +9,7 @@ const FIRST_COUNT = 4;
 
 /**
  * 예시 질문 버튼. 누르면 질문을 채우고 바로 실행한다(AskApp의 onExample).
- * 처음엔 네 개(E09·E13·E22·E28)만 보이고 나머지는 '더 보기'로 펼친다.
+ * 처음엔 네 개(E09·E19·E22·E28)만 보이고 나머지는 '더 보기'로 펼친다.
  * variant "other"는 결과 아래 '다른 예시'(새 질문 시작점)
  */
 export function ExampleList({

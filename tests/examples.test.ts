@@ -10,8 +10,8 @@ const rows = readFileSync(join(__dirname, "..", "eval", "questions.jsonl"), "utf
   .map((l) => JSON.parse(l) as { id: string; question: string });
 
 describe("예시 질문", () => {
-  it("E09·E13·E22·E28(처음 네 개)과 E03·E06(더 보기) 순서다", () => {
-    expect(messages.examples.map((e) => e.id)).toEqual(["E09", "E13", "E22", "E28", "E03", "E06"]);
+  it("E09·E19·E22·E28(처음 네 개)과 E03·E06(더 보기) 순서다", () => {
+    expect(messages.examples.map((e) => e.id)).toEqual(["E09", "E19", "E22", "E28", "E03", "E06"]);
   });
 
   it("질문은 평가 세트 글자 그대로다", () => {
