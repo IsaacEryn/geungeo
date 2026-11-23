@@ -195,7 +195,7 @@
     }
   },
   "checklist": {
-    "heading": "업무 시작 체크리스트",
+    "heading": "새로 시작하는 업무 체크리스트",
     "intro": "순서대로 확인하세요. 기한은 원문 표현을 옮겼습니다.",
     "deadline": "기한",
     "basis": "근거"
@@ -263,7 +263,7 @@
     "errorTitle": "답을 받지 못했습니다",
     "tocLabel": "이 답의 목차",
     "tocConclusion": "결론",
-    "tocChecklist": "업무 시작 체크리스트",
+    "tocChecklist": "새로 시작하는 업무 체크리스트",
     "tocCards": "근거 조문과 자료",
     "tocSignals": "변경 신호",
     "tocTrace": "처리 과정 보기",

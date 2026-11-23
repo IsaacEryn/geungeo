@@ -36,4 +36,10 @@ describe("예시 질문", () => {
     expect(messages.result.scenes.processing).toBe("진행 중인 업무");
     expect(messages.result.scenes.initiating).toBe("새로 시작하는 업무");
   });
+
+  it("체크리스트 제목도 업무 상황 이름과 같은 말을 쓴다", () => {
+    const all = JSON.stringify(messages);
+    expect(all).not.toContain("업무 시작 체크리스트");
+    expect(all).toContain(`${messages.result.scenes.initiating} 체크리스트`);
+  });
 });
