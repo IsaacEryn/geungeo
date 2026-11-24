@@ -26,6 +26,26 @@ export function loadAccessCode(): string | null {
   }
 }
 
+/**
+ * 주소 끝 조각(#code=…)으로 넘어온 접근 코드와, 코드를 뺀 나머지 조각.
+ * 조각은 서버로 가지 않아 접속 기록과 Referer에 남지 않는다. 코드가 없으면 조각을 그대로 돌려준다.
+ * '+'를 공백으로 바꾸지 않도록 URLSearchParams 대신 직접 나눈다
+ */
+export function accessCodeFromHash(hash: string): { code: string | null; rest: string } {
+  const parts = hash.replace(/^#/, "").split("&");
+  const index = parts.findIndex((part) => part.startsWith("code="));
+  if (index < 0) return { code: null, rest: hash };
+  const raw = parts[index].slice("code=".length);
+  let code: string;
+  try {
+    code = decodeURIComponent(raw).trim();
+  } catch {
+    code = raw.trim();
+  }
+  const rest = parts.filter((_, i) => i !== index).join("&");
+  return { code: code || null, rest: rest ? `#${rest}` : "" };
+}
+
 /** 맞은 접근 코드를 이 탭에만 기억한다. null이면 지운다. 저장소를 못 쓰면 조용히 넘어간다 */
 export function saveAccessCode(code: string | null): void {
   try {

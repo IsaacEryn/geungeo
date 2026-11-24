@@ -3,7 +3,7 @@
 import { createContext, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import messages from "@/messages/ko.json";
 import { AccessCodeField } from "./AccessCodeField";
-import { loadAccessCode, saveAccessCode } from "./ask-client";
+import { accessCodeFromHash, loadAccessCode, saveAccessCode } from "./ask-client";
 import { useDocTitle } from "./useDocTitle";
 
 const tf = messages.form;
@@ -35,14 +35,35 @@ export function AccessGate({ required, children }: { required: boolean; children
   const id = useId();
   const locked = required && !code;
 
-  // 이 탭에서 이미 맞았던 코드가 있으면 화면을 건너뛴다(서버 렌더링과 어긋나지 않게 마운트 뒤에 읽는다).
+  // 주소에 #code=…가 있거나 이 탭에서 이미 맞았던 코드가 있으면 화면을 건너뛴다(서버 렌더링과 어긋나지 않게
+  // 마운트 뒤에 읽는다). 주소의 코드는 읽자마자 주소창과 방문 기록에서 지우고, 새로 고쳐도 다시 묻지 않게 이 탭에
+  // 기억해 둔다. 틀린 코드면 첫 질문의 401에서 reject가 지우고 접근 코드 화면을 다시 띄운다.
+  // 이미 열린 탭에서 #code=…만 바꿔 넣으면 다시 로드되지 않으므로 hashchange도 듣는다.
   // 되살린 코드는 입력란에 넣지 않고 메모리에만 둔다
   useEffect(() => {
+    function takeFromUrl(): string | null {
+      const { code: fromUrl, rest } = accessCodeFromHash(window.location.hash);
+      if (rest !== window.location.hash) {
+        window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search + rest);
+      }
+      if (fromUrl && required) saveAccessCode(fromUrl);
+      return fromUrl;
+    }
+    const fromUrl = takeFromUrl();
     if (!required) return;
-    const saved = loadAccessCode();
-    if (!saved) return;
-    const timer = setTimeout(() => setCode(saved.trim()), 0);
-    return () => clearTimeout(timer);
+    function onHashChange() {
+      const next = takeFromUrl();
+      if (!next) return;
+      setError(null);
+      setCode(next);
+    }
+    window.addEventListener("hashchange", onHashChange);
+    const next = fromUrl ?? loadAccessCode()?.trim();
+    const timer = next ? setTimeout(() => setCode(next), 0) : undefined;
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("hashchange", onHashChange);
+    };
   }, [required]);
 
   // 접근 코드 화면이 떠 있는 동안 탭 제목을 바꾼다. 풀리면 기본 제목으로 돌아간다
